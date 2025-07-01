@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: backend-app
+
+  profiles:
+    active: local  # local / dev / prod ? ??? ??? ?? ??
+
+  datasource:
+    url: jdbc:h2:mem:testdb  #
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create  # create | update | validate | none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+  devtools:
+    restart:
+      enabled: true
+
+  thymeleaf:
+    cache: false
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+
+logging:
+  level:
+    root: info
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql: trace
+
+server:
+  port: 8080
