@@ -1,0 +1,88 @@
+package com.example.demo.domain.post.entity;
+
+//import com.example.demo.domain.member.entity.Member;
+//import com.example.demo.domain.major.entity.Major;
+import com.example.demo.domain.post.enums.PostStatus;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
+@Table(name = "posts")
+public class Post {
+
+    @Id
+    @GeneratedValue
+    @Column(name = "post_id")
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "major_id", nullable = false)
+//    private Major major;
+
+    @Column(nullable = false)
+    private String title;
+
+    @Column(nullable = false)
+    private String postName;
+
+    @Column(nullable = false)
+    private Integer postPrice;
+
+    private String professor;
+
+    private String courseName;
+
+    private Integer grade;
+
+    private Integer semester;
+
+    private String postImage;
+
+    @Column(columnDefinition = "TEXT")
+    private String content;
+
+    @Column(nullable = false)
+    private Integer likeCount = 0;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seller_id", nullable = false)
+//    private Member seller;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PostStatus status;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime modifiedAt;
+
+    public void updatePost(String title, String content, Integer postPrice) {
+        this.title = title;
+        this.content = content;
+        this.postPrice = postPrice;
+        this.modifiedAt = LocalDateTime.now();
+    }
+
+    public void markAsSold() {
+        this.status = PostStatus.판매완료;
+    }
+
+    public void increaseLike() {
+        this.likeCount++;
+    }
+
+    public void decreaseLike() {
+        this.likeCount = Math.max(0, this.likeCount - 1);
+    }
+}
