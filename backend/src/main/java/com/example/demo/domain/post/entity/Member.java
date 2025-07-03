@@ -1,7 +1,6 @@
 package com.example.demo.domain.post.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Member {
-//푸시체크용 주석
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name ="member_id")
