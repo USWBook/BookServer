@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Member {
-
+//푸시체크용 주석
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name ="member_id")
