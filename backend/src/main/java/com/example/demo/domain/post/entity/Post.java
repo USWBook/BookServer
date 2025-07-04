@@ -51,6 +51,7 @@ public class Post {
     private String content;
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer likeCount = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
