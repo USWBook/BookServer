@@ -1,5 +1,5 @@
 package com.example.demo.domain.post.dto.request;
-
+// 게시글 생성 요청 DTO
 import lombok.Getter;
 
 @Getter

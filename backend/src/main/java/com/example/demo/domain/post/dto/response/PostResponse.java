@@ -1,5 +1,5 @@
 package com.example.demo.domain.post.dto.response;
-
+// 게시글 응답 DTO
 import com.example.demo.domain.post.entity.Post;
 import lombok.Builder;
 import lombok.Getter;
