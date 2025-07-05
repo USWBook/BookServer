@@ -2,6 +2,7 @@ package com.example.demo.domain.post.entity;
 // 게시글 Entity
 
 //import com.example.demo.domain.major.entity.Major;
+import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.post.enums.PostStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -25,9 +26,9 @@ public class Post {
     @Column(name = "post_id", columnDefinition = "BINARY(16)")
     private UUID id;
 
-    //@ManyToOne(fetch = FetchType.LAZY)
-    //@JoinColumn(name = "major_id", nullable = false)
-    //private Major major;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "major_id", nullable = false)
+    private Major major;
 
     @Column(nullable = false)
     private String title;
@@ -52,6 +53,7 @@ public class Post {
     private String content;
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer likeCount = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)

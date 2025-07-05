@@ -1,5 +1,6 @@
 package com.example.demo.domain.member.entity;
 
+import com.example.demo.domain.major.entity.Major;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -35,9 +36,10 @@ public class Member {
      * 추후 확장한다면 학교는 정수 색인이랑 매칭시켜서 따로 테이블로 관리하고 해당 인덱스값을
      * 외래 키로 받아서 전공들 테이블 만들면 되려나 싶음
      */
-    @Column(nullable = false)
-    private String school;
+//    @Column(nullable = false)
+//    private String school;
 
-    @Column(nullable = false)
-    private String major;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "major_id", nullable = false)
+    private Major major;
 }
