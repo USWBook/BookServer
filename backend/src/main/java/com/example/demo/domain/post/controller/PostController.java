@@ -1,6 +1,7 @@
 package com.example.demo.domain.post.controller;
 
 import com.example.demo.domain.post.dto.request.PostCreateRequest;
+import com.example.demo.domain.post.dto.request.PostUpdateRequest;
 import com.example.demo.domain.post.dto.response.PostResponse;
 import com.example.demo.domain.post.service.PostService;
 import lombok.RequiredArgsConstructor;
@@ -37,5 +38,11 @@ public class PostController {
     public ResponseEntity<?> deletePost(@PathVariable UUID id) {
         postService.deletePost(id);
         return ResponseEntity.ok().body("삭제되었습니다.");
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<?> updatePost(@PathVariable UUID id, @RequestBody PostUpdateRequest request) {
+        postService.updatePost(id, request);
+        return ResponseEntity.ok().body("게시글이 수정되었습니다.");
     }
 }

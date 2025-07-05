@@ -1,5 +1,6 @@
 package com.example.demo.domain.post.service;
 
+import com.example.demo.domain.post.dto.request.PostUpdateRequest;
 import com.example.demo.domain.post.dto.response.PostResponse;
 import com.example.demo.domain.post.dto.request.PostCreateRequest;
 import com.example.demo.domain.post.entity.Post;
@@ -55,5 +56,13 @@ public class PostService {
     @Transactional
     public void deletePost(UUID id) {
         postRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void updatePost(UUID postId, PostUpdateRequest request) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다."));
+
+        post.updatePost(request.getTitle(), request.getContent(), request.getPostPrice());
     }
 }
