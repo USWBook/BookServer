@@ -21,12 +21,12 @@ import java.util.UUID;
 public class Post {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "post_id")
+    @GeneratedValue
+    @Column(name = "post_id", columnDefinition = "BINARY(16)")
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "major_id", nullable = false)
+    //@ManyToOne(fetch = FetchType.LAZY)
+    //@JoinColumn(name = "major_id", nullable = false)
     //private Major major;
 
     @Column(nullable = false)

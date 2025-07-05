@@ -3,21 +3,22 @@ spring:
     name: backend-app
 
   profiles:
-    active: local  # local / dev / prod ? ??? ??? ?? ??
+    active: local
 
   datasource:
-    url: jdbc:h2:mem:testdb  #
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: jdbc:mysql://localhost:3306/book?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 0000
 
   jpa:
     hibernate:
-      ddl-auto: create  # create | update | validate | none
+      ddl-auto: create
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
     open-in-view: false
 
   devtools:
