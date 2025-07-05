@@ -1,3 +1,4 @@
+# 테스트코드 운영
 spring:
   datasource:
     url: jdbc:h2:mem:book_test;MODE=MySQL
