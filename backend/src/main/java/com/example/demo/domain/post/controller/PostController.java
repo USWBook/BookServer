@@ -1,11 +1,12 @@
 package com.example.demo.domain.post.controller;
-// 게시글 컨트롤러
+
 import com.example.demo.domain.post.dto.request.PostCreateRequest;
 import com.example.demo.domain.post.dto.request.PostUpdateRequest;
 import com.example.demo.domain.post.dto.response.PostResponse;
 import com.example.demo.domain.post.service.PostService;
+import com.example.demo.global.response.Empty;
+import com.example.demo.global.response.RsData;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,44 +18,53 @@ import java.util.UUID;
 public class PostController {
 
     private final PostService postService;
+
     // 게시글 생성
     @PostMapping
-    public ResponseEntity<?> createPost(@RequestBody PostCreateRequest request) {
+    public RsData<?> createPost(@RequestBody PostCreateRequest request) {
         UUID postId = postService.createPost(request);
-        return ResponseEntity.ok().body(postId);
+        return new RsData<>("201", "게시글이 성공적으로 등록되었습니다.", postId);
     }
+
     // 게시글 전체 조회
     @GetMapping
-    public ResponseEntity<List<PostResponse>> getAllPosts() {
-        return ResponseEntity.ok(postService.getAllPosts());
+    public RsData<List<PostResponse>> getAllPosts() {
+        List<PostResponse> posts = postService.getAllPosts();
+        return new RsData<>("200", "게시글 목록 조회에 성공했습니다.", posts);
     }
+
     // 게시글 단건 조회
     @GetMapping("/{id}")
-    public ResponseEntity<PostResponse> getPost(@PathVariable UUID id) {
-        return ResponseEntity.ok(postService.getPostById(id));
+    public RsData<PostResponse> getPost(@PathVariable UUID id) {
+        PostResponse post = postService.getPostById(id);
+        return new RsData<>("200", "게시글 상세 조회에 성공했습니다.", post);
     }
+
     // 게시글 삭제
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deletePost(@PathVariable UUID id) {
+    public RsData<Empty> deletePost(@PathVariable UUID id) {
         postService.deletePost(id);
-        return ResponseEntity.ok().body("삭제되었습니다.");
+        return new RsData<>("200", "게시글이 성공적으로 삭제되었습니다.");
     }
+
     // 게시글 수정
     @PatchMapping("/{id}")
-    public ResponseEntity<?> updatePost(@PathVariable UUID id, @RequestBody PostUpdateRequest request) {
+    public RsData<Empty> updatePost(@PathVariable UUID id, @RequestBody PostUpdateRequest request) {
         postService.updatePost(id, request);
-        return ResponseEntity.ok().body("게시글이 수정되었습니다.");
+        return new RsData<>("200", "게시글이 성공적으로 수정되었습니다.");
     }
+
     // 찜하기
     @PostMapping("/{postId}/likes")
-    public ResponseEntity<?> likePost(@PathVariable UUID postId, @RequestParam UUID memberId) {
+    public RsData<Empty> likePost(@PathVariable UUID postId, @RequestParam UUID memberId) {
         postService.likePost(postId, memberId);
-        return ResponseEntity.ok().body("찜 완료되었습니다.");
+        return new RsData<>("200", "찜 완료되었습니다.");
     }
+
     // 찜 해제
     @DeleteMapping("/{postId}/likes")
-    public ResponseEntity<?> unlikePost(@PathVariable UUID postId, @RequestParam UUID memberId) {
+    public RsData<Empty> unlikePost(@PathVariable UUID postId, @RequestParam UUID memberId) {
         postService.unlikePost(postId, memberId);
-        return ResponseEntity.ok().body("찜 해제되었습니다.");
+        return new RsData<>("200", "찜 해제되었습니다.");
     }
 }
