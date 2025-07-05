@@ -1,7 +1,6 @@
-package com.example.demo.domain.post.entity;
+package com.example.demo.domain.member.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.Setter;
 
