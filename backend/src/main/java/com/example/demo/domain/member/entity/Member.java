@@ -1,19 +1,22 @@
 package com.example.demo.domain.member.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-@Entity
+import java.util.UUID;
+
 @Table(name ="members")
+@Entity
 @Getter
-@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class Member {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name ="member_id")
-    private Long id;
+    private UUID id;
 
     @Column(nullable = false)
     private String email;
