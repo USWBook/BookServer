@@ -4,6 +4,7 @@ import com.example.demo.domain.post.dto.request.PostUpdateRequest;
 import com.example.demo.domain.post.dto.response.PostResponse;
 import com.example.demo.domain.post.dto.request.PostCreateRequest;
 import com.example.demo.domain.post.entity.Post;
+import com.example.demo.domain.post.exception.PostNotFoundException;
 import com.example.demo.domain.post.entity.PostLike;
 import com.example.demo.domain.post.enums.PostStatus;
 import com.example.demo.domain.post.repository.PostLikeRepository;
@@ -53,7 +54,7 @@ public class PostService {
     @Transactional(readOnly = true)
     public PostResponse getPostById(UUID id) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다."));
+                .orElseThrow(PostNotFoundException::new);
         return PostResponse.from(post);
     }
     // 게시글 삭제
