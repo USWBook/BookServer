@@ -1,4 +1,4 @@
-package com.example.demo.domain.member.dto.response;
+package com.example.demo.domain.post.dto.response;
 
 import com.example.demo.domain.post.entity.Post;
 import lombok.Builder;
