@@ -1,4 +1,4 @@
-package com.example.demo.domain.post.entity;
+package com.example.demo.domain.Member.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
