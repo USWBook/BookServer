@@ -1,3 +1,3 @@
-package com.example.demo.domain.chat.dto;
+package com.example.demo.domain.chat.dto.response;
 
 public record ReportMessageResponseDto(int code, String message) {}

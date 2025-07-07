@@ -1,4 +1,4 @@
-package com.example.demo.domain.chat.dto;
+package com.example.demo.domain.chat.dto.request;
 
 import java.util.UUID;
 import org.springframework.web.multipart.MultipartFile;
