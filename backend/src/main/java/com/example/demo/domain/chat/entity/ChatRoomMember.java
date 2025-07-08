@@ -1,8 +1,10 @@
 package com.example.demo.domain.chat.entity;
 
-import com.example.demo.domain.post.entity.Member;
+import com.example.demo.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -15,7 +17,7 @@ public class ChatRoomMember {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "chat_room_member_id")
-    private Long id;
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chat_room_id", nullable = false)

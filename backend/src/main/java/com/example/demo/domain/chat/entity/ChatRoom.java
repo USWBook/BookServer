@@ -1,6 +1,5 @@
 package com.example.demo.domain.chat.entity;
 
-import com.example.demo.domain.post.entity.Member;
 import com.example.demo.domain.post.entity.Post;
 import jakarta.persistence.*;
 import lombok.*;

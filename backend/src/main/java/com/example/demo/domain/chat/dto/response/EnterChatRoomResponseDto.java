@@ -1,4 +1,6 @@
-package com.example.demo.domain.chat.dto;
+package com.example.demo.domain.chat.dto.response;
+
+import com.example.demo.domain.chat.dto.response.ReceiveMessageResponseDto;
 
 import java.util.List;
 import java.util.UUID;

@@ -1,10 +1,13 @@
 package com.example.demo.domain.chat.controller;
 
+import com.example.demo.domain.chat.dto.request.*;
+import com.example.demo.domain.chat.dto.response.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.demo.domain.chat.dto.request.CreateChatRoomRequestDto;
 import java.util.UUID;
 import java.util.List;
 import java.time.LocalDateTime;

@@ -1,4 +1,4 @@
-package com.example.demo.domain.chat.dto;
+package com.example.demo.domain.chat.dto.response;
 
 import java.util.List;
 

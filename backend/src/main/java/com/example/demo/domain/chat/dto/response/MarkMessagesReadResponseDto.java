@@ -1,4 +1,4 @@
-package com.example.demo.domain.chat.dto;
+package com.example.demo.domain.chat.dto.response;
 
 public record MarkMessagesReadResponseDto(int code, String message) {}
 
