@@ -1,4 +1,4 @@
-package com.example.demo.domain.member.exception;
+package com.example.demo.domain.user.exception;
 
 import com.example.demo.global.exception.BookException;
 
