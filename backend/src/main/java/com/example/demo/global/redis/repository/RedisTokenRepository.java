@@ -1,0 +1,47 @@
+package com.example.demo.global.redis.repository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Repository;
+
+import java.time.Duration;
+
+@Repository
+@RequiredArgsConstructor
+@Slf4j
+public class RedisTokenRepository {
+
+    private final RedisTemplate<String, String> redisTemplate;
+
+    private static final String REFRESH_PREFIX = "refresh:";
+    private static final String BLACKLIST_PREFIX = "blacklist:";
+
+    public void saveRefreshToken(String email, String refreshToken, long expirationInMillis) {
+        redisTemplate.opsForValue().set(
+                REFRESH_PREFIX + email,
+                refreshToken,
+                Duration.ofMillis(expirationInMillis)
+        );
+    }
+
+    public String getRefreshToken(String email) {
+        return redisTemplate.opsForValue().get(REFRESH_PREFIX + email);
+    }
+
+    public void deleteRefreshToken(String email) {
+        redisTemplate.delete(REFRESH_PREFIX + email);
+    }
+
+    public void blacklistAccessToken(String accessToken, long expirationMillis) {
+        redisTemplate.opsForValue().set(
+                BLACKLIST_PREFIX + accessToken,
+                "logout",
+                Duration.ofMillis(expirationMillis)
+        );
+    }
+
+    public boolean isBlacklisted(String accessToken) {
+        return redisTemplate.hasKey(BLACKLIST_PREFIX + accessToken);
+    }
+}
