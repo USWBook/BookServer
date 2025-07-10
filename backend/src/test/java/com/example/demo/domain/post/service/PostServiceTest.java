@@ -1,7 +1,7 @@
 package com.example.demo.domain.post.service;
 
 import com.example.demo.domain.major.entity.Major;
-import com.example.demo.domain.member.entity.Member;
+import com.example.demo.domain.user.entity.Member;
 import com.example.demo.domain.post.dto.request.PostCreateRequest;
 import com.example.demo.domain.post.dto.request.PostUpdateRequest;
 import com.example.demo.domain.post.dto.response.PostResponse;

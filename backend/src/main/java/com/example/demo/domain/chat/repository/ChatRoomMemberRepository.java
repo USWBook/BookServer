@@ -2,7 +2,7 @@ package com.example.demo.domain.chat.repository;
 
 import com.example.demo.domain.chat.entity.ChatRoomMember;
 import org.springframework.data.jpa.repository.JpaRepository;
-import com.example.demo.domain.member.entity.Member;
+
 import java.util.List;
 import java.util.UUID;
 
