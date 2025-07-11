@@ -45,26 +45,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.replace("Bearer ", "");
-        log.info("[JWT Filter] 추출된 토큰: {}", token);
 
         if (redisTokenRepository.isBlacklisted(token)) {
-            log.info("[JWT Filter] 블랙리스트 토큰. 요청 차단.");
+            log.info("[JWT Filter] 블랙리스트 토큰: {}  요청 차단.", token);
             chain.doFilter(request, response);
             return;
         }
 
         try {
             String email = jwtProvider.extractEmail(token);
-            log.info("[JWT Filter] 추출된 이메일: {}", email);
 
             User user = userRepository.findByEmail(email).orElse(null);
             if (user == null) {
-                log.info("[JWT Filter] 사용자 없음");
+                log.info("[JWT Filter] 사용자 {} 없음", email);
             } else {
                 log.info("[JWT Filter] 사용자 인증 완료: {}", user.getEmail());
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
                         user.getEmail(),null,
-                        List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
+                        List.of(new SimpleGrantedAuthority(
+                                "ROLE_" + user.getRole()
+                                )
+                        )
                 );
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
