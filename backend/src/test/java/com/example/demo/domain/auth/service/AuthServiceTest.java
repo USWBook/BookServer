@@ -1,7 +1,7 @@
 package com.example.demo.domain.auth.service;
 
-import com.example.demo.domain.auth.dto.LoginRequest;
-import com.example.demo.domain.auth.dto.TokenResponse;
+import com.example.demo.domain.auth.dto.request.LoginRequest;
+import com.example.demo.domain.auth.dto.request.TokenResponse;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
