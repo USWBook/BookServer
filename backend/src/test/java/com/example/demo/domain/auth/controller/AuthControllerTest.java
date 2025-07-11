@@ -1,7 +1,7 @@
 package com.example.demo.domain.auth.controller;
 
-import com.example.demo.domain.auth.dto.LoginRequest;
-import com.example.demo.domain.auth.dto.TokenResponse;
+import com.example.demo.domain.auth.dto.request.LoginRequest;
+import com.example.demo.domain.auth.dto.request.TokenResponse;
 import com.example.demo.domain.auth.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +13,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
