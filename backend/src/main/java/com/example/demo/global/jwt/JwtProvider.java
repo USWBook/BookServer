@@ -71,7 +71,7 @@ public class JwtProvider {
         return Jwts.parser()
                 .verifyWith(getKey())
                 .build()
-                .parseSignedClaims(token);
+                .parseSignedClaims(token); // 유효성 검사 수행
     }
 
     public String extractEmail(String token) {
@@ -87,7 +87,7 @@ public class JwtProvider {
         return Jwts.parser()
                 .verifyWith(getKey())
                 .build()
-                .parseSignedClaims(token)
+                .parseSignedClaims(token)// 유효성 검사 수행
                 .getPayload()
                 .getSubject();
     }
@@ -104,7 +104,7 @@ public class JwtProvider {
     public boolean isValid(String token) {
         try {
             Jwts.parser()
-                    .verifyWith(getKey()) // key()는 HMAC 비밀 키를 반환하는 메서드
+                    .verifyWith(getKey())
                     .build()
                     .parseSignedClaims(token); // 유효성 검사 수행
 
