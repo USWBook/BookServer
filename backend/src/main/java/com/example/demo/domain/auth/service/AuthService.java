@@ -3,6 +3,10 @@ package com.example.demo.domain.auth.service;
 import com.example.demo.domain.auth.dto.request.LoginRequest;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
 import com.example.demo.domain.auth.dto.request.TokenResponse;
+import com.example.demo.domain.auth.exception.ExistEmailSignUpException;
+import com.example.demo.domain.auth.exception.InvalidPasswordException;
+import com.example.demo.domain.auth.exception.InvalidTokenException;
+import com.example.demo.domain.auth.exception.UserNotFoundException;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
@@ -13,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,9 +29,10 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final RedisTokenRepository redisTokenRepository;
 
+    @Transactional
     public void signUp(SignUpRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("이미 가입된 이메일입니다.");
+            throw new ExistEmailSignUpException();
         }
 
         User user = User.builder()
@@ -39,14 +45,15 @@ public class AuthService {
         userRepository.save(user);
     }
 
+    @Transactional
     public TokenResponse login(LoginRequest request) {
         // 이메일로 사용자 조회
         User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(UserNotFoundException::new);
 
         // 비밀번호 검증
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 잘못되었습니다.");
+            throw new InvalidPasswordException();
         }
 
         // 토큰 생성
@@ -63,6 +70,7 @@ public class AuthService {
         return new TokenResponse(accessToken, refreshToken);
     }
 
+    @Transactional
     public void logout(String accessToken, String email) {
         long expiration = jwtProvider.getAccessTokenRemainingTime(accessToken);
 
@@ -70,10 +78,11 @@ public class AuthService {
         redisTokenRepository.deleteRefreshToken(email);
     }
 
+    @Transactional
     public TokenResponse reissue(String refreshToken) {
         // 1. 토큰 유효성 검사
         if (!jwtProvider.isValid(refreshToken)) {
-            throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
+            throw new InvalidTokenException();
         }
 
         // 2. 이메일 추출
@@ -82,12 +91,12 @@ public class AuthService {
         // 3. Redis에 저장된 refreshToken과 비교
         String savedToken = redisTokenRepository.getRefreshToken(email);
         if (!refreshToken.equals(savedToken)) {
-            throw new IllegalArgumentException("토큰이 일치하지 않습니다.");
+            throw new InvalidTokenException();
         }
 
         // 4. 새로운 accessToken 발급
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 사용자입니다."));
+                .orElseThrow(UserNotFoundException::new);
 
         String newAccessToken = jwtProvider.generateAccessToken(email, user.getRole());
 

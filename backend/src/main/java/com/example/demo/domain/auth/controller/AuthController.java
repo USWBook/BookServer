@@ -8,7 +8,6 @@ import com.example.demo.global.jwt.JwtProvider;
 import com.example.demo.global.response.RsData;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
