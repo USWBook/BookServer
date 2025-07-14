@@ -4,7 +4,7 @@ import com.example.demo.global.exception.AuthException;
 
 public class InvalidTokenException extends AuthException {
     public InvalidTokenException() {
-        super("401", "유효하지 않은 토큰입니다.");
+        super( "유효하지 않은 토큰입니다.","401");
     }
 }
 

@@ -72,10 +72,21 @@ public class JwtProvider {
     }
 
     public Jws<Claims> parse(String token) {
-        return Jwts.parser()
-                .verifyWith(getKey())
-                .build()
-                .parseSignedClaims(token); // 유효성 검사 수행
+        try {
+            return Jwts.parser()
+                    .verifyWith(getKey())
+                    .build()
+                    .parseSignedClaims(token);
+        } catch (io.jsonwebtoken.security.SignatureException e) {
+            throw new JwtInvalidSignatureException();
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            throw new JwtTokenExpiredException();
+        } catch (io.jsonwebtoken.MalformedJwtException e) {
+            throw new JwtMalformedTokenException();
+        } catch (JwtException | IllegalArgumentException e) {
+            // 더 포괄적인 JWT 관련 예외 처리
+            throw new CustomJwtException("유효하지 않은 토큰입니다.", "401");
+        }
     }
 
     public String extractEmail(String token) {
@@ -107,20 +118,29 @@ public class JwtProvider {
 
     public boolean isValid(String token) {
         try {
-            Jwts.parser()
-                    .verifyWith(getKey())
-                    .build()
-                    .parseSignedClaims(token); // 유효성 검사 수행
-
+            parse(token);
             return true;
-        } catch (io.jsonwebtoken.ExpiredJwtException e) {
-            throw new JwtTokenExpiredException();
-        } catch (io.jsonwebtoken.security.SignatureException e) {
-            throw new JwtInvalidSignatureException();
-        } catch (io.jsonwebtoken.MalformedJwtException e) {
-            throw new JwtMalformedTokenException();
-        } catch (JwtException | IllegalArgumentException e) {
-            throw new CustomJwtException("유효하지 않은 토큰입니다.", "401");
+        } catch (CustomJwtException e) {
+            return false;
         }
     }
+
+//    public boolean isValid(String token) {
+//        try {
+//            Jwts.parser()
+//                    .verifyWith(getKey())
+//                    .build()
+//                    .parseSignedClaims(token); // 유효성 검사 수행
+//
+//            return true;
+//        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+//            throw new JwtTokenExpiredException();
+//        } catch (io.jsonwebtoken.security.SignatureException e) {
+//            throw new JwtInvalidSignatureException();
+//        } catch (io.jsonwebtoken.MalformedJwtException e) {
+//            throw new JwtMalformedTokenException();
+//        } catch (JwtException | IllegalArgumentException e) {
+//            throw new CustomJwtException("유효하지 않은 토큰입니다.", "401");
+//        }
+//    }
 }
