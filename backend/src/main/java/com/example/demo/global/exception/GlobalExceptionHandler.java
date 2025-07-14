@@ -36,6 +36,12 @@ public class GlobalExceptionHandler {
                 .body(new RsData<>(e.getCode(), e.getMessage()));
     }
 
+    @ExceptionHandler(CustomJwtException.class)
+    public ResponseEntity<RsData<Void>> handleJwtException(CustomJwtException e) {
+        return ResponseEntity.status(e.getStatusCode())
+                .body(new RsData<>(e.getCode(), e.getMessage()));
+    }
+
     // 도메인 커스텀 예외
     @ExceptionHandler(BookException.class)
     public ResponseEntity<RsData<Void>> handleBookException(BookException e) {

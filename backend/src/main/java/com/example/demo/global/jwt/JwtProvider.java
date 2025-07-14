@@ -1,5 +1,9 @@
 package com.example.demo.global.jwt;
 
+import com.example.demo.global.exception.CustomJwtException;
+import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
+import com.example.demo.global.jwt.exception.JwtMalformedTokenException;
+import com.example.demo.global.jwt.exception.JwtTokenExpiredException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
@@ -109,9 +113,14 @@ public class JwtProvider {
                     .parseSignedClaims(token); // 유효성 검사 수행
 
             return true;
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            throw new JwtTokenExpiredException();
+        } catch (io.jsonwebtoken.security.SignatureException e) {
+            throw new JwtInvalidSignatureException();
+        } catch (io.jsonwebtoken.MalformedJwtException e) {
+            throw new JwtMalformedTokenException();
         } catch (JwtException | IllegalArgumentException e) {
-            // 토큰 만료, 서명 오류, 잘못된 형식 등
-            return false;
+            throw new CustomJwtException("유효하지 않은 토큰입니다.", "401");
         }
     }
 }
