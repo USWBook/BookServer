@@ -2,10 +2,12 @@ package com.example.demo.domain.auth.service;
 
 import com.example.demo.domain.auth.dto.request.LoginRequest;
 import com.example.demo.domain.auth.dto.request.TokenResponse;
+import com.example.demo.domain.auth.exception.BannedUserException;
 import com.example.demo.domain.auth.exception.InvalidPasswordException;
 import com.example.demo.domain.auth.exception.InvalidTokenException;
 import com.example.demo.domain.auth.exception.UserNotFoundException;
 import com.example.demo.domain.user.entity.User;
+import com.example.demo.domain.user.entity.UserStatus;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.jwt.JwtProvider;
@@ -175,6 +177,30 @@ class AuthServiceTest {
 
         // then
         assertThrows(InvalidPasswordException.class, () ->
+                authService.login(new LoginRequest(email, password))
+        );
+    }
+
+    @Test
+    @DisplayName("밴된 사용자가 로그인 시도 시 실패")
+    void login_fail_bannedUser() {
+        // given
+        String email = "banned@example.com";
+        String password = "password123";
+        String encodedPassword = "encoded-password";
+
+        User user = User.builder()
+                .email(email)
+                .password(encodedPassword)
+                .role(Role.USER)
+                .status(UserStatus.BANNED) // ← 밴 상태
+                .build();
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(password, encodedPassword)).thenReturn(true);
+
+        // then
+        assertThrows(BannedUserException.class, () ->
                 authService.login(new LoginRequest(email, password))
         );
     }

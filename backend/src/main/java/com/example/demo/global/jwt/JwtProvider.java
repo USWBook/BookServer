@@ -125,22 +125,4 @@ public class JwtProvider {
         }
     }
 
-//    public boolean isValid(String token) {
-//        try {
-//            Jwts.parser()
-//                    .verifyWith(getKey())
-//                    .build()
-//                    .parseSignedClaims(token); // 유효성 검사 수행
-//
-//            return true;
-//        } catch (io.jsonwebtoken.ExpiredJwtException e) {
-//            throw new JwtTokenExpiredException();
-//        } catch (io.jsonwebtoken.security.SignatureException e) {
-//            throw new JwtInvalidSignatureException();
-//        } catch (io.jsonwebtoken.MalformedJwtException e) {
-//            throw new JwtMalformedTokenException();
-//        } catch (JwtException | IllegalArgumentException e) {
-//            throw new CustomJwtException("유효하지 않은 토큰입니다.", "401");
-//        }
-//    }
 }

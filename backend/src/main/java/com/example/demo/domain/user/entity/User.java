@@ -26,4 +26,17 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserStatus status;
+
+    public void ban() {
+        this.status = UserStatus.BANNED;
+    }
+
+    public boolean isBanned() {
+        return this.status == UserStatus.BANNED;
+    }
+
 }

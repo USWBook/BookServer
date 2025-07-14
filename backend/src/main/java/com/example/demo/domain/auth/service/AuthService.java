@@ -3,11 +3,9 @@ package com.example.demo.domain.auth.service;
 import com.example.demo.domain.auth.dto.request.LoginRequest;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
 import com.example.demo.domain.auth.dto.request.TokenResponse;
-import com.example.demo.domain.auth.exception.ExistEmailSignUpException;
-import com.example.demo.domain.auth.exception.InvalidPasswordException;
-import com.example.demo.domain.auth.exception.InvalidTokenException;
-import com.example.demo.domain.auth.exception.UserNotFoundException;
+import com.example.demo.domain.auth.exception.*;
 import com.example.demo.domain.user.entity.User;
+import com.example.demo.domain.user.entity.UserStatus;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.jwt.JwtProvider;
@@ -40,6 +38,7 @@ public class AuthService {
                 .password(passwordEncoder.encode(request.password()))
                 .name(request.name())
                 .role(Role.USER)
+                .status(UserStatus.ACTIVE)
                 .build();
 
         userRepository.save(user);
@@ -50,6 +49,10 @@ public class AuthService {
         // 이메일로 사용자 조회
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(UserNotFoundException::new);
+
+        if (user.isBanned()) {
+            throw new BannedUserException();
+        }
 
         // 비밀번호 검증
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
@@ -112,6 +115,21 @@ public class AuthService {
         String newAccessToken = jwtProvider.generateAccessToken(email, user.getRole());
 
         return new TokenResponse(newAccessToken, refreshToken);
+    }
+
+    public void banUser(String accessToken, String email) {
+        // 1. 블랙리스트 등록
+        long expiration = jwtProvider.getAccessTokenRemainingTime(accessToken);
+        redisTokenRepository.blacklistAccessToken(accessToken, expiration);
+
+        // 2. 리프레시 토큰 삭제
+        redisTokenRepository.deleteRefreshToken(email);
+
+        // 3. 사용자 상태 변경 (선택)
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(UserNotFoundException::new);
+
+        user.ban();
     }
 
 }
