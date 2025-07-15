@@ -73,9 +73,20 @@ public class JwtProvider {
 
     public Jws<Claims> parse(String token) {
         try {
+            // 1. 파서 빌더 생성(내부적으로는 DefaultJwtParserBuilder 객체를 반환)
             return Jwts.parser()
+            // 2. 검증용 키 등록(JWT의 Signature를 검증)
                     .verifyWith(getKey())
+            // 3. 파서 객체 완성
                     .build()
+            // 4. 토큰 파싱 + 서명 검증
+                    // token 문자열을 . 기준으로 세 조각(Header, Payload, Signature)으로 나눔
+                    //Header의 alg 값을 보고 적절한 검증 방식 선택
+                    //.verifyWith(getKey())에서 지정한 키로 Signature가 유효한지 검증
+                    //검증에 성공하면 → Jws<Claims> 타입 객체 반환
+                    //Jws = JSON Web Signature (서명 포함된 JWT)
+                    //Claims = JWT payload에 담긴 클레임들
+                    //Jws<Claims>는 Header + Payload + Signature를 모두 포함한 검증된 JWT 객체
                     .parseSignedClaims(token);
         } catch (io.jsonwebtoken.security.SignatureException e) {
             throw new JwtInvalidSignatureException();
@@ -88,6 +99,7 @@ public class JwtProvider {
             throw new CustomJwtException("유효하지 않은 토큰입니다.", "401");
         }
     }
+
 
     public String extractEmail(String token) {
         return parse(token).getPayload().getSubject();
