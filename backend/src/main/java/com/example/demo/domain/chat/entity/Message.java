@@ -1,6 +1,6 @@
 package com.example.demo.domain.chat.entity;
 
-import com.example.demo.domain.member.entity.Member;
+import com.example.demo.domain.user.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

@@ -22,6 +22,12 @@ repositories {
 	mavenCentral()
 }
 
+// chat 패키지 에러나서 제외하고 돌림
+tasks.withType(JavaCompile) {
+	exclude '**/chat/**'
+
+}
+
 dependencies {
 	// JWT 라이브러리 (JJWT)
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'

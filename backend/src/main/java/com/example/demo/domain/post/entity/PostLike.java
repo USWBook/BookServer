@@ -3,7 +3,7 @@ package com.example.demo.domain.post.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import com.example.demo.domain.member.entity.Member;
+
 import java.util.UUID;
 
 @Entity

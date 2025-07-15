@@ -2,8 +2,8 @@ package com.example.demo.domain.post.controller;
 
 import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.major.repository.MajorRepository;
-import com.example.demo.domain.member.entity.Member;
-import com.example.demo.domain.member.repository.MemberRepository;
+import com.example.demo.domain.user.entity.Member;
+import com.example.demo.domain.user.repository.MemberRepository;
 import com.example.demo.domain.post.dto.request.PostCreateRequest;
 import com.example.demo.domain.post.dto.request.PostUpdateRequest;
 import com.example.demo.domain.post.entity.Post;
