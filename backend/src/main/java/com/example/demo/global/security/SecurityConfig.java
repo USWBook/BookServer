@@ -16,6 +16,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
+import org.springframework.security.web.context.SecurityContextPersistenceFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -56,6 +58,9 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)    // UsernamePasswordAuthenticationFilter disable
                 .httpBasic(AbstractHttpConfigurer::disable)    // 기본 로그인창 disable
 
+                //로그아웃필터 비활성화
+                .logout(AbstractHttpConfigurer::disable)
+
                 // 세션 정보를 저장하지 않음(jwt에서는 임시 세션 정보 사용, 사용된 세션은 이후 초기화)
                 .sessionManagement(httpSecuritySessionManagementConfigurer -> {
                     httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
@@ -73,7 +78,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                // UsernamePasswordAuthenticationFilter는 비활성화 되어있고
+                // JWT 필터는 인증 정보를 확인하고, SecurityContext에 저장하는 필터
+                // 따라서, SecurityContextHolderFilter가 실행되기 전에 인증 객체를 넣어야 함
+                // SecurityContextHolderFilter 앞에  두는게 나을듯
+                .addFilterBefore(jwtFilter, SecurityContextHolderFilter.class);
 
 
 
