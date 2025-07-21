@@ -73,6 +73,11 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+	//websocket
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+	//LocalDateTime 직렬화 오류 해결
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 }
 
 tasks.named('test') {
