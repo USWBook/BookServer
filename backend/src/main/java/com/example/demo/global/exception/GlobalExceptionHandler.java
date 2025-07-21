@@ -27,6 +27,21 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
     private final HttpServletRequest request;
 
+    // Auth 예외
+    @ExceptionHandler(AuthException.class)
+    public ResponseEntity<RsData<Void>> handleAuthException(AuthException e) {
+        return ResponseEntity
+                //.status(HttpStatus.CONFLICT)
+                .status(e.getStatusCode())
+                .body(new RsData<>(e.getCode(), e.getMessage()));
+    }
+
+    @ExceptionHandler(CustomJwtException.class)
+    public ResponseEntity<RsData<Void>> handleJwtException(CustomJwtException e) {
+        return ResponseEntity.status(e.getStatusCode())
+                .body(new RsData<>(e.getCode(), e.getMessage()));
+    }
+
     // 도메인 커스텀 예외
     @ExceptionHandler(BookException.class)
     public ResponseEntity<RsData<Void>> handleBookException(BookException e) {

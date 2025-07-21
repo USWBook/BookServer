@@ -2,7 +2,7 @@ package com.example.demo.domain.post.dto.request;
 
 import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.post.entity.Post;
-import com.example.demo.domain.member.entity.Member;
+import com.example.demo.domain.user.entity.Member;
 import com.example.demo.domain.post.enums.PostStatus;
 
 import java.util.UUID;
