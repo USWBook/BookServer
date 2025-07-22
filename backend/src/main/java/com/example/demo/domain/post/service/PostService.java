@@ -1,11 +1,10 @@
 package com.example.demo.domain.post.service;
 
+import com.example.demo.domain.auth.exception.UserNotFoundException;
 import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.major.exception.MajorNotFoundException;
 import com.example.demo.domain.major.repository.MajorRepository;
-import com.example.demo.domain.user.entity.Member;
-import com.example.demo.domain.user.exception.MemberNotFoundException;
-import com.example.demo.domain.user.repository.MemberRepository;
+import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.post.dto.request.PostCreateRequest;
 import com.example.demo.domain.post.dto.request.PostUpdateRequest;
 import com.example.demo.domain.post.dto.response.PostResponse;
@@ -14,6 +13,7 @@ import com.example.demo.domain.post.entity.PostLike;
 import com.example.demo.domain.post.exception.PostNotFoundException;
 import com.example.demo.domain.post.repository.PostLikeRepository;
 import com.example.demo.domain.post.repository.PostRepository;
+import com.example.demo.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +29,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
     private final MajorRepository majorRepository;
-    private final MemberRepository memberRepository;
+    private final UserRepository userRepository;
 
     // 게시글 생성
     @Transactional
@@ -37,9 +37,9 @@ public class PostService {
         Major major = majorRepository.findById(request.majorId())
                 .orElseThrow(MajorNotFoundException::new);
 
-        // seller: 로그인 구현 전까지 임의의 member 할당 또는 예외 처리
-        Member seller = memberRepository.findAll().stream().findFirst()
-                .orElseThrow(MemberNotFoundException::new);
+        // seller: 로그인 구현 전까지 임의의 user 할당 또는 예외 처리
+        User seller = userRepository.findAll().stream().findFirst()
+                .orElseThrow(UserNotFoundException::new);
 
         Post post = PostCreateRequest.toEntity(request, seller, major);
         return postRepository.save(post).getId();
@@ -81,15 +81,15 @@ public class PostService {
 
     // 찜하기
     @Transactional
-    public void likePost(UUID postId, UUID memberId) {
+    public void likePost(UUID postId, UUID userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(PostNotFoundException::new);
 
-        boolean alreadyLiked = postLikeRepository.findByMemberIdAndPost(memberId, post).isPresent();
+        boolean alreadyLiked = postLikeRepository.findByUserIdAndPost(userId, post).isPresent();
         if (alreadyLiked) return; // 중복 방지
 
         postLikeRepository.save(PostLike.builder()
-                .memberId(memberId)
+                .userId(userId)
                 .post(post)
                 .build());
 
@@ -98,11 +98,11 @@ public class PostService {
 
     // 찜 해제
     @Transactional
-    public void unlikePost(UUID postId, UUID memberId) {
+    public void unlikePost(UUID postId, UUID userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(PostNotFoundException::new);
 
-        postLikeRepository.findByMemberIdAndPost(memberId, post)
+        postLikeRepository.findByUserIdAndPost(userId, post)
                 .ifPresent(postLike -> {
                     postLikeRepository.delete(postLike);
                     post.decreaseLike();

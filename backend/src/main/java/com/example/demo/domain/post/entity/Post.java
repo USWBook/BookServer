@@ -4,11 +4,11 @@ package com.example.demo.domain.post.entity;
 //import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.post.enums.PostStatus;
+import com.example.demo.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import com.example.demo.domain.user.entity.Member;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -58,7 +58,7 @@ public class Post {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_id", nullable = false)
-    private Member seller;
+    private User seller;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

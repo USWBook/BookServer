@@ -22,7 +22,7 @@ public class PostLike {
     private UUID id;
     // 로그인 기능 구현 전: UUID로 임시 식별( 리팩토링 예정)
     @Column(name = "member_id", nullable = false)
-    private UUID memberId; // 임시로 UUID로 처리
+    private UUID userId; // 임시로 UUID로 처리
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)

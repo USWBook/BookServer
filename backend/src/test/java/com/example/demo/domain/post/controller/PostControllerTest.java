@@ -2,12 +2,12 @@ package com.example.demo.domain.post.controller;
 
 import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.major.repository.MajorRepository;
-import com.example.demo.domain.user.entity.Member;
-import com.example.demo.domain.user.repository.MemberRepository;
+import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.post.dto.request.PostCreateRequest;
 import com.example.demo.domain.post.dto.request.PostUpdateRequest;
 import com.example.demo.domain.post.entity.Post;
 import com.example.demo.domain.post.repository.PostRepository;
+import com.example.demo.domain.user.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.DisplayName;
@@ -34,15 +34,15 @@ class PostControllerTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
     @Autowired private PostRepository postRepository;
-    @Autowired private MemberRepository memberRepository;
+    @Autowired private UserRepository userRepository;
     @Autowired private MajorRepository majorRepository;
 
-    private Member createAndSaveMockMember(UUID id) {
+    private User createAndSaveMockMember(UUID id) {
         Major major = majorRepository.save(Major.builder()
                 .name("컴퓨터공학")
                 .build());
 
-        Member member = Member.builder()
+        User user = User.builder()
                 .id(id)
                 .email("test@example.com")
                 .password("password")
@@ -50,14 +50,14 @@ class PostControllerTest {
                 .studentId("20230001")
                 .major(major)
                 .build();
-        return memberRepository.save(member);
+        return userRepository.save(user);
     }
 
     @Test
     @DisplayName("게시글 생성 성공")
     void createPost_success() throws Exception {
-        Member member = createAndSaveMockMember(UUID.randomUUID());
-        Major major = member.getMajor();
+        User user = createAndSaveMockMember(UUID.randomUUID());
+        Major major = user.getMajor();
 
         PostCreateRequest request = new PostCreateRequest(
                 "제목", "책이름", 10000, "교수", "과목", 2, 1, "이미지URL", "게시글 내용", major.getId()
@@ -76,14 +76,14 @@ class PostControllerTest {
     @Test
     @DisplayName("게시글 전체 조회")
     void getAllPosts_success() throws Exception {
-        Member member = createAndSaveMockMember(UUID.randomUUID());
-        Major major = member.getMajor();
+        User user = createAndSaveMockMember(UUID.randomUUID());
+        Major major = user.getMajor();
 
         PostCreateRequest request = new PostCreateRequest(
                 "제목", "책", 1234, "교수", "과목", 2, 1, "imageUrl", "내용", major.getId()
         );
 
-        Post post = PostCreateRequest.toEntity(request, member, major);
+        Post post = PostCreateRequest.toEntity(request, user, major);
         postRepository.save(post);
 
         mockMvc.perform(get("/api/posts"))
@@ -95,13 +95,13 @@ class PostControllerTest {
     @Test
     @DisplayName("게시글 수정 성공")
     void updatePost_success() throws Exception {
-        Member member = createAndSaveMockMember(UUID.randomUUID());
-        Major major = member.getMajor();
+        User user = createAndSaveMockMember(UUID.randomUUID());
+        Major major = user.getMajor();
 
         PostCreateRequest request = new PostCreateRequest(
                 "제목", "책", 1234, "교수", "과목", 2, 1, "imageUrl", "내용", major.getId()
         );
-        Post post = PostCreateRequest.toEntity(request, member, major);
+        Post post = PostCreateRequest.toEntity(request, user, major);
         Post savedPost = postRepository.save(post);
 
         PostUpdateRequest updateRequest = new PostUpdateRequest("변경 제목", "수정된 내용", 9999);
@@ -117,13 +117,13 @@ class PostControllerTest {
     @DisplayName("찜하기 성공")
     void likePost_success() throws Exception {
         UUID memberId = UUID.randomUUID();
-        Member member = createAndSaveMockMember(memberId);
-        Major major = member.getMajor();
+        User user = createAndSaveMockMember(memberId);
+        Major major = user.getMajor();
 
         PostCreateRequest request = new PostCreateRequest(
                 "제목", "책", 5000, "교수", "과목", 2, 1, "img", "내용", major.getId()
         );
-        Post post = postRepository.save(PostCreateRequest.toEntity(request, member, major));
+        Post post = postRepository.save(PostCreateRequest.toEntity(request, user, major));
 
         mockMvc.perform(post("/api/posts/" + post.getId() + "/likes?memberId=" + memberId))
                 .andExpect(status().isOk())
@@ -134,13 +134,13 @@ class PostControllerTest {
     @DisplayName("찜 해제 성공")
     void unlikePost_success() throws Exception {
         UUID memberId = UUID.randomUUID();
-        Member member = createAndSaveMockMember(memberId);
-        Major major = member.getMajor();
+        User user = createAndSaveMockMember(memberId);
+        Major major = user.getMajor();
 
         PostCreateRequest request = new PostCreateRequest(
                 "제목", "책", 5000, "교수", "과목", 2, 1, "img", "내용", major.getId()
         );
-        Post post = postRepository.save(PostCreateRequest.toEntity(request, member, major));
+        Post post = postRepository.save(PostCreateRequest.toEntity(request, user, major));
 
         mockMvc.perform(post("/api/posts/" + post.getId() + "/likes?memberId=" + memberId));
         mockMvc.perform(delete("/api/posts/" + post.getId() + "/likes?memberId=" + memberId))

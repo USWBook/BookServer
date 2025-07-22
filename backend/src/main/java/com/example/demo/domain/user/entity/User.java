@@ -1,8 +1,11 @@
 package com.example.demo.domain.user.entity;
 
+import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.user.role.Role;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -14,14 +17,19 @@ import lombok.*;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue
+    @Column(name = "user_id", columnDefinition = "BINARY(16)")
+    private UUID id;
 
     private String email;
 
     private String password;
 
     private String name;
+
+    private String studentId;
+
+    private Major major;
 
     @Enumerated(EnumType.STRING)
     private Role role;

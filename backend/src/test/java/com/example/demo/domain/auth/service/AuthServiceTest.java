@@ -21,6 +21,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -59,7 +60,7 @@ class AuthServiceTest {
         String encodedPassword = "encoded";
 
         User user = User.builder()
-                .id(1L)
+                .id(UUID.randomUUID())
                 .email(email)
                 .password(encodedPassword)
                 .role(Role.USER)
@@ -108,7 +109,7 @@ class AuthServiceTest {
 
 
         User user = User.builder()
-                .id(1L)
+                .id(UUID.randomUUID())
                 .email(email)
                 .password(encodedPassword)
                 .role(Role.USER)
