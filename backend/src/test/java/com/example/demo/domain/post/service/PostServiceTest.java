@@ -1,7 +1,6 @@
 package com.example.demo.domain.post.service;
 
 import com.example.demo.domain.major.entity.Major;
-import com.example.demo.domain.user.entity.Member;
 import com.example.demo.domain.post.dto.request.PostCreateRequest;
 import com.example.demo.domain.post.dto.request.PostUpdateRequest;
 import com.example.demo.domain.post.dto.response.PostResponse;
@@ -12,6 +11,7 @@ import com.example.demo.domain.post.exception.PostNotFoundException;
 import com.example.demo.domain.post.repository.PostLikeRepository;
 import com.example.demo.domain.post.repository.PostRepository;
 
+import com.example.demo.domain.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,16 +40,16 @@ class PostServiceTest {
     private PostLikeRepository postLikeRepository;
 
     private UUID postId;
-    private UUID memberId;
+    private UUID userId;
     private UUID majorId;
     private Post post;
-    private Member member;
+    private User user;
     private Major major;
 
     @BeforeEach
     void setUp() {
         postId = UUID.randomUUID();
-        memberId = UUID.randomUUID();
+        userId = UUID.randomUUID();
         majorId = UUID.randomUUID();
 
         major = Major.builder()
@@ -57,8 +57,8 @@ class PostServiceTest {
                 .name("컴퓨터공학")
                 .build();
 
-        member = Member.builder()
-                .id(memberId)
+        user = User.builder()
+                .id(userId)
                 .major(major)
                 .build();
 
@@ -75,7 +75,7 @@ class PostServiceTest {
                 .semester(1)
                 .status(PostStatus.판매중)
                 .likeCount(0)
-                .seller(member)
+                .seller(user)
                 .major(major)
                 .build();
     }
@@ -161,15 +161,15 @@ class PostServiceTest {
     @DisplayName("찜하기 - 성공 (중복 아님)")
     void likePost_success() {
         given(postRepository.findById(postId)).willReturn(Optional.of(post));
-        given(postLikeRepository.findByMemberIdAndPost(memberId, post)).willReturn(Optional.empty());
+        given(postLikeRepository.findByUserIdAndPost(userId, post)).willReturn(Optional.empty());
         given(postLikeRepository.save(any(PostLike.class))).willReturn(
                 PostLike.builder()
-                        .memberId(memberId)
+                        .userId(userId)
                         .post(post)
                         .build()
         );
 
-        postService.likePost(postId, memberId);
+        postService.likePost(postId, userId);
 
         assertThat(post.getLikeCount()).isEqualTo(1);
     }
@@ -177,12 +177,12 @@ class PostServiceTest {
     @Test
     @DisplayName("찜하기 - 실패 (이미 찜한 경우)")
     void likePost_alreadyLiked() {
-        PostLike alreadyLiked = PostLike.builder().memberId(memberId).post(post).build();
+        PostLike alreadyLiked = PostLike.builder().userId(userId).post(post).build();
 
         given(postRepository.findById(postId)).willReturn(Optional.of(post));
-        given(postLikeRepository.findByMemberIdAndPost(memberId, post)).willReturn(Optional.of(alreadyLiked));
+        given(postLikeRepository.findByUserIdAndPost(userId, post)).willReturn(Optional.of(alreadyLiked));
 
-        postService.likePost(postId, memberId);
+        postService.likePost(postId, userId);
 
         assertThat(post.getLikeCount()).isEqualTo(0);
         then(postLikeRepository).should(never()).save(any(PostLike.class));
@@ -191,12 +191,12 @@ class PostServiceTest {
     @Test
     @DisplayName("찜 해제 - 성공")
     void unlikePost_success() {
-        PostLike like = PostLike.builder().post(post).memberId(memberId).build();
+        PostLike like = PostLike.builder().post(post).userId(userId).build();
 
         given(postRepository.findById(postId)).willReturn(Optional.of(post));
-        given(postLikeRepository.findByMemberIdAndPost(memberId, post)).willReturn(Optional.of(like));
+        given(postLikeRepository.findByUserIdAndPost(userId, post)).willReturn(Optional.of(like));
 
-        postService.unlikePost(postId, memberId);
+        postService.unlikePost(postId, userId);
 
         assertThat(post.getLikeCount()).isEqualTo(0);
         then(postLikeRepository).should().delete(like);
@@ -206,9 +206,9 @@ class PostServiceTest {
     @DisplayName("찜 해제 - 실패 (찜하지 않은 상태)")
     void unlikePost_noLikeRecord() {
         given(postRepository.findById(postId)).willReturn(Optional.of(post));
-        given(postLikeRepository.findByMemberIdAndPost(memberId, post)).willReturn(Optional.empty());
+        given(postLikeRepository.findByUserIdAndPost(userId, post)).willReturn(Optional.empty());
 
-        postService.unlikePost(postId, memberId);
+        postService.unlikePost(postId, userId);
 
         assertThat(post.getLikeCount()).isEqualTo(0);
         then(postLikeRepository).should(never()).delete(any());

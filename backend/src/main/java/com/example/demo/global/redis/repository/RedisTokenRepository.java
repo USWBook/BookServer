@@ -2,6 +2,7 @@ package com.example.demo.global.redis.repository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -12,6 +13,7 @@ import java.time.Duration;
 @Slf4j
 public class RedisTokenRepository {
 
+    @Qualifier("authRedisTemplate")
     private final RedisTemplate<String, String> redisTemplate;
 
     private static final String REFRESH_PREFIX = "refresh:";

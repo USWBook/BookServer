@@ -17,7 +17,6 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-import com.example.demo.global.config.chat.RedisSubscriber;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @Configuration
 @Profile("!test")
 @EnableRedisRepositories(enableKeyspaceEvents = RedisKeyValueAdapter.EnableKeyspaceEvents.ON_STARTUP)
-public class RedisConfig {
+public class RedischatConfig {
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory(Environment environment) {
@@ -74,7 +73,7 @@ public class RedisConfig {
     /**
      * 어플리케이션에서 사용할 redisTemplate 설정
      */
-    @Bean
+    @Bean(name = "chatRedisTemplate")
     public RedisTemplate<String, Object> objectRedisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(connectionFactory);
@@ -83,7 +82,7 @@ public class RedisConfig {
         return redisTemplate;
     }
 
-    @Bean
+    @Bean(name = "chatStringRedisTemplate")
     public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, String> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory);
