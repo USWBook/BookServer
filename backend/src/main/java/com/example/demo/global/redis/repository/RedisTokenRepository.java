@@ -7,6 +7,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 @Repository
 @RequiredArgsConstructor
@@ -57,5 +58,9 @@ public class RedisTokenRepository {
 
     public void deleteVerificationCode(String email) {
         redisTemplate.delete(EMAIL_AUTH_PREFIX + email);
+    }
+
+    public void saveVerificationCode(String email, String code, long expirationMillis) {
+        redisTemplate.opsForValue().set("auth:code:" + email, code, expirationMillis, TimeUnit.MILLISECONDS);
     }
 }
