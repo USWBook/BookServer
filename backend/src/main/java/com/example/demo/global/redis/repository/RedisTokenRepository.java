@@ -10,12 +10,14 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 @Repository
-@RequiredArgsConstructor
 @Slf4j
 public class RedisTokenRepository {
 
-    @Qualifier("authRedisTemplate")
     private final RedisTemplate<String, String> redisTemplate;
+
+    public RedisTokenRepository(@Qualifier("authRedisTemplate") RedisTemplate<String, String> redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     private static final String REFRESH_PREFIX = "refresh:";
     private static final String BLACKLIST_PREFIX = "blacklist:";
