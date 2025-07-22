@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 
+import com.example.demo.domain.auth.exception.MemberNotFoundException;
+
 @Service
 @RequiredArgsConstructor
 public class MailService {
@@ -34,7 +36,7 @@ public class MailService {
             throw new IllegalArgumentException("인증 코드가 올바르지 않거나 만료되었습니다.");
         }
 
-        User user = userRepository.findByEmail(email).orElseThrow(UserNotFoundException::new);
+        User user = userRepository.findByEmail(email).orElseThrow(MemberNotFoundException::new);
         user.completeSignUp(); // 유저 상태를 ACTIVE로 변경
 
         redisTokenRepository.deleteVerificationCode(email); // 인증 완료 후 코드 삭제
