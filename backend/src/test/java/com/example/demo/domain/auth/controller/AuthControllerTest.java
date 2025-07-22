@@ -1,5 +1,6 @@
 package com.example.demo.domain.auth.controller;
 
+import com.example.demo.DemoApplication;
 import com.example.demo.domain.auth.dto.request.LoginRequest;
 import com.example.demo.domain.auth.dto.request.TokenResponse;
 import com.example.demo.domain.auth.exception.InvalidPasswordException;
@@ -20,7 +21,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(classes = DemoApplication.class)
 @AutoConfigureMockMvc
 class AuthControllerTest {
 
