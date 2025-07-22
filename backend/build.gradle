@@ -24,7 +24,7 @@ repositories {
 
 // chat 패키지 에러나서 제외하고 돌림
 tasks.withType(JavaCompile) {
-	exclude '**/chat/**'
+
 
 }
 
