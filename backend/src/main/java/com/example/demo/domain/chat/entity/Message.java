@@ -1,6 +1,6 @@
 package com.example.demo.domain.chat.entity;
 
-import com.example.demo.domain.user.entity.Member;
+import com.example.demo.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -27,7 +27,7 @@ public class Message {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id", nullable = false)
-    private Member sender;
+    private User sender;
 
     @Column(columnDefinition = "TEXT")
     private String content;

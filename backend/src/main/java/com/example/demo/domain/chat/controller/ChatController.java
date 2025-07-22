@@ -2,148 +2,130 @@ package com.example.demo.domain.chat.controller;
 
 import com.example.demo.domain.chat.dto.request.*;
 import com.example.demo.domain.chat.dto.response.*;
-import org.springframework.web.bind.annotation.*;
+import com.example.demo.domain.chat.entity.ChatMessage;
+import com.example.demo.domain.chat.entity.ChatRoom;
+import com.example.demo.domain.chat.service.ChatRoomService;
+import com.example.demo.domain.chat.service.ChatService;
+import com.example.demo.global.response.RsData;
+import com.example.demo.global.response.Empty;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.demo.domain.chat.dto.request.CreateChatRoomRequestDto;
-import java.util.UUID;
 import java.util.List;
-import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/chat")
 public class ChatController {
 
+    private final ChatRoomService chatRoomService;
+    private final ChatService chatService;
+
     // 채팅방 생성
     @PostMapping("/room")
-    public ResponseEntity<CreateChatRoomResponseDto> createRoom(
-            @RequestBody CreateChatRoomRequestDto request
-    ) {
-        return ResponseEntity.ok(
-                new CreateChatRoomResponseDto(
-                        200, "채팅방 생성 성공",
-                        new CreateChatRoomResponseDto.Data(UUID.randomUUID(), LocalDateTime.now())
-                )
-        );
+    public RsData<CreateChatRoomResponseDto> createRoom(@RequestBody CreateChatRoomRequestDto dto) {
+        ChatRoom room = chatRoomService.createOrGetRoom(dto);
+        return new RsData<>("200", "채팅방 생성 완료", CreateChatRoomResponseDto.from(room));
     }
 
-    // 채팅방 입장
-    @PostMapping("/room/enter")
-    public ResponseEntity<EnterChatRoomResponseDto> enterRoom(
-            @RequestParam UUID roomId
-    ) {
-        return ResponseEntity.ok(
-                new EnterChatRoomResponseDto(
-                        200, "입장 성공",
-                        new EnterChatRoomResponseDto.Data(roomId, List.of())
-                )
-        );
-    }
-
-    // 채팅방 목록 조회
+    // 내 채팅방 목록 조회
     @GetMapping("/rooms")
-    public ResponseEntity<ListChatRoomsResponseDto> listRooms() {
-        return ResponseEntity.ok(
-                new ListChatRoomsResponseDto(
-                        200, "채팅방 목록",
-                        List.of()
-                )
-        );
+    public RsData<ListChatRoomsResponseDto> listRooms(@RequestParam UUID userId) {
+        List<ChatRoom> rooms = chatRoomService.findRoomByUser(userId);
+
+        // ChatRoom → ChatRoomDto로 변환
+        List<ListChatRoomsResponseDto.ChatRoomDto> dtos = rooms.stream()
+                .map(room -> new ListChatRoomsResponseDto.ChatRoomDto(
+                        room.getRoomId().toString(),
+                        room.getPostId() != null ? room.getPostId().toString() : null,
+                        room.getName(),
+                        room.getUserCount(),
+                        room.getLastMessage(),
+                        room.getLastTimestamp()
+                ))
+                .toList();
+
+        // 최종 DTO 포매팅
+        ListChatRoomsResponseDto responseDto =
+                new ListChatRoomsResponseDto(200, "나의 채팅방 목록 조회 성공", dtos);
+
+        return new RsData<>("200", "나의 채팅방 목록 조회 성공", responseDto);
     }
 
-    // 메시지 전송
-    @PostMapping("/message")
-    public ResponseEntity<SendMessageResponseDto> sendMessage(
-            @RequestBody SendMessageRequestDto request
-    ) {
-        return ResponseEntity.ok(
-                new SendMessageResponseDto(
-                        200, "메시지 전송 성공",
-                        new SendMessageResponseDto.Data(
-                                UUID.randomUUID(), request.roomId(), request.senderId(), request.message(), LocalDateTime.now()
-                        )
-                )
-        );
+
+    // 채팅방 하나 조회
+    @GetMapping("/room/{roomId}")
+    public RsData<ChatRoom> getRoom(@PathVariable UUID roomId) {
+        return Optional.ofNullable(chatRoomService.findByRoomId(roomId))
+                .map(room -> new RsData<>("200", "채팅방 조회 성공", room))
+                .orElseGet(() -> new RsData<>("404", "채팅방을 찾을 수 없습니다."));
+    }
+
+    // 채팅방 메시지 이력 조회
+    @GetMapping("/room/{roomId}/messages")
+    public RsData<List<ChatMessage>> getMessages(@PathVariable UUID roomId) {
+        List<ChatMessage> messages = chatService.getMessages(roomId);
+        return new RsData<>("200", "채팅 메시지 목록 조회 성공", messages);
     }
 
     // 이미지 전송
-    @PostMapping("/message/image")
-    public ResponseEntity<SendImageResponseDto> sendImage(
-            @RequestParam UUID roomId,
-            @RequestParam UUID senderId,
+    @PostMapping("/room/{roomId}/image")
+    public RsData<ChatMessage> sendImage(
+            @PathVariable UUID roomId,
+            @RequestParam UUID sender,
+            @RequestParam UUID receiver,
             @RequestPart MultipartFile image
     ) {
-        return ResponseEntity.ok(
-                new SendImageResponseDto(
-                        200, "이미지 전송 성공",
-                        new SendImageResponseDto.Data(
-                                UUID.randomUUID(),
-                                "https://example.com/image.jpg",
-                                LocalDateTime.now()
-                        )
-                )
-        );
-    }
-
-    // 메시지 신고
-    @PostMapping("/message/report")
-    public ResponseEntity<ReportMessageResponseDto> reportMessage(
-            @RequestBody ReportMessageRequestDto request
-    ) {
-        return ResponseEntity.ok(
-                new ReportMessageResponseDto(200, "메시지 신고 완료")
-        );
-    }
-
-    // 채팅방 나가기
-    @PostMapping("/room/leave")
-    public ResponseEntity<LeaveChatRoomResponseDto> leaveRoom(
-            @RequestBody LeaveChatRoomRequestDto request
-    ) {
-        return ResponseEntity.ok(
-                new LeaveChatRoomResponseDto(200, "채팅방 나가기 완료")
-        );
-    }
-
-    // 채팅방 삭제
-    @DeleteMapping("/room")
-    public ResponseEntity<DeleteChatRoomResponseDto> deleteRoom(
-            @RequestParam UUID roomId
-    ) {
-        return ResponseEntity.ok(
-                new DeleteChatRoomResponseDto(200, "채팅방 삭제 완료")
-        );
+        ChatMessage msg = chatService.sendImage(roomId, sender, receiver, image);
+        return new RsData<>("200", "이미지 전송 성공", msg);
     }
 
     // 메시지 읽음 처리
-    @PostMapping("/message/read")
-    public ResponseEntity<MarkMessagesReadResponseDto> markMessagesRead(
-            @RequestBody MarkMessagesReadRequestDto request
-    ) {
-        return ResponseEntity.ok(
-                new MarkMessagesReadResponseDto(200, "메시지 읽음 처리 완료")
-        );
+    @PostMapping("/room/{roomId}/read")
+    public RsData<Empty> markMessagesRead(@PathVariable UUID roomId, @RequestParam String username) {
+        chatService.markMessagesRead(roomId, username);
+        return new RsData<>("200", "메시지 읽음 처리 완료");
     }
 
-    // 유저 신고
-    @PostMapping("/user/report")
-    public ResponseEntity<ReportUserResponseDto> reportUser(
-            @RequestBody ReportUserRequestDto request
-    ) {
-        return ResponseEntity.ok(
-                new ReportUserResponseDto(200, "유저 신고 완료")
-        );
+    // 논리적 삭제 (나만 삭제)
+    @DeleteMapping("/room/{roomId}")
+    public RsData<String> deleteChatRoom(@PathVariable UUID roomId, @RequestParam String username) {
+        chatRoomService.deleteChatRoom(roomId, username);
+        return new RsData<>("200", "채팅방 삭제 처리 완료", null);
     }
 
-    // 알림 토큰 등록
-    @PostMapping("/notification")
-    public ResponseEntity<NotificationResponseDto> registerNotificationToken(
-            @RequestBody NotificationRequestDto request
-    ) {
-        return ResponseEntity.ok(
-                new NotificationResponseDto(200, "알림 토큰 등록 완료")
-        );
+    // URL string에서 roomId 추출 (예시)
+    @GetMapping("/room-id")
+    public RsData<UUID> getRoomId(@RequestParam String destination) {
+        UUID roomId = chatService.getRoomId(destination);
+        if (roomId == null)
+            return new RsData<>("400", "roomId 파싱 실패", null);
+        return new RsData<>("200", "roomId 추출 성공", roomId);
     }
+
+
+    //채팅 메시지 전송 API
+    @PostMapping("/messages")
+    public RsData<Void> sendChatMessage(@RequestBody SendMessageRequestDto request) {
+        // ChatMessage 객체 생성
+        ChatMessage chatMessage = ChatMessage.builder()
+                .type(ChatMessage.MessageType.TALK)
+                .roomId(request.roomId())
+                .sender(request.senderId())
+                .receiver(request.receiverId())
+                .message(request.message())
+                .build();
+
+        // 서비스 메서드 호출
+        chatService.sendChatMessage(chatMessage);
+
+        // 글로벌 정책에 맞는 RsData 구조로 반환
+        return new RsData<>("200", "채팅 메시지 전송 완료");
+    }
+
 }
+

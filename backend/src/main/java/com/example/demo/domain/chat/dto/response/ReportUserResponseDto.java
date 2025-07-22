@@ -1,3 +1,6 @@
 package com.example.demo.domain.chat.dto.response;
 
-public record ReportUserResponseDto(int code, String message) {}
+//신고 기능 나중에 구현
+public record ReportUserResponseDto(
+        int code, String message
+) {}
