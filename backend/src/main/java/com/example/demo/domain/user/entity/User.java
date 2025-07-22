@@ -17,8 +17,8 @@ import java.util.UUID;
 public class User {
 
     @Id
-    @GeneratedValue
-    @Column(name = "user_id", columnDefinition = "BINARY(16)")
+    @GeneratedValue (strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id", unique = true, nullable = false, columnDefinition = "BINARY(16)")
     private UUID id;
 
     private String email;
@@ -29,7 +29,7 @@ public class User {
 
     private String studentId;
 
-    private Major major;
+    //private Major major;
 
     @Enumerated(EnumType.STRING)
     private Role role;
