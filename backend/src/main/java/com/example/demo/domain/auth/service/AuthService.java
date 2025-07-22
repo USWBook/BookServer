@@ -4,6 +4,7 @@ import com.example.demo.domain.auth.dto.request.LoginRequest;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
 import com.example.demo.domain.auth.dto.request.TokenResponse;
 import com.example.demo.domain.auth.exception.*;
+import com.example.demo.domain.mail.service.MailService;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.entity.UserStatus;
 import com.example.demo.domain.user.repository.UserRepository;
@@ -26,6 +27,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final RedisTokenRepository redisTokenRepository;
+    private final MailService mailService;
 
     @Transactional
     public void signUp(SignUpRequest request) {
@@ -38,10 +40,12 @@ public class AuthService {
                 .password(passwordEncoder.encode(request.password()))
                 .name(request.name())
                 .role(Role.USER)
-                .status(UserStatus.ACTIVE)
+                .status(UserStatus.INACTIVE)
                 .build();
 
         userRepository.save(user);
+
+        mailService.sendVerificationCode(request.email());
     }
 
     @Transactional
@@ -49,6 +53,10 @@ public class AuthService {
         // 이메일로 사용자 조회
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(UserNotFoundException::new);
+
+        if (user.getStatus() == UserStatus.INACTIVE) {
+            throw new IllegalStateException("이메일 인증이 완료되지 않았습니다.");
+        }
 
         if (user.isBanned()) {
             throw new BannedUserException();

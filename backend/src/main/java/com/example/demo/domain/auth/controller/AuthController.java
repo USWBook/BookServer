@@ -21,7 +21,7 @@ public class AuthController {
     @PostMapping("/signup")
     public RsData<?> signUp(@RequestBody @Valid SignUpRequest request) {
         authService.signUp(request);
-        return new RsData<>("200", "회원가입 완료되었습니다.");
+        return new RsData<>("200", "회원가입 성공. 이메일을 확인하여 계정을 활성화해주세요.");
     }
 
     @PostMapping("/login")
