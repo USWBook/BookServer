@@ -4,6 +4,7 @@ import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.user.role.Role;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.util.UUID;
 
@@ -17,8 +18,9 @@ import java.util.UUID;
 public class User {
 
     @Id
-    @GeneratedValue (strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id", unique = true, nullable = false, columnDefinition = "BINARY(16)")
+    @GeneratedValue
+    @GenericGenerator(name = "uuid2", strategy = "uuid2")
+    @Column(name = "user_id", columnDefinition = "BINARY(16)")
     private UUID id;
 
     private String email;
@@ -32,6 +34,7 @@ public class User {
     //private Major major;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private Role role;
 
 
