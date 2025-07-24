@@ -1,5 +1,8 @@
 package com.example.demo.domain.mail.service;
 
+import com.example.demo.domain.mail.exception.InvalidOrExpiredVerificationCodeException;
+import com.example.demo.domain.mail.exception.MessagingFailException;
+import com.example.demo.domain.mail.exception.VerificationCodeNotRequestedException;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
@@ -20,24 +23,34 @@ public class MailService {
     private final RedisTokenRepository redisTokenRepository;
     private final UserRepository userRepository;
 
-    private static final long AUTH_CODE_EXPIRATION_MILLIS = 180000L; // 3분
+    private static final long AUTH_CODE_EXPIRATION_MILLIS = 1800000L; // 30분
 
     @Transactional
     public void sendVerificationCode(String email) {
         String code = createAuthCode();
         redisTokenRepository.saveVerificationCode(email, code, AUTH_CODE_EXPIRATION_MILLIS);
-        emailSendingService.sendAuthCodeEmail(email, code);
+        try {
+            emailSendingService.sendAuthCodeEmail(email, code);
+        } catch (Exception e) {
+            throw new MessagingFailException(e.getMessage());
+        }
     }
 
     @Transactional
     public void verifyEmail(String email, String code) {
-        String savedCode = redisTokenRepository.getVerificationCode(email);
-        if (savedCode == null || !savedCode.equals(code)) {
-            throw new IllegalArgumentException("인증 코드가 올바르지 않거나 만료되었습니다.");
+
+        // 이메일 인증코드를 보낸 적이 없다면 예외 처리
+        if (!redisTokenRepository.existsVerificationCode(email)) {
+            throw new VerificationCodeNotRequestedException();
         }
 
-        User user = userRepository.findByEmail(email).orElseThrow(MemberNotFoundException::new);
-        user.completeSignUp(); // 유저 상태를 ACTIVE로 변경
+        String savedCode = redisTokenRepository.getVerificationCode(email);
+        if (savedCode == null || !savedCode.equals(code)) {
+            throw new InvalidOrExpiredVerificationCodeException();
+        }
+
+        // 인증 성공: Redis에 인증된 이메일 저장 (TTL 20분 설정)
+        redisTokenRepository.setVerifiedEmail(email);  // "verified:email" -> "true"
 
         redisTokenRepository.deleteVerificationCode(email); // 인증 완료 후 코드 삭제
     }
