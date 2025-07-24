@@ -75,7 +75,7 @@ public class SecurityConfig {
 
                 // 정용현 테스트용
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/**","/api/mail/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 // UsernamePasswordAuthenticationFilter는 비활성화 되어있고

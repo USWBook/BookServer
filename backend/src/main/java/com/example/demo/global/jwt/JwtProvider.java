@@ -45,6 +45,16 @@ public class JwtProvider {
         return this.key;
     }
 
+    /*
+         JWT에 만료시간이 있는데 굳이 expirationMillis를 따로 Redis에 넣는 이유
+         Redis TTL(Time-To-Live) 설정 때문
+         Redis에 저장된 리프레시 토큰은 수동으로 삭제하지 않으면 계속 남아 있기에
+         TTL을 설정하지 않으면 Redis에 영구적으로 남음.
+         내부적으로는 RedisTemplate.opsForValue().set(key, value, expirationMillis, TimeUnit.MILLISECONDS)
+         이게 Redis에 자동으로 만료되도록 설정해주는 핵심
+         리프레시 토큰 만료 시간만큼 Redis에 자동으로 남아 있도록 설정하는 역할.
+         토큰과 서버 저장소의 만료 시점을 맞추기 위해 필요
+         */
     public String generateAccessToken(String email,Role role){
         Date now = new Date();
         Date expiry = new Date(now.getTime() + accessExpirationInSeconds * 1000);
@@ -110,15 +120,6 @@ public class JwtProvider {
     }
 
 
-    public String extractEmailIgnoreExpiration(String token) {
-        return Jwts.parser()
-                .verifyWith(getKey())
-                .build()
-                .parseSignedClaims(token)// 유효성 검사 수행
-                .getPayload()
-                .getSubject();
-    }
-
     public long getRefreshTokenExpirationInMillis() {
         return refreshExpirationInSeconds*1000;
     }
@@ -128,6 +129,7 @@ public class JwtProvider {
         return (exp.getTime() - System.currentTimeMillis()) / 1000;
     }
 
+    // 토큰 형식 검사
     public boolean isValid(String token) {
         try {
             parse(token);

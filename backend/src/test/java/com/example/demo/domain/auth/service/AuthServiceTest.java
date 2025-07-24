@@ -1,11 +1,9 @@
 package com.example.demo.domain.auth.service;
 
 import com.example.demo.domain.auth.dto.request.LoginRequest;
+import com.example.demo.domain.auth.dto.request.SignUpRequest;
 import com.example.demo.domain.auth.dto.request.TokenResponse;
-import com.example.demo.domain.auth.exception.BannedUserException;
-import com.example.demo.domain.auth.exception.InvalidPasswordException;
-import com.example.demo.domain.auth.exception.InvalidTokenException;
-import com.example.demo.domain.auth.exception.UserNotFoundException;
+import com.example.demo.domain.auth.exception.*;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.entity.UserStatus;
 import com.example.demo.domain.user.repository.UserRepository;
@@ -24,11 +22,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 class AuthServiceTest {
     @Mock
@@ -50,6 +47,52 @@ class AuthServiceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
     }
+
+    @DisplayName("회원가입_성공")
+    @Test
+    void signUp_정상동작() {
+        // given
+        String email = "test@example.com";
+        String password = "pw1234";
+        String nickname = "testUser";
+        String encodedPassword = "encoded";
+
+        SignUpRequest request = new SignUpRequest(email, password, nickname);
+
+        // 이메일 인증 여부 true로 설정
+        when(redisTokenRepository.isVerifiedEmail(email)).thenReturn(true);
+        when(passwordEncoder.encode(password)).thenReturn(encodedPassword);
+        when(userRepository.existsByEmail(email)).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        authService.signUp(request);
+
+        // then
+        verify(redisTokenRepository).isVerifiedEmail(email);
+        verify(userRepository).existsByEmail(email);
+        verify(userRepository).save(any(User.class));
+    }
+
+    @DisplayName("회원가입_실패_이메일_미인증")
+    @Test
+    void signUp_실패_인증안된이메일() {
+        // given
+        String email = "unverified@example.com";
+        String password = "pw1234";
+        String nickname = "noVerify";
+        SignUpRequest request = new SignUpRequest(email, password, nickname);
+
+        when(redisTokenRepository.isVerifiedEmail(email)).thenReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> authService.signUp(request))
+                .isInstanceOf(EmailNotVerifiedException.class);
+
+        verify(redisTokenRepository).isVerifiedEmail(email);
+        verify(userRepository, never()).save(any());
+    }
+
 
     @Test
     @DisplayName("로그인_성공")
