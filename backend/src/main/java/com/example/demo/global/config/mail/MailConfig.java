@@ -22,7 +22,7 @@ public class MailConfig {
     public JavaMailSender getJavaMailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
 
-        mailSender.setHost("uswbookverify@gmail.com");
+        mailSender.setHost("smtp.gmail.com");
         mailSender.setPort(465);
         mailSender.setUsername(fromId);
         mailSender.setPassword(password);
