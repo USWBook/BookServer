@@ -1,6 +1,6 @@
 package com.example.demo.domain.chat.entity;
 
-import com.example.demo.domain.user.entity.Member;
+import com.example.demo.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,5 +25,5 @@ public class ChatRoomMember {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+    private User user;
 }

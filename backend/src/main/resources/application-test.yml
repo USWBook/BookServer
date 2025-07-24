@@ -1,7 +1,12 @@
-# 테스트코드 운영
 spring:
   datasource:
-    url: jdbc:h2:mem:book_test;MODE=MySQL
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  redis:
+    host: localhost
+    port: 6379
   jpa:
     hibernate:
       ddl-auto: create-drop
