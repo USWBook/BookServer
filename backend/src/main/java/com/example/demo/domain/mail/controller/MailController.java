@@ -32,5 +32,4 @@ public class MailController {
         return new RsData<>("200", "이메일 인증이 성공적으로 완료되었습니다.");
     }
 
-
 }
