@@ -24,15 +24,14 @@ public class EmailSendingService {
 
             // HTML 형식의 이메일 본문
             String htmlContent = "<p>USWBook 가입해주셔서 감사합니다.</p>"
-                    + "<p>인증을 완료하려면 아래의 6자리 코드를 입력해주세요.</p>"
+                    + "<p>인증을 완료하려면 아래의 6자리 코드를 입력해주세요.(유효기간은 30분입니다)</p>"
                     + "<h2>" + authCode + "</h2>";
             mimeMessageHelper.setText(htmlContent, true);
 
             javaMailSender.send(mimeMessage);
 
         } catch (MessagingException e) {
-
-            throw new MessagingFailException();
+            throw new MessagingFailException(e.getMessage());
         }
     }
 }
