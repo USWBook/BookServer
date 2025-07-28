@@ -23,10 +23,11 @@ repositories {
 }
 
 // chat 패키지 에러나서 제외하고 돌림
-tasks.withType(JavaCompile) {
-
-
-}
+//tasks.withType(JavaCompile) {
+//	exclude '**/chat/**'
+//	exclude '**/post/**'
+//
+//}
 
 dependencies {
 	// JWT 라이브러리 (JJWT)
@@ -84,6 +85,9 @@ dependencies {
 
 	//LocalDateTime 직렬화 오류 해결
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+	// 이메일 전송을 위해 Spring Boot Starter Mail 의존성을 추가
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
 }
 
 tasks.named('test') {
