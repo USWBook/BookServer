@@ -19,9 +19,8 @@ public class ChatRoomMember {
     @Column(name = "chat_room_member_id")
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "chat_room_id", nullable = false)
-    private ChatRoom chatRoom;
+    // 직접 JPA 연관관계 대신 roomId만 저장
+    private UUID chatRoomId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)

@@ -18,9 +18,6 @@ import java.util.Map;
 import java.util.UUID;
 import jakarta.persistence.Transient;
 
-/**
- * Redis/메모리 기반으로 관리하는 채팅 메시지 객체
- */
 @Getter
 @Setter
 @NoArgsConstructor

@@ -29,6 +29,8 @@ public class User {
 
     private String studentId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "major_id")
     private Major major;
 
     @Enumerated(EnumType.STRING)

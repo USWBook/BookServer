@@ -6,38 +6,56 @@ import com.example.demo.domain.chat.entity.ChatMessage;
 import com.example.demo.domain.chat.entity.ChatRoom;
 import com.example.demo.domain.chat.service.ChatRoomService;
 import com.example.demo.domain.chat.service.ChatService;
+import com.example.demo.domain.user.repository.UserRepository;
+import com.example.demo.global.jwt.JwtProvider;
+import com.example.demo.global.redis.repository.RedisTokenRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ChatController.class)
+@AutoConfigureMockMvc(addFilters = false) // 시큐리티 필터 비활성화 (JWT 인증 필터 포함)
 class ChatControllerTest {
 
     @Autowired
     MockMvc mockMvc;
+
     @Autowired
     ObjectMapper objectMapper;
 
     @MockBean
     ChatRoomService chatRoomService;
+
     @MockBean
     ChatService chatService;
+
+    @MockBean
+    JwtProvider jwtProvider;
+
+    // Security 의존성으로 추가 필요
+    @MockBean
+    UserRepository userRepository;
+
+    @MockBean
+    RedisTokenRepository redisTokenRepository;
 
     final UUID postId = UUID.fromString("11111111-1111-1111-1111-111111111111");
     final UUID sellerId = UUID.fromString("22222222-2222-2222-2222-222222222222");
@@ -86,7 +104,6 @@ class ChatControllerTest {
                 .andExpect(jsonPath("$.data.data[0].roomId").value(roomId.toString()));
     }
 
-
     @Test
     @DisplayName("채팅 메시지 전송 API - 200 OK")
     @WithMockUser
@@ -116,6 +133,7 @@ class ChatControllerTest {
                 .receiver(sellerId)
                 .message("테스트메시지")
                 .build();
+
         when(chatService.getMessages(roomId))
                 .thenReturn(List.of(msg));
 
@@ -137,13 +155,13 @@ class ChatControllerTest {
 
         when(chatRoomService.findByRoomId(roomId)).thenReturn(room);
 
-        // 성공 응답
+        // 성공 케이스
         mockMvc.perform(get("/api/chat/room/" + roomId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200"))
                 .andExpect(jsonPath("$.data.roomId").value(roomId.toString()));
 
-        // 실패 응답 (없는 방)
+        // 실패 케이스: 방 없음
         when(chatRoomService.findByRoomId(any(UUID.class))).thenReturn(null);
 
         mockMvc.perform(get("/api/chat/room/" + UUID.randomUUID()))
