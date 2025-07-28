@@ -12,5 +12,5 @@ import java.util.UUID;
  */
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, String> {
     //특정 채팅방(roomId)의 모든 메시지 조회
-    List<ChatMessage> findByRoomId(UUID roomId);
+    List<ChatMessage> findByChatRoomId(UUID roomId);
 }

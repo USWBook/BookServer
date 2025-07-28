@@ -73,9 +73,9 @@ public class SecurityConfig {
 //                        .anyRequest().permitAll() // 모든 요청 인증 없이 허용 (임시)
 //
 
-                // 정용현 테스트용
+                // 정용현 테스트용 , chat 요청 인증 허용
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**","/api/mail/**").permitAll()
+                        .requestMatchers("/api/auth/**","/api/mail/**","/api/chat/**","/h2-console/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 // UsernamePasswordAuthenticationFilter는 비활성화 되어있고

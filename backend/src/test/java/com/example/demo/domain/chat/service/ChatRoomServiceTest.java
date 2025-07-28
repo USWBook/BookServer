@@ -27,7 +27,7 @@ class ChatRoomServiceTest {
 
     // HashOperations의 타입은 실제 redisTemplate에서 반환하는 것과 일치하도록 Object로 맞추어야 Mock 오류가 없습니다.
     @Mock
-    private HashOperations<String, Object, Object> hashOpsChatRoom;
+    private HashOperations<String, Object, ChatRoom> hashOpsChatRoom;
 
     private UUID postId;
     private UUID sellerId;
@@ -38,7 +38,6 @@ class ChatRoomServiceTest {
         MockitoAnnotations.openMocks(this);
 
         // RedisTemplate의 opsForHash()를 반환하도록 세팅
-        given(redisTemplate.opsForHash()).willReturn(hashOpsChatRoom);
         // ChatRoomService 내부 필드에도 직접 주입 (테스트 환경에서 @PostConstruct 실행 안 됨)
         ReflectionTestUtils.setField(chatRoomService, "hashOpsChatRoom", hashOpsChatRoom);
 
@@ -128,7 +127,7 @@ class ChatRoomServiceTest {
     }
 
     @Test
-    @DisplayName("논리적 삭제 및 실삭제")
+    @DisplayName("논리적 삭제 및 삭제")
     void deleteChatRoom_deletesIfBothMarked() {
         UUID roomId = UUID.randomUUID();
         UUID userAId = UUID.randomUUID();

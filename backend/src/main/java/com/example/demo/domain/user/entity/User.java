@@ -42,10 +42,6 @@ public class User {
     @Column(nullable = false)
     private UserStatus status;
 
-    public void completeSignUp() {
-        this.status = UserStatus.ACTIVE;
-    }
-
     public void ban() {
         this.status = UserStatus.BANNED;
     }

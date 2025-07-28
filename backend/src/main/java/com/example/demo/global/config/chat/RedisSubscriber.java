@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
-
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -17,16 +16,14 @@ public class RedisSubscriber {
     private final SimpMessageSendingOperations messagingTemplate;
 
     /**
-     * Redis에서 메시지가 발행(publish)되면 대기하고 있던 Redis Subscriber가 해당 메시지를 받아 처리한다.
+     * Redis에서 메시지가 publish되면 호출되어, JSON -> ChatMessage 역직렬화 후 WebSocket으로 발송
      */
     public void sendMessage(String publishMessage) {
         try {
-            // ChatMessage 객채로 맵핑
             ChatMessage chatMessage = objectMapper.readValue(publishMessage, ChatMessage.class);
-            // 채팅방을 구독한 클라이언트에게 메시지 발송
-            messagingTemplate.convertAndSend("/sub/chat/room/" + chatMessage.getRoomId(), chatMessage);
+            messagingTemplate.convertAndSend("/sub/chat/room/" + chatMessage.getChatRoomId(), chatMessage);
         } catch (Exception e) {
-            log.error("Exception {}", e);
+            log.error("RedisSubscriber 예외 발생: {}", e.getMessage(), e);
         }
     }
 }
