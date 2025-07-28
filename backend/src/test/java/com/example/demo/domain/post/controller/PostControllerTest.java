@@ -116,8 +116,8 @@ class PostControllerTest {
     @Test
     @DisplayName("찜하기 성공")
     void likePost_success() throws Exception {
-        UUID memberId = UUID.randomUUID();
-        User user = createAndSaveMockMember(memberId);
+        UUID userId = UUID.randomUUID();
+        User user = createAndSaveMockMember(userId);
         Major major = user.getMajor();
 
         PostCreateRequest request = new PostCreateRequest(
@@ -125,7 +125,7 @@ class PostControllerTest {
         );
         Post post = postRepository.save(PostCreateRequest.toEntity(request, user, major));
 
-        mockMvc.perform(post("/api/posts/" + post.getId() + "/likes?memberId=" + memberId))
+        mockMvc.perform(post("/api/posts/" + post.getId() + "/likes?userId=" + userId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("찜 완료되었습니다."));
     }
@@ -133,8 +133,8 @@ class PostControllerTest {
     @Test
     @DisplayName("찜 해제 성공")
     void unlikePost_success() throws Exception {
-        UUID memberId = UUID.randomUUID();
-        User user = createAndSaveMockMember(memberId);
+        UUID userId = UUID.randomUUID();
+        User user = createAndSaveMockMember(userId);
         Major major = user.getMajor();
 
         PostCreateRequest request = new PostCreateRequest(
@@ -142,8 +142,8 @@ class PostControllerTest {
         );
         Post post = postRepository.save(PostCreateRequest.toEntity(request, user, major));
 
-        mockMvc.perform(post("/api/posts/" + post.getId() + "/likes?memberId=" + memberId));
-        mockMvc.perform(delete("/api/posts/" + post.getId() + "/likes?memberId=" + memberId))
+        mockMvc.perform(post("/api/posts/" + post.getId() + "/likes?userId=" + userId));
+        mockMvc.perform(delete("/api/posts/" + post.getId() + "/likes?userId=" + userId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("찜 해제되었습니다."));
     }
