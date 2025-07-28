@@ -56,15 +56,15 @@ public class PostController {
 
     // 찜하기
     @PostMapping("/{postId}/likes")
-    public RsData<Empty> likePost(@PathVariable UUID postId, @RequestParam UUID memberId) {
-        postService.likePost(postId, memberId);
+    public RsData<Empty> likePost(@PathVariable UUID postId, @RequestParam UUID userId) {
+        postService.likePost(postId, userId);
         return new RsData<>("200", "찜 완료되었습니다.");
     }
 
     // 찜 해제
     @DeleteMapping("/{postId}/likes")
-    public RsData<Empty> unlikePost(@PathVariable UUID postId, @RequestParam UUID memberId) {
-        postService.unlikePost(postId, memberId);
+    public RsData<Empty> unlikePost(@PathVariable UUID postId, @RequestParam UUID userId) {
+        postService.unlikePost(postId, userId);
         return new RsData<>("200", "찜 해제되었습니다.");
     }
 }
