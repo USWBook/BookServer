@@ -12,7 +12,6 @@ import com.example.demo.global.jwt.JwtProvider;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,8 +28,15 @@ public class AuthService {
 
     @Transactional
     public void signUp(SignUpRequest request) {
+
+        // 회원가입되어있는지 검증
         if (userRepository.existsByEmail(request.email())) {
             throw new ExistEmailSignUpException();
+        }
+
+        // 이메일 인증 여부 확인
+        if (!redisTokenRepository.isVerifiedEmail(request.email())) {
+            throw new EmailNotVerifiedException();
         }
 
         User user = User.builder()
@@ -42,6 +48,9 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+
+        // 인증 상태 삭제 (더 이상 필요 없으므로)
+        redisTokenRepository.deleteVerifiedEmail(request.email());
     }
 
     @Transactional
@@ -64,16 +73,6 @@ public class AuthService {
         String refreshToken = jwtProvider.generateRefreshToken(user.getEmail(),user.getRole());
 
         // Redis에 Refresh Token 저장 (email 기준으로)
-        /*
-            JWT에 만료시간이 있는데 굳이 expirationMillis를 따로 Redis에 넣는 이유
-         Redis TTL(Time-To-Live) 설정 때문
-         Redis에 저장된 리프레시 토큰은 수동으로 삭제하지 않으면 계속 남아 있기에
-         TTL을 설정하지 않으면 Redis에 영구적으로 남음.
-         내부적으로는 RedisTemplate.opsForValue().set(key, value, expirationMillis, TimeUnit.MILLISECONDS)
-         이게 Redis에 자동으로 만료되도록 설정해주는 핵심
-         리프레시 토큰 만료 시간만큼 Redis에 자동으로 남아 있도록 설정하는 역할.
-         토큰과 서버 저장소의 만료 시점을 맞추기 위해 필요
-         */
         redisTokenRepository.saveRefreshToken(
                 user.getEmail(),
                 refreshToken,
@@ -95,15 +94,6 @@ public class AuthService {
             return;
         }
         // 2. 남은 유효시간 계산 및 블랙리스트 등록
-        /*
-            액세스 토큰 블랙리스트에 남은 유효시간을 왜 넘기는 이유
-        Redis에서 블랙리스트 자동 삭제를 위해서.
-        액세스 토큰은 만료 시간이 지나면 쓸모가 없음.
-        따라서 블랙리스트에도 너무 오래 남아 있을 필요가 없음.
-        Redis에 넣되, 남은 유효시간만큼만 유지하고 자동 삭제되게 하려는 목적.
-        내부적으로는 Redis에 set(token, true, expiration) 형태로 저장되어
-        해당 시간이 지나면 자동 삭제돼서 메모리를 아낄 수 있음.
-         */
         long expiration = jwtProvider.getAccessTokenRemainingTime(accessToken);
         redisTokenRepository.blacklistAccessToken(accessToken, expiration);
 
