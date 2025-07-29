@@ -5,6 +5,7 @@ import com.example.demo.domain.chat.entity.ChatRoom;
 import com.example.demo.domain.chat.exception.ChatAccessDeniedException;
 import com.example.demo.domain.chat.exception.ChatRoomNotFoundException;
 
+import com.example.demo.domain.chat.exception.InvalidChatArgumentException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.HashOperations;
@@ -55,8 +56,15 @@ public class ChatRoomService {
     }
 
     private boolean isSameParticipants(ChatRoom room, UUID userA, UUID userB) {
-        return (room.getSender().equals(userA) && room.getReceiver().equals(userB)) ||
-                (room.getSender().equals(userB) && room.getReceiver().equals(userA));
+        UUID sender = room.getSender();
+        UUID receiver = room.getReceiver();
+
+        if (sender == null || receiver == null) {
+            throw new InvalidChatArgumentException();
+        }
+
+        return (sender.equals(userA) && receiver.equals(userB)) ||
+                (sender.equals(userB) && receiver.equals(userA));
     }
 
     public List<ChatRoom> findRoomByUser(UUID userId) {
