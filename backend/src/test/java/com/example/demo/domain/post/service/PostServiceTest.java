@@ -1,6 +1,7 @@
 package com.example.demo.domain.post.service;
 
 import com.example.demo.domain.major.entity.Major;
+import com.example.demo.domain.major.repository.MajorRepository;
 import com.example.demo.domain.post.dto.request.PostCreateRequest;
 import com.example.demo.domain.post.dto.request.PostUpdateRequest;
 import com.example.demo.domain.post.dto.response.PostResponse;
@@ -12,6 +13,7 @@ import com.example.demo.domain.post.repository.PostLikeRepository;
 import com.example.demo.domain.post.repository.PostRepository;
 
 import com.example.demo.domain.user.entity.User;
+import com.example.demo.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,6 +40,12 @@ class PostServiceTest {
 
     @Mock
     private PostLikeRepository postLikeRepository;
+
+    @Mock
+    private MajorRepository majorRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     private UUID postId;
     private UUID userId;
@@ -81,21 +89,19 @@ class PostServiceTest {
     }
 
     @Test
-    @DisplayName("게시글 생성 - 성공")
     void createPost_success() {
-        // given
         PostCreateRequest request = new PostCreateRequest(
                 post.getTitle(), post.getPostName(), post.getPostPrice(),
                 post.getProfessor(), post.getCourseName(), post.getGrade(),
                 post.getSemester(), post.getPostImage(), post.getContent(), major.getId()
         );
 
+        given(majorRepository.findById(major.getId())).willReturn(Optional.of(major));
+        given(userRepository.findAll()).willReturn(List.of(user)); // ✅ 추가
         given(postRepository.save(any(Post.class))).willReturn(post);
 
-        // when
         UUID result = postService.createPost(request);
 
-        // then
         assertThat(result).isEqualTo(postId);
         then(postRepository).should().save(any(Post.class));
     }
@@ -143,17 +149,23 @@ class PostServiceTest {
         PostUpdateRequest request = new PostUpdateRequest("제목", "내용", 1000);
 
         assertThatThrownBy(() -> postService.updatePost(postId, request))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("해당 게시글이 존재하지 않습니다.");
+                .isInstanceOf(PostNotFoundException.class)
+                .hasMessage("존재하지 않는 게시글입니다.");
     }
 
     @Test
     @DisplayName("게시글 삭제 - 성공")
     void deletePost_success() {
+        // 게시글 존재 여부를 true로 설정
+        given(postRepository.existsById(postId)).willReturn(true);
+
+        // deleteById mocking
         willDoNothing().given(postRepository).deleteById(postId);
 
+        // when
         postService.deletePost(postId);
 
+        // then
         then(postRepository).should().deleteById(postId);
     }
 

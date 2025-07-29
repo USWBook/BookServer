@@ -31,7 +31,7 @@ public class User {
 
     private String studentId;
 
-    //private Major major;
+    private Major major;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
