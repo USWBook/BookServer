@@ -73,7 +73,7 @@ public class SecurityConfig {
 //                        .anyRequest().permitAll() // 모든 요청 인증 없이 허용 (임시)
 //
 
-                // 정용현 테스트용 , chat 요청 인증 허용
+                // 정용현 테스트용
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**","/api/mail/**","/api/chat/**","/h2-console/**").permitAll()
                         .anyRequest().authenticated()
