@@ -21,6 +21,12 @@ public class InitDevData {
 
     @PostConstruct
     public void init() {
+        if (helper.countUsers() > 0) {
+            log.info("✅ 기존 유저가 존재하여 초기화 생략");
+            return;
+        }
+
+        log.info("📌 InitDevData 시작");
         // 전공 생성
         Major csMajor = helper.createMajor("컴퓨터공학과");
         Major mechMajor = helper.createMajor("기계공학과");

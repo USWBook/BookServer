@@ -36,6 +36,9 @@ public class InitDataHelper {
                         .build()
         );
     }
+    public long countUsers() {
+        return userRepository.count();
+    }
 
     // 전공 생성
     public Major createMajor(String name) {
