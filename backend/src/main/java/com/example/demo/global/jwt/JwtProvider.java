@@ -24,14 +24,14 @@ import com.example.demo.domain.user.role.Role;
 @RequiredArgsConstructor
 public class JwtProvider {
 
-    @Value("${jwt.secret}")
+    @Value("${custom.jwt.secret-key}")
     private String secret;
 
 
-    @Value("${jwt.access-expiration}")
+    @Value("${custom.jwt.access-token-expire-seconds}")
     private long accessExpirationInSeconds;
 
-    @Value("${jwt.refresh-expiration}")
+    @Value("${custom.jwt.refresh-token-expire-seconds}")
     private long refreshExpirationInSeconds;
 
     private SecretKey key;

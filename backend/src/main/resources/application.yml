@@ -1,12 +1,15 @@
 spring:
   application:
     name: book
+
   profiles:
     active: dev
     include: secret
+
   output:
     ansi:
       enabled: always
+
   data:
     redis:
       host: localhost   # Redis 서버 주소 (도커로 띄웠으면 localhost)
