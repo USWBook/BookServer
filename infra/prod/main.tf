@@ -66,7 +66,7 @@ resource "aws_route_table_association" "subook_rt_assoc" {
 
 resource "aws_security_group" "subook_sg" {
   name        = "subook-sg"
-  description = "Allow SSH, HTTP, HTTPS"
+  description = "Allow SSH, HTTP, HTTPS, 8080"
   vpc_id      = aws_vpc.subook_vpc.id
 
   ingress {
@@ -86,6 +86,13 @@ resource "aws_security_group" "subook_sg" {
   ingress {
     from_port   = 443
     to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
