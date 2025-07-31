@@ -6,6 +6,7 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,6 +15,7 @@ public class EmailSendingService {
 
     private final JavaMailSender javaMailSender;
 
+    @Async
     // 인증 코드를 이메일로 발송
     public void sendAuthCodeEmail(String email, String authCode) {
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
