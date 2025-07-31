@@ -29,9 +29,12 @@ public class User {
 
     private String name;
 
+    @Column(unique = true)
     private String studentId;
 
-    //private Major major;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "major_id")
+    private Major major;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
