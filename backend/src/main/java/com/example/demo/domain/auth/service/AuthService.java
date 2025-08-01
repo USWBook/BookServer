@@ -9,6 +9,7 @@ import com.example.demo.domain.user.entity.UserStatus;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.jwt.JwtProvider;
+import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -105,7 +106,7 @@ public class AuthService {
     public TokenResponse reissue(String refreshToken) {
         // 1. 토큰 유효성 검사
         if (!jwtProvider.isValid(refreshToken)) {
-            throw new InvalidTokenException();
+            throw new JwtInvalidSignatureException();
         }
 
         // 2. 이메일 추출
@@ -114,7 +115,7 @@ public class AuthService {
         // 3. Redis에 저장된 refreshToken과 비교
         String savedToken = redisTokenRepository.getRefreshToken(email);
         if (!refreshToken.equals(savedToken)) {
-            throw new InvalidTokenException();
+            throw new JwtInvalidSignatureException();
         }
 
         // 4. 새로운 accessToken 발급
