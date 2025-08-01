@@ -1,8 +1,9 @@
 package com.example.demo.domain.auth.service;
 
 import com.example.demo.domain.auth.dto.request.LoginRequest;
+import com.example.demo.domain.auth.dto.request.PasswordChangeRequest;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
-import com.example.demo.domain.auth.dto.request.TokenResponse;
+import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.auth.exception.*;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.entity.UserStatus;
@@ -140,6 +141,19 @@ public class AuthService {
                 .orElseThrow(UserNotFoundException::new);
 
         user.ban();
+    }
+
+    @Transactional
+    public void changePassword(String email ,PasswordChangeRequest request) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(UserNotFoundException::new);
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
+            throw new InvalidPasswordException();
+        }
+
+        user.changePassword(passwordEncoder.encode(request.newPassword()));
     }
 
 }

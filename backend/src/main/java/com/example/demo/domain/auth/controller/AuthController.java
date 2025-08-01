@@ -1,8 +1,9 @@
 package com.example.demo.domain.auth.controller;
 
 import com.example.demo.domain.auth.dto.request.LoginRequest;
+import com.example.demo.domain.auth.dto.request.PasswordChangeRequest;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
-import com.example.demo.domain.auth.dto.request.TokenResponse;
+import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.auth.service.AuthService;
 import com.example.demo.global.jwt.JwtProvider;
 import com.example.demo.global.response.RsData;
@@ -42,6 +43,14 @@ public class AuthController {
     public RsData<TokenResponse> reissue(@CookieValue("refreshToken") String refreshToken) {
         TokenResponse tokens = authService.reissue(refreshToken);
         return new RsData<>("200", "토큰 재발행 완료되었습니다.", tokens);
+    }
+
+    @PostMapping("change-password")
+    public RsData<?> changePassword(@RequestHeader("Authorization") String authHeader,@RequestBody @Valid PasswordChangeRequest passwordChangeRequest){
+        String token = authHeader.replace("Bearer ", "");
+        String email = jwtProvider.extractEmail(token);
+        authService.changePassword(email,passwordChangeRequest);
+        return new RsData<>("200", "비밀번호 변경 완료되었습니다.");
     }
 
 }
