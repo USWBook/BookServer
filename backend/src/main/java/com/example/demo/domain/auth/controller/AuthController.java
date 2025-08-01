@@ -34,9 +34,7 @@ public class AuthController {
 
     @PostMapping("/logout")
     public RsData<?> logout(@RequestHeader(value = "Authorization",required = false) String authHeader) {
-        String token = authHeader.replace("Bearer ", "");
-        String email = jwtProvider.extractEmail(token);
-        authService.logout(token, email);
+        authService.logout(authHeader);
         return new RsData<>("200", "로그아웃 완료되었습니다.");
     }
 
@@ -48,9 +46,7 @@ public class AuthController {
 
     @PostMapping("change-password")
     public RsData<?> changePassword(@RequestHeader(value = "Authorization",required = false) String authHeader,@RequestBody @Valid PasswordChangeRequest passwordChangeRequest){
-        String token = authHeader.replace("Bearer ", "");
-        String email = jwtProvider.extractEmail(token);
-        authService.changePassword(email,passwordChangeRequest);
+        authService.changePassword(authHeader,passwordChangeRequest);
         return new RsData<>("200", "비밀번호 변경 완료되었습니다.");
     }
 

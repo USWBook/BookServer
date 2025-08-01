@@ -87,19 +87,22 @@ public class AuthService {
     }
 
     @Transactional
-    public void logout(String accessToken, String email) {
+    public void logout(String authHeader) {
+
+        String token = authHeader.replace("Bearer ", "");
+        String email = jwtProvider.extractEmail(token);
 
         // 1. 이미 블랙리스트에 있는지 확인
-        if (redisTokenRepository.isBlacklisted(accessToken)) {
-            log.warn("[Logout] 이미 로그아웃 처리된 토큰입니다: {}", accessToken);
+        if (redisTokenRepository.isBlacklisted(token)) {
+            log.warn("[Logout] 이미 로그아웃 처리된 토큰입니다: {}", token);
             // 이미 처리되었으므로 별도 예외 없이 종료하거나,
             // 클라이언트에게 특정 응답을 주고 싶다면 예외를 던질 수도 있습니다.
             // 여기서는 조용히 종료합니다.
             return;
         }
         // 2. 남은 유효시간 계산 및 블랙리스트 등록
-        long expiration = jwtProvider.getAccessTokenRemainingTime(accessToken);
-        redisTokenRepository.blacklistAccessToken(accessToken, expiration);
+        long expiration = jwtProvider.getAccessTokenRemainingTime(token);
+        redisTokenRepository.blacklistAccessToken(token, expiration);
 
         // 3. Refresh Token 삭제
         redisTokenRepository.deleteRefreshToken(email);
@@ -146,7 +149,10 @@ public class AuthService {
     }
 
     @Transactional
-    public void changePassword(String email ,PasswordChangeRequest request) {
+    public void changePassword(String authHeader ,PasswordChangeRequest request) {
+
+        String token = authHeader.replace("Bearer ", "");
+        String email = jwtProvider.extractEmail(token);
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(UserNotFoundException::new);
