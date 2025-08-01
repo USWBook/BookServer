@@ -2,6 +2,7 @@ package com.example.demo.domain.auth.service;
 
 import com.example.demo.domain.auth.dto.request.LoginRequest;
 import com.example.demo.domain.auth.dto.request.PasswordChangeRequest;
+import com.example.demo.domain.auth.dto.request.ResetPasswordRequest;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
 import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.auth.exception.*;
@@ -12,6 +13,7 @@ import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.jwt.JwtProvider;
 import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -156,4 +158,17 @@ public class AuthService {
         user.changePassword(passwordEncoder.encode(request.newPassword()));
     }
 
+    @Transactional
+    public void resetPassword(@Valid ResetPasswordRequest request) {
+
+        // 이메일 인증 여부 확인
+        if (!redisTokenRepository.isVerifiedEmail(request.email())) {
+            throw new EmailNotVerifiedException();
+        }
+
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(UserNotFoundException::new);
+
+        user.changePassword(passwordEncoder.encode(request.newPassword()));
+    }
 }

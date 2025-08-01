@@ -2,6 +2,7 @@ package com.example.demo.domain.auth.controller;
 
 import com.example.demo.domain.auth.dto.request.LoginRequest;
 import com.example.demo.domain.auth.dto.request.PasswordChangeRequest;
+import com.example.demo.domain.auth.dto.request.ResetPasswordRequest;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
 import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.auth.service.AuthService;
@@ -51,6 +52,12 @@ public class AuthController {
         String email = jwtProvider.extractEmail(token);
         authService.changePassword(email,passwordChangeRequest);
         return new RsData<>("200", "비밀번호 변경 완료되었습니다.");
+    }
+
+    @PostMapping("reset-password")
+    public RsData<?> resetPassword(@RequestBody @Valid ResetPasswordRequest resetPasswordRequest){
+        authService.resetPassword(resetPasswordRequest);
+        return new RsData<>("200", "비밀번호 초기화 완료되었습니다.");
     }
 
 }
