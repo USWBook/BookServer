@@ -33,7 +33,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public RsData<?> logout(@RequestHeader("Authorization") String authHeader) {
+    public RsData<?> logout(@RequestHeader(value = "Authorization",required = false) String authHeader) {
         String token = authHeader.replace("Bearer ", "");
         String email = jwtProvider.extractEmail(token);
         authService.logout(token, email);
@@ -47,7 +47,7 @@ public class AuthController {
     }
 
     @PostMapping("change-password")
-    public RsData<?> changePassword(@RequestHeader("Authorization") String authHeader,@RequestBody @Valid PasswordChangeRequest passwordChangeRequest){
+    public RsData<?> changePassword(@RequestHeader(value = "Authorization",required = false) String authHeader,@RequestBody @Valid PasswordChangeRequest passwordChangeRequest){
         String token = authHeader.replace("Bearer ", "");
         String email = jwtProvider.extractEmail(token);
         authService.changePassword(email,passwordChangeRequest);
