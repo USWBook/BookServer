@@ -18,7 +18,7 @@ public class ChatRoomUser {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-    @Column(name = "chat_room_member_id", updatable = false, nullable = false)
+    @Column(name = "chat_room_user_id", updatable = false, nullable = false)
     private UUID id;
 
     // JPA 연관관계 없이 단순 UUID 보관
