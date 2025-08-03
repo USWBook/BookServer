@@ -1,0 +1,26 @@
+# 1. 빌드 스테이지 (Gradle + JDK 21)
+FROM gradle:jdk-21-and-23-graal-jammy AS builder
+WORKDIR /app
+
+# Gradle 설정 복사 및 종속성 다운로드
+COPY build.gradle settings.gradle ./
+RUN gradle wrapper
+RUN ./gradlew dependencies --no-daemon
+
+# 소스 및 환경 설정 복사
+COPY src src
+COPY .env .env
+
+# 테스트 제외하고 빌드
+RUN ./gradlew build --no-daemon -x test
+RUN rm -rf /app/build/libs/*-plain.jar
+
+# 2. 실행 스테이지 (GraalVM JDK 23 사용)
+FROM container-registry.oracle.com/graalvm/jdk:23
+WORKDIR /app
+
+# 빌드된 JAR 복사
+COPY --from=builder /app/build/libs/app.jar app.jar
+
+# ✅ stg 환경으로 실행
+ENTRYPOINT ["java", "-Dspring.profiles.active=stg", "-jar", "app.jar"]

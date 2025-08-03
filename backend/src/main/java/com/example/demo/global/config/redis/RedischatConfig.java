@@ -1,6 +1,7 @@
 package com.example.demo.global.config.redis;
 
 import com.example.demo.global.config.chat.RedisSubscriber;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -14,15 +15,12 @@ import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-
-import lombok.RequiredArgsConstructor;
-
-@RequiredArgsConstructor
 @Configuration
-@Profile("!test")
+@Profile("!test") // test 환경 제외
+@RequiredArgsConstructor
 @EnableRedisRepositories(enableKeyspaceEvents = RedisKeyValueAdapter.EnableKeyspaceEvents.ON_STARTUP)
 public class RedischatConfig {
 
@@ -30,7 +28,6 @@ public class RedischatConfig {
     public RedisConnectionFactory redisConnectionFactory(Environment environment) {
         String redisHost = environment.getProperty("spring.data.redis.host");
         int redisPort = Integer.parseInt(environment.getProperty("spring.data.redis.port"));
-
         LettuceConnectionFactory factory = new LettuceConnectionFactory(redisHost, redisPort);
         factory.afterPropertiesSet();
         return factory;
@@ -63,7 +60,7 @@ public class RedischatConfig {
     }
 
     /**
-     * 실제 메시지를 처리하는 subscriber 설정 추가
+     * 실제 메시지를 처리하는 subscriber 설정
      */
     @Bean
     public MessageListenerAdapter listenerAdapter(RedisSubscriber subscriber) {
@@ -71,23 +68,35 @@ public class RedischatConfig {
     }
 
     /**
-     * 어플리케이션에서 사용할 redisTemplate 설정
+     * Redis에서 ChatRoom 객체를 직렬화/역직렬화할 Template
      */
     @Bean(name = "chatRedisTemplate")
-    public RedisTemplate<String, Object> objectRedisTemplate(RedisConnectionFactory connectionFactory) {
+    public RedisTemplate<String, Object> chatRedisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(connectionFactory);
-        redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(String.class));
+
+        StringRedisSerializer stringSerializer = new StringRedisSerializer();
+        GenericJackson2JsonRedisSerializer jsonSerializer = new GenericJackson2JsonRedisSerializer();
+
+        redisTemplate.setKeySerializer(stringSerializer);
+        redisTemplate.setHashKeySerializer(stringSerializer);
+        redisTemplate.setValueSerializer(jsonSerializer);
+        redisTemplate.setHashValueSerializer(jsonSerializer);
+
+        redisTemplate.afterPropertiesSet();
         return redisTemplate;
     }
 
+    /**
+     * Redis에서 문자열 기반 데이터만 다룰 경우 사용하는 Template
+     */
     @Bean(name = "chatStringRedisTemplate")
     public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, String> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory);
 
         StringRedisSerializer stringSerializer = new StringRedisSerializer();
+
         template.setKeySerializer(stringSerializer);
         template.setValueSerializer(stringSerializer);
         template.setHashKeySerializer(stringSerializer);

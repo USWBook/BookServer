@@ -17,6 +17,7 @@ provider "aws" {
   }
 }
 
+# VPC
 resource "aws_vpc" "subook_vpc" {
   cidr_block           = "10.10.0.0/16"
   enable_dns_support   = true
@@ -27,6 +28,7 @@ resource "aws_vpc" "subook_vpc" {
   }
 }
 
+# Subnet
 resource "aws_subnet" "subook_subnet" {
   vpc_id                  = aws_vpc.subook_vpc.id
   cidr_block              = "10.10.1.0/24"
@@ -38,6 +40,7 @@ resource "aws_subnet" "subook_subnet" {
   }
 }
 
+# IGW
 resource "aws_internet_gateway" "subook_igw" {
   vpc_id = aws_vpc.subook_vpc.id
 
@@ -46,6 +49,7 @@ resource "aws_internet_gateway" "subook_igw" {
   }
 }
 
+# Route Table
 resource "aws_route_table" "subook_rt" {
   vpc_id = aws_vpc.subook_vpc.id
 
@@ -64,6 +68,7 @@ resource "aws_route_table_association" "subook_rt_assoc" {
   route_table_id = aws_route_table.subook_rt.id
 }
 
+# Security Group
 resource "aws_security_group" "subook_sg" {
   name        = "subook-sg"
   description = "Allow SSH, HTTP, HTTPS, 8080"
@@ -109,6 +114,7 @@ resource "aws_security_group" "subook_sg" {
   }
 }
 
+# AMI
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
@@ -134,7 +140,8 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
-resource "aws_instance" "subook_ec2" {
+# Blue EC2
+resource "aws_instance" "subook_ec2_blue" {
   ami                         = data.aws_ami.amazon_linux.id
   instance_type               = "t3.micro"
   subnet_id                   = aws_subnet.subook_subnet.id
@@ -142,7 +149,7 @@ resource "aws_instance" "subook_ec2" {
   associate_public_ip_address = true
 
   tags = {
-    Name = "subook-ec2"
+    Name = "subook-ec2-blue"
   }
 
   root_block_device {
@@ -155,14 +162,32 @@ resource "aws_instance" "subook_ec2" {
 yum install -y docker
 systemctl enable docker
 systemctl start docker
+echo "Hello from BLUE" > /home/ec2-user/hello.txt
 EOF
 }
 
-resource "aws_eip" "subook_eip" {
-  instance = aws_instance.subook_ec2.id
-  domain   = "vpc"
+# Green EC2
+resource "aws_instance" "subook_ec2_green" {
+  ami                         = data.aws_ami.amazon_linux.id
+  instance_type               = "t3.micro"
+  subnet_id                   = aws_subnet.subook_subnet.id
+  vpc_security_group_ids      = [aws_security_group.subook_sg.id]
+  associate_public_ip_address = true
 
   tags = {
-    Name = "subook-eip"
+    Name = "subook-ec2-green"
   }
+
+  root_block_device {
+    volume_size = 25
+    volume_type = "gp3"
+  }
+
+  user_data = <<-EOF
+#!/bin/bash
+yum install -y docker
+systemctl enable docker
+systemctl start docker
+echo "Hello from GREEN" > /home/ec2-user/hello.txt
+EOF
 }

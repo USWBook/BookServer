@@ -185,12 +185,20 @@ defaults
 
 frontend http-in
     bind *:80
-    default_backend app_servers
+    acl host_prod hdr(host) -i subook.shop
+    acl host_stg hdr(host) -i stg.subook.shop
 
-backend app_servers
+    use_backend prod_servers if host_prod
+    use_backend stg_servers if host_stg
+
+backend prod_servers
     balance roundrobin
-    server app1 10.10.1.100:8080 check
-    server app2 10.10.1.101:8080 check
+    server blue 10.10.1.21:8080 check disabled
+    server green 10.10.1.74:8080 check
+
+backend stg_servers
+    balance roundrobin
+    server stg 10.9.1.133:8080 check
 EOT
 
 # HAProxy 실행

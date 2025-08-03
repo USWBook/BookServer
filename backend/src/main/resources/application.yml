@@ -2,21 +2,27 @@ spring:
   application:
     name: book
 
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: false
+        highlight_sql: false
+        use_sql_comments: false
   profiles:
-    active: dev
+    active: prod
     include: secret
 
   output:
     ansi:
       enabled: always
 
-  data:
-    redis:
-      host: localhost   # Redis 서버 주소 (도커로 띄웠으면 localhost)
-      port: 6379        # Redis 서버 포트 (기본 6379)
 
 server:
   port: 8080
+
+
 
 logging:
   output:

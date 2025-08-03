@@ -26,13 +26,6 @@ import org.springframework.security.web.context.SecurityContextPersistenceFilter
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
-
-    @Bean
-    public BCryptPasswordEncoder bCryptPasswordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    // authManager Bean을 얻기 위한 authConfiguration 객체
     private final AuthenticationConfiguration authenticationConfiguration;
 
     @Bean
@@ -40,7 +33,6 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // get authManager
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
@@ -49,42 +41,103 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // CSRF Disable
+                // CSRF 비활성화
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // iframe 허용 (H2 Console 등)
-                .headers(headers -> headers.frameOptions().sameOrigin()) // ✅ 추가
+                // H2 콘솔 iframe 허용
+                .headers(headers -> headers.frameOptions().sameOrigin())
 
+                // CORS 기본 설정 사용
                 .cors(Customizer.withDefaults())
 
-                // Session login disable
-                .formLogin(AbstractHttpConfigurer::disable)    // UsernamePasswordAuthenticationFilter disable
-                .httpBasic(AbstractHttpConfigurer::disable)    // 기본 로그인창 disable
+                // 세션 비활성화 (JWT 사용 시)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // 로그아웃 필터 비활성화
+                // 기본 로그인/로그아웃 비활성화
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
 
-                // 세션 정보를 저장하지 않음(jwt에서는 임시 세션 정보 사용, 사용된 세션은 이후 초기화)
-                .sessionManagement(httpSecuritySessionManagementConfigurer -> {
-                    httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-                })
-
-//                .authorizeHttpRequests(auth -> auth
-//                        .requestMatchers(SecurityConstants.AUTH_WHITELIST.toArray(String[]::new)).permitAll()
-//                        .anyRequest().permitAll() // 모든 요청 인증 없이 허용 (임시)
-
-                // 정용현 테스트용
+                // 요청 인증 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/mail/**", "/h2-console/**","/api/posts/**").permitAll()
+                        .requestMatchers(
+                                "/",                // 루트 경로 허용
+                                "/index.html",      // index.html 허용
+                                "/api/auth/**",     // 로그인/회원가입 등 인증 경로
+                                "/api/mail/**",     // 이메일 인증 등
+                                "/api/posts/**",    // 게시글 공개 조회
+                                "/h2-console/**"    // H2 콘솔
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
 
-                // UsernamePasswordAuthenticationFilter는 비활성화 되어있고
-                // JWT 필터는 인증 정보를 확인하고, SecurityContext에 저장하는 필터
-                // 따라서, SecurityContextHolderFilter가 실행되기 전에 인증 객체를 넣어야 함
-                // SecurityContextHolderFilter 앞에 두는게 나을 듯
+                // JWT 필터 등록 (SecurityContextHolderFilter 앞에 위치)
                 .addFilterBefore(jwtFilter, SecurityContextHolderFilter.class);
 
         return http.build();
     }
+
+
+//    private final JwtAuthenticationFilter jwtFilter;
+//
+//    @Bean
+//    public BCryptPasswordEncoder bCryptPasswordEncoder() {
+//        return new BCryptPasswordEncoder();
+//    }
+//
+//    // authManager Bean을 얻기 위한 authConfiguration 객체
+//    private final AuthenticationConfiguration authenticationConfiguration;
+//
+//    @Bean
+//    public PasswordEncoder passwordEncoder() {
+//        return new BCryptPasswordEncoder();
+//    }
+//
+//    // get authManager
+//    @Bean
+//    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+//        return authenticationConfiguration.getAuthenticationManager();
+//    }
+//
+//    @Bean
+//    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+//        http
+//                // CSRF Disable
+//                .csrf(AbstractHttpConfigurer::disable)
+//
+//                // iframe 허용 (H2 Console 등)
+//                .headers(headers -> headers.frameOptions().sameOrigin()) // ✅ 추가
+//
+//                .cors(Customizer.withDefaults())
+//
+//                // Session login disable
+//                .formLogin(AbstractHttpConfigurer::disable)    // UsernamePasswordAuthenticationFilter disable
+//                .httpBasic(AbstractHttpConfigurer::disable)    // 기본 로그인창 disable
+//
+//                // 로그아웃 필터 비활성화
+//                .logout(AbstractHttpConfigurer::disable)
+//
+//                // 세션 정보를 저장하지 않음(jwt에서는 임시 세션 정보 사용, 사용된 세션은 이후 초기화)
+//                .sessionManagement(httpSecuritySessionManagementConfigurer -> {
+//                    httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+//                })
+//
+////                .authorizeHttpRequests(auth -> auth
+////                        .requestMatchers(SecurityConstants.AUTH_WHITELIST.toArray(String[]::new)).permitAll()
+////                        .anyRequest().permitAll() // 모든 요청 인증 없이 허용 (임시)
+//
+//                // 정용현 테스트용
+//                .authorizeHttpRequests(auth -> auth
+//                        .requestMatchers("/api/auth/**", "/api/mail/**", "/h2-console/**","/api/posts/**").permitAll()
+//                        .anyRequest().authenticated()
+//                )
+//
+//                // UsernamePasswordAuthenticationFilter는 비활성화 되어있고
+//                // JWT 필터는 인증 정보를 확인하고, SecurityContext에 저장하는 필터
+//                // 따라서, SecurityContextHolderFilter가 실행되기 전에 인증 객체를 넣어야 함
+//                // SecurityContextHolderFilter 앞에 두는게 나을 듯
+//                .addFilterBefore(jwtFilter, SecurityContextHolderFilter.class);
+//
+//        return http.build();
+//    }
 }
