@@ -11,6 +11,8 @@ public record SendImageResponseDto(
 ) {
     public record Data(
             UUID messageId,
+            UUID roomId,      //
+            UUID senderId,    //
             String imageUrl,
             LocalDateTime sentAt
     ) {}
