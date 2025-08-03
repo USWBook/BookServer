@@ -135,7 +135,7 @@ data "aws_ami" "amazon_linux" {
 
 resource "aws_instance" "proxy_ec2" {
   ami                         = data.aws_ami.amazon_linux.id
-  instance_type               = "t3.small"
+  instance_type               = "t3.micro"
   subnet_id                   = aws_subnet.proxy_subnet.id
   vpc_security_group_ids      = [aws_security_group.proxy_sg.id]
   associate_public_ip_address = true
