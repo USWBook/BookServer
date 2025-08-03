@@ -57,4 +57,9 @@ public class User {
         return this.status == UserStatus.BANNED;
     }
 
+    public void changePassword(String newEncodedPassword) {
+        this.password = newEncodedPassword;
+    }
+
+
 }

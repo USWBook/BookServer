@@ -1,4 +1,4 @@
-package com.example.demo.domain.auth.dto.request;
+package com.example.demo.domain.auth.dto.response;
 
 public record TokenResponse(
         String accessToken, String refreshToken

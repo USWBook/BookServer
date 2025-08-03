@@ -47,7 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.info("[JWT Filter] 토큰 없음, 필터 체인 통과");
+            log.info("[JWT Filter] Authorization 헤더 없음 또는 잘못됨 → 인증 없이 통과");
             chain.doFilter(request, response);
             return;
         }
@@ -59,19 +59,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authHeader.replace("Bearer ", "");
 
-        // 나중에 블랙리스트인지 로그인 기간 만료인지 바꿔야 할듯
-        if (redisTokenRepository.isBlacklisted(token)) {
-            log.info("[JWT Filter] 블랙리스트 토큰: {}  요청 차단.", token);
-            throw new JwtBlacklistedException();
-        }
-
         try {
+
+            // 블랙리스트 체크
+            if (redisTokenRepository.isBlacklisted(token)) {
+                log.info("[JWT Filter] 블랙리스트 토큰: {}  요청 차단.", token);
+                throw new JwtBlacklistedException();
+            }
             String email = jwtProvider.extractEmail(token);
 
             User user = userRepository.findByEmail(email)
                     .orElseThrow(JwtUserNotFoundException::new);
 
-            log.info("[JWT Filter] 사용자 인증 완료: {}", user.getEmail());
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                             user.getEmail(), null,

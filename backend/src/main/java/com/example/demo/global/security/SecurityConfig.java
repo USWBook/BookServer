@@ -1,6 +1,7 @@
 package com.example.demo.global.security;
 
 import com.example.demo.global.jwt.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,7 +15,9 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.context.SecurityContextPersistenceFilter;
@@ -79,6 +82,12 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
+                .exceptionHandling(exception -> exception
+                        .accessDeniedHandler(customAccessDeniedHandler())  // 권한 없으면 403
+                        .authenticationEntryPoint(customAuthenticationEntryPoint()) // 인증 없으면 401
+                )
+
+
                 // UsernamePasswordAuthenticationFilter는 비활성화 되어있고
                 // JWT 필터는 인증 정보를 확인하고, SecurityContext에 저장하는 필터
                 // 따라서, SecurityContextHolderFilter가 실행되기 전에 인증 객체를 넣어야 함
@@ -86,5 +95,33 @@ public class SecurityConfig {
                 .addFilterBefore(jwtFilter, SecurityContextHolderFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public AccessDeniedHandler customAccessDeniedHandler() {
+        return (request, response, accessDeniedException) -> {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("""
+                {
+                    "code": "FORBIDDEN",
+                    "message": "접근 권한이 없습니다."
+                }
+            """);
+        };
+    }
+
+    @Bean
+    public AuthenticationEntryPoint customAuthenticationEntryPoint() {
+        return (request, response, authException) -> {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("""
+                {
+                    "code": "UNAUTHORIZED",
+                    "message": "인증이 필요합니다."
+                }
+            """);
+        };
     }
 }
