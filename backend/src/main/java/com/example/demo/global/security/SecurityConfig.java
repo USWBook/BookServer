@@ -78,7 +78,7 @@ public class SecurityConfig {
 
                 // 정용현 테스트용
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/mail/**", "/h2-console/**","/api/posts/**","/api/chat/**").permitAll()
+                        .requestMatchers("/api/major/**","/api/auth/**", "/api/mail/**", "/h2-console/**","/api/posts/**","/api/chat/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
