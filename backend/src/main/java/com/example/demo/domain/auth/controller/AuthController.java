@@ -6,10 +6,16 @@ import com.example.demo.domain.auth.dto.request.ResetPasswordRequest;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
 import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.auth.service.AuthService;
+import com.example.demo.global.jwt.JwtProvider;
 import com.example.demo.global.response.RsData;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.Duration;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -17,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final JwtProvider jwtProvider;
 
     @PostMapping("/signup")
     public RsData<?> signUp(@RequestBody @Valid SignUpRequest request) {
@@ -25,21 +32,57 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public RsData<TokenResponse> login(@RequestBody @Valid LoginRequest request) {
+    public ResponseEntity<RsData<TokenResponse>> login(@RequestBody @Valid LoginRequest request) {
         TokenResponse tokens = authService.login(request);
-        return new RsData<>("200", "로그인 완료되었습니다.", tokens);
+
+        // HttpOnly 쿠키 설정
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokens.refreshToken())
+                .httpOnly(true) // avaScript에서 접근 불가.
+                //.secure(true) // HTTPS 사용 시
+                .path("/")
+                .maxAge(Duration.ofMillis(jwtProvider.getRefreshTokenExpirationInMillis()))
+                .sameSite("Strict") // 또는 Lax/None
+                .build();
+
+        return  ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .body(new RsData<>("200", "로그인 완료되었습니다.", tokens.withoutRefreshToken()));
     }
 
     @PostMapping("/logout")
-    public RsData<?> logout(@RequestHeader(value = "Authorization",required = false) String authHeader) {
+    public ResponseEntity<RsData<?>> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         authService.logout(authHeader);
-        return new RsData<>("200", "로그아웃 완료되었습니다.");
+
+        // refreshToken 쿠키 삭제
+        ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                //.secure(true)
+                .path("/")
+                .maxAge(0) // 쿠키 즉시 만료
+                .sameSite("Strict")
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
+                .body(new RsData<>("200", "로그아웃 완료되었습니다."));
     }
 
+    // @CookieValue를 통해 클라이언트가 보내는 HttpOnly 쿠키에서 Refresh Token을 읽음
     @PostMapping("/reissue")
-    public RsData<TokenResponse> reissue(@CookieValue("refreshToken") String refreshToken) {
+    public ResponseEntity<RsData<TokenResponse>> reissue(@CookieValue("refreshToken") String refreshToken) {
         TokenResponse tokens = authService.reissue(refreshToken);
-        return new RsData<>("200", "토큰 재발행 완료되었습니다.", tokens);
+
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokens.refreshToken())
+                .httpOnly(true)
+                //.secure(true)  // HTTPS 환경에서만 true, 로컬 개발시 false 가능
+                .path("/")
+                .maxAge(Duration.ofMillis(jwtProvider.getRefreshTokenExpirationInMillis()))
+                .sameSite("Strict")
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .body(new RsData<>("200", "토큰 재발행 완료되었습니다.", tokens.withoutRefreshToken()));
     }
 
     @PostMapping("change-password")
