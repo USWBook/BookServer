@@ -1,13 +1,10 @@
 package com.example.demo.domain.major.controller;
 
-import com.example.demo.domain.major.entity.Major;
-import com.example.demo.domain.major.repository.MajorRepository;
 import com.example.demo.domain.major.response.MajorResponse;
 import com.example.demo.domain.major.service.MajorService;
 import com.example.demo.global.response.RsData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,7 +17,7 @@ public class MajorController {
 
     private final MajorService majorService;
 
-    @PostMapping("/list")
+    @GetMapping("/list")
     public RsData<?> getAllMajors() {
         List<MajorResponse> majors = majorService.getAllMajors();
         return new RsData<>("200", "전공 목록 조회 성공", majors);
