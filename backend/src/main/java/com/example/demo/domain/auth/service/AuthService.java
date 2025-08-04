@@ -129,6 +129,10 @@ public class AuthService {
                 .orElseThrow(UserNotFoundException::new);
 
         String newAccessToken = jwtProvider.generateAccessToken(email, user.getRole());
+        String newRefreshToken = jwtProvider.generateRefreshToken(email, user.getRole());
+
+        // Redis에 새 refreshToken 저장, 기존 토큰 덮어쓰기
+        redisTokenRepository.saveRefreshToken(email, newRefreshToken, jwtProvider.getRefreshTokenExpirationInMillis());
 
         return new TokenResponse(newAccessToken, refreshToken);
     }
