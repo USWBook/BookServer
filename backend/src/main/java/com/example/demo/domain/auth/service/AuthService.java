@@ -10,12 +10,18 @@ import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.entity.UserStatus;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
+import com.example.demo.global.exception.AuthException;
 import com.example.demo.global.jwt.JwtProvider;
 import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +35,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final RedisTokenRepository redisTokenRepository;
+    private final AuthenticationManager authenticationManager;
 
     @Transactional
     public void signUp(SignUpRequest request) {
@@ -59,32 +66,42 @@ public class AuthService {
 
     @Transactional
     public TokenResponse login(LoginRequest request) {
-        // 이메일로 사용자 조회
-        User user = userRepository.findByEmail(request.email())
-                .orElseThrow(UserNotFoundException::new);
+        try {
+            // 1. AuthenticationManager에게 인증 위임
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.email(), request.password())
+            );
 
-        if (user.isBanned()) {
-            throw new BannedUserException();
+            // 2. 인증 성공 시 UserDetails(User 객체) 가져오기
+            User user = (User) authentication.getPrincipal();
+
+            if (!user.isEnabled()) {
+                throw new DisabledException("계정이 활성화되어 있지 않습니다.");
+            }
+
+            // 3. 토큰 생성
+            String accessToken = jwtProvider.generateAccessToken(user.getEmail(), user.getRole());
+            String refreshToken = jwtProvider.generateRefreshToken(user.getEmail(), user.getRole());
+
+            // 4. Redis에 Refresh Token 저장
+            redisTokenRepository.saveRefreshToken(
+                    user.getEmail(),
+                    refreshToken,
+                    jwtProvider.getRefreshTokenExpirationInMillis()
+            );
+
+            return new TokenResponse(accessToken, refreshToken);
+
+        } catch (AuthenticationException e) {
+            // 5. 인증 실패 시 예외 처리
+            // BannedUserException 등 특정 상태에 대한 분기는 UserDetails의 isAccountNonLocked() 등에서 처리됩니다.
+            // DaoAuthenticationProvider가 적절한 예외(BadCredentialsException, LockedException 등)를 던져줍니다.
+            log.warn("Login failed for email {}: {}", request.email(), e.getMessage());
+            log.error(">>>> [AuthService] 인증 실패!", e);
+            throw new AuthException(e.getMessage(),"400"); // 또는 더 구체적인 예외를 반환
         }
-
-        // 비밀번호 검증
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new InvalidPasswordException();
-        }
-
-        // 토큰 생성
-        String accessToken = jwtProvider.generateAccessToken(user.getEmail(), user.getRole());
-        String refreshToken = jwtProvider.generateRefreshToken(user.getEmail(),user.getRole());
-
-        // Redis에 Refresh Token 저장 (email 기준으로)
-        redisTokenRepository.saveRefreshToken(
-                user.getEmail(),
-                refreshToken,
-                jwtProvider.getRefreshTokenExpirationInMillis()
-        );
-
-        return new TokenResponse(accessToken, refreshToken);
     }
+
 
     @Transactional
     public void logout(String authHeader) {
@@ -134,7 +151,7 @@ public class AuthService {
         // Redis에 새 refreshToken 저장, 기존 토큰 덮어쓰기
         redisTokenRepository.saveRefreshToken(email, newRefreshToken, jwtProvider.getRefreshTokenExpirationInMillis());
 
-        return new TokenResponse(newAccessToken, refreshToken);
+        return new TokenResponse(newAccessToken, newRefreshToken);
     }
 
     public void banUser(String accessToken, String email) {
