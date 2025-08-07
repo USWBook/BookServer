@@ -1,0 +1,26 @@
+#Dockerfile.prod
+FROM gradle:jdk-21-and-23-graal-jammy AS builder
+WORKDIR /app
+
+# 1. Gradle 설정파일 복사
+COPY build.gradle settings.gradle ./
+RUN gradle wrapper
+RUN ./gradlew dependencies --no-daemon
+
+# 2. 소스, 환경설정 복사
+COPY src src
+COPY .env .env
+
+# 3. JAR 빌드 (테스트 제외)
+RUN ./gradlew build --no-daemon -x test
+RUN rm -rf /app/build/libs/*-plain.jar
+
+# 4. 실행 스테이지 (가벼운 이미지)
+FROM container-registry.oracle.com/graalvm/jdk:23
+WORKDIR /app
+
+# 5. 빌드 결과물 복사 (app.jar 기준)
+COPY --from=builder /app/build/libs/app.jar app.jar
+
+# 6. 프로덕션 환경으로 실행
+ENTRYPOINT ["java", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
