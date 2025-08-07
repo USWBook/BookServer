@@ -1,4 +1,4 @@
-$Dockerfile.stg
+#Dockerfile.stg
 # 1. 빌드 스테이지 (Gradle + JDK 21)
 FROM gradle:jdk-21-and-23-graal-jammy AS builder
 WORKDIR /app
