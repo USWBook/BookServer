@@ -26,7 +26,7 @@ import java.util.*;
 @Service
 public class ChatRoomService {
 
-    private static final String CHAT_ROOMS = "CHAT_ROOM"; // Redis 상위 키
+    public static final String CHAT_ROOMS = "CHAT_ROOM"; // Redis 상위 키
 
     // ✅ chatRedisTemplate 주입
     @Qualifier("chatRedisTemplate")
@@ -95,7 +95,7 @@ public class ChatRoomService {
 
 
 
-    private boolean isSameParticipants(ChatRoom room, UUID userA, UUID userB) {
+    public boolean isSameParticipants(ChatRoom room, UUID userA, UUID userB) {
         UUID sender = room.getSender();
         UUID receiver = room.getReceiver();
 

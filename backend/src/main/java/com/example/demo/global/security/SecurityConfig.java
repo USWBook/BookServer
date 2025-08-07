@@ -19,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.context.SecurityContextPersistenceFilter;
@@ -94,7 +95,7 @@ public class SecurityConfig {
                 // JWT 필터는 인증 정보를 확인하고, SecurityContext에 저장하는 필터
                 // 따라서, SecurityContextHolderFilter가 실행되기 전에 인증 객체를 넣어야 함
                 // SecurityContextHolderFilter 앞에 두는게 나을 듯
-                .addFilterBefore(jwtFilter, SecurityContextHolderFilter.class);
+                .addFilterBefore(jwtFilter, AnonymousAuthenticationFilter.class);
 
         return http.build();
     }
