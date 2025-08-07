@@ -95,9 +95,9 @@ public class InitDevData {
         // 채팅방 생성 (이미 있으면 조회)
         ChatRoom chatRoom = helper.createChatRoom(
                 post.getId(),
-                post.getSeller().getId(),
-                user2.getId()
+                user2.getId()  // buyerId (로그인 유저)
         );
+
 
         // 샘플 채팅 메시지 생성
         ChatMessage chatMessage = helper.createChatMessage(

@@ -15,6 +15,12 @@ spring:
         use_sql_comments: true
         default_batch_fetch_size: 100
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+
   h2:
     console:
       enabled: true

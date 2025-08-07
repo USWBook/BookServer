@@ -2,155 +2,269 @@ package com.example.demo.domain.chat.service;
 
 import com.example.demo.domain.chat.dto.request.CreateChatRoomRequestDto;
 import com.example.demo.domain.chat.entity.ChatRoom;
+import com.example.demo.domain.chat.entity.ChatRoomUser;
+import com.example.demo.domain.chat.exception.ChatAccessDeniedException;
+import com.example.demo.domain.chat.exception.ChatRoomNotFoundException;
+import com.example.demo.domain.chat.exception.InvalidChatArgumentException;
+import com.example.demo.domain.chat.repository.ChatMessageRepository;
+import com.example.demo.domain.chat.repository.ChatRoomUserRepository;
+import com.example.demo.domain.post.entity.Post;
+import com.example.demo.domain.post.repository.PostRepository;
+import com.example.demo.domain.user.entity.User;
+import com.example.demo.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class ChatRoomServiceTest {
-
-    @InjectMocks
-    private ChatRoomService chatRoomService;
 
     @Mock
     private RedisTemplate<String, Object> redisTemplate;
 
-    // HashOperations의 타입은 실제 redisTemplate에서 반환하는 것과 일치하도록 Object로 맞추어야 Mock 오류가 없습니다.
     @Mock
-    private HashOperations<String, Object, ChatRoom> hashOpsChatRoom;
+    private HashOperations<String, Object, Object> hashOpsChatRoom;
+
+    @Mock
+    private ChatRoomUserRepository chatRoomUserRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private PostRepository postRepository;
+
+    @Mock
+    private ChatMessageRepository chatMessageRepository;
+
+    @InjectMocks
+    private ChatRoomService chatRoomService;
 
     private UUID postId;
-    private UUID sellerId;
     private UUID buyerId;
+    private UUID sellerId;
+    private Post post;
+    private User sellerUser;
+    private User buyerUser;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-
-        // RedisTemplate의 opsForHash()를 반환하도록 세팅
-        // ChatRoomService 내부 필드에도 직접 주입 (테스트 환경에서 @PostConstruct 실행 안 됨)
-        ReflectionTestUtils.setField(chatRoomService, "hashOpsChatRoom", hashOpsChatRoom);
-
         postId = UUID.randomUUID();
-        sellerId = UUID.randomUUID();
         buyerId = UUID.randomUUID();
+        sellerId = UUID.randomUUID();
+
+        post = Post.builder().id(postId).seller(null).build(); // 기본, seller는 테스트 내에서 변경
+        sellerUser = User.builder().id(sellerId).build();
+        buyerUser = User.builder().id(buyerId).build();
+
+        // RedisTemplate opsForHash 리턴값 지정
+        given(redisTemplate.opsForHash()).willReturn(hashOpsChatRoom);
+
+        // chatRoomService에서 redisTemplate.opsForHash() 초기화 위해 init() 호출 필요
+        chatRoomService.init();
+    }
+
+    // --- createOrGetRoom 관련 테스트 ---
+
+    @Test
+    @DisplayName("채팅방 생성 실패 - postId null 이면 IllegalArgumentException")
+    void createOrGetRoom_postIdNull_throws() {
+        CreateChatRoomRequestDto dto = new CreateChatRoomRequestDto(null);
+
+        assertThatThrownBy(() -> chatRoomService.createOrGetRoom(dto, buyerId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("postId는 필수입니다.");
     }
 
     @Test
-    @DisplayName("채팅방이 없으면 신규 생성")
-    void createOrGetRoom_createsNew() {
-        // given
-        given(hashOpsChatRoom.values("CHAT_ROOM")).willReturn(new ArrayList<>());
+    @DisplayName("채팅방 생성 실패 - 게시글 없는 경우 IllegalArgException")
+    void createOrGetRoom_postNotFound_throws() {
+        CreateChatRoomRequestDto dto = new CreateChatRoomRequestDto(postId);
 
-        CreateChatRoomRequestDto dto = new CreateChatRoomRequestDto(postId, sellerId, buyerId);
+        given(postRepository.findById(postId)).willReturn(Optional.empty());
 
-        // when
-        ChatRoom room = chatRoomService.createOrGetRoom(dto);
-
-        // then
-        assertThat(room.getPostId()).isEqualTo(postId);
-        assertThat(room.getSender()).isEqualTo(buyerId);
-        assertThat(room.getReceiver()).isEqualTo(sellerId);
-
-        verify(hashOpsChatRoom).put(eq("CHAT_ROOM"), eq(room.getRoomId().toString()), any());
+        assertThatThrownBy(() -> chatRoomService.createOrGetRoom(dto, buyerId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("게시글이 없습니다.");
     }
 
     @Test
-    @DisplayName("이미 존재하는 방이면 기존 방 반환 및 삭제 플래그 복구")
-    void createOrGetRoom_returnsExistingRestoresDeleteStatus() {
-        // given
-        ChatRoom existingRoom = ChatRoom.builder()
-                .roomId(UUID.randomUUID())
-                .postId(postId)
-                .sender(buyerId)
-                .receiver(sellerId)
-                .isDelete(new HashMap<>(Map.of(buyerId.toString(), true, sellerId.toString(), false)))
-                .build();
+    @DisplayName("신규 채팅방 생성")
+    void createOrGetRoom_newRoom_success() {
+        CreateChatRoomRequestDto dto = new CreateChatRoomRequestDto(postId);
 
-        given(hashOpsChatRoom.values("CHAT_ROOM")).willReturn(List.of(existingRoom));
+        post = Post.builder().id(postId).seller(sellerUser).build();
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(hashOpsChatRoom.values(ChatRoomService.CHAT_ROOMS)).willReturn(Collections.emptyList());
 
-        CreateChatRoomRequestDto dto = new CreateChatRoomRequestDto(postId, sellerId, buyerId);
+        given(userRepository.findById(sellerId)).willReturn(Optional.of(sellerUser));
+        given(userRepository.findById(buyerId)).willReturn(Optional.of(buyerUser));
 
-        // when
-        ChatRoom room = chatRoomService.createOrGetRoom(dto);
+        given(chatRoomUserRepository.save(any(ChatRoomUser.class))).willAnswer(invocation -> invocation.getArgument(0));
 
-        // then
-        assertThat(room).isSameAs(existingRoom);
-        assertThat(room.getDeleteStatus(buyerId.toString())).isFalse();
-        verify(hashOpsChatRoom).put("CHAT_ROOM", room.getRoomId().toString(), room);
+        ChatRoom created = chatRoomService.createOrGetRoom(dto, buyerId);
+
+        // 필수 필드 확인
+        assertThat(created.getPostId()).isEqualTo(postId);
+        assertThat(created.getSender()).isIn(buyerId, sellerId);
+        assertThat(created.getReceiver()).isIn(buyerId, sellerId);
+
+        // Redis 캐시에 저장되었는지
+        then(hashOpsChatRoom).should().put(eq(ChatRoomService.CHAT_ROOMS), eq(created.getRoomId().toString()), eq(created));
+
+        // 멤버 저장 2회 확인
+        then(chatRoomUserRepository).should(times(2)).save(any(ChatRoomUser.class));
     }
 
+    // --- isSameParticipants() 관련 테스트 ---
+
     @Test
-    @DisplayName("유저 채팅방 목록은 논리삭제 제외")
-    void findRoomByUser_excludesDeleted() {
-        // given
-        ChatRoom room1 = ChatRoom.builder().roomId(UUID.randomUUID())
-                .postId(postId).sender(buyerId).receiver(sellerId)
-                .isDelete(Map.of(buyerId.toString(), false)).build();
+    @DisplayName("채팅방 참여 여부")
+    void isSameParticipants_cases() {
+        UUID userA = UUID.randomUUID();
+        UUID userB = UUID.randomUUID();
 
-        ChatRoom room2 = ChatRoom.builder().roomId(UUID.randomUUID())
-                .postId(postId).sender(buyerId).receiver(sellerId)
-                .isDelete(Map.of(buyerId.toString(), true)).build();
+        ChatRoom room = new ChatRoom();
+        room.setSender(userA);
+        room.setReceiver(userB);
 
-        given(hashOpsChatRoom.values("CHAT_ROOM")).willReturn(List.of(room1, room2));
+        // 정상: 두 유저가 순서 달라도 true
+        assertThat(chatRoomService.isSameParticipants(room, userA, userB)).isTrue();
+        assertThat(chatRoomService.isSameParticipants(room, userB, userA)).isTrue();
 
-        // when
-        List<ChatRoom> list = chatRoomService.findRoomByUser(buyerId);
+        // sender null 시 예외 발생
+        room.setSender(null);
 
-        // then
-        assertThat(list).containsExactly(room1);
+        assertThatThrownBy(() -> chatRoomService.isSameParticipants(room, userA, userB))
+                .isInstanceOf(InvalidChatArgumentException.class);
     }
 
+    // --- findRoomByUser 테스트 ---
+
     @Test
-    @DisplayName("채팅방 ID로 조회 성공")
-    void findByRoomId_success() {
+    @DisplayName("참가자 맞고 삭제 상태 false인 채팅방만 반환")
+    void findRoomByUser_filtersProperly() {
+        UUID userId = UUID.randomUUID();
+
+        ChatRoom room1 = new ChatRoom(UUID.randomUUID(), userId, UUID.randomUUID());
+        ChatRoom room2 = new ChatRoom(UUID.randomUUID(), UUID.randomUUID(), userId);
+        ChatRoom room3 = new ChatRoom(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+
+        // userId 삭제 상태 true면 제외
+        room2.setDeleteStatus(userId.toString(), true);
+
+        given(hashOpsChatRoom.values(ChatRoomService.CHAT_ROOMS)).willReturn(List.of(room1, room2, room3));
+
+        List<ChatRoom> found = chatRoomService.findRoomByUser(userId);
+
+        // room1만 결과
+        assertThat(found).containsExactly(room1);
+    }
+
+    // --- findByRoomId 테스트 ---
+
+    @Test
+    @DisplayName("채팅방 조회 정상, 없으면 예외")
+    void findByRoomId_works() {
         UUID roomId = UUID.randomUUID();
-        ChatRoom room = ChatRoom.builder().roomId(roomId).build();
+        ChatRoom room = new ChatRoom();
+        room.setRoomId(roomId);
 
-        given(hashOpsChatRoom.get("CHAT_ROOM", roomId.toString())).willReturn(room);
+        given(hashOpsChatRoom.get(ChatRoomService.CHAT_ROOMS, roomId.toString())).willReturn(room);
 
-        // when
         ChatRoom found = chatRoomService.findByRoomId(roomId);
+        assertThat(found).isEqualTo(room);
 
-        // then
-        assertThat(found).isSameAs(room);
+        given(hashOpsChatRoom.get(ChatRoomService.CHAT_ROOMS, roomId.toString())).willReturn(null);
+
+        assertThatThrownBy(() -> chatRoomService.findByRoomId(roomId))
+                .isInstanceOf(ChatRoomNotFoundException.class);
     }
+
+    // --- deleteChatRoom 테스트 ---
 
     @Test
-    @DisplayName("논리적 삭제 및 삭제")
-    void deleteChatRoom_deletesIfBothMarked() {
+    @DisplayName("참가자 삭제 처리 및 양측 삭제시 Redis 삭제")
+    void deleteChatRoom_works() {
         UUID roomId = UUID.randomUUID();
-        UUID userAId = UUID.randomUUID();
-        UUID userBId = UUID.randomUUID();
-        String userA = userAId.toString();
-        String userB = userBId.toString();
+        UUID senderId = UUID.randomUUID();
+        UUID receiverId = UUID.randomUUID();
 
-        ChatRoom room = ChatRoom.builder()
-                .roomId(roomId)
-                .sender(userAId)
-                .receiver(userBId)
-                .isDelete(new HashMap<>(Map.of(userA, false, userB, true)))
-                .build();
+        ChatRoom room = new ChatRoom();
+        room.setRoomId(roomId);
+        room.setSender(senderId);
+        room.setReceiver(receiverId);
 
-        given(hashOpsChatRoom.get("CHAT_ROOM", roomId.toString())).willReturn(room);
+        room.setDeleteStatus(senderId.toString(), false);
+        room.setDeleteStatus(receiverId.toString(), false);
 
-        // when
-        chatRoomService.deleteChatRoom(roomId, userA);
+        given(hashOpsChatRoom.get(ChatRoomService.CHAT_ROOMS, roomId.toString())).willReturn(room);
 
-        // then
-        assertThat(room.getDeleteStatus(userA)).isTrue();
-        verify(hashOpsChatRoom).put("CHAT_ROOM", roomId.toString(), room);
-        verify(hashOpsChatRoom).delete("CHAT_ROOM", roomId.toString());
+        // 첫 참가자 삭제 요청
+        chatRoomService.deleteChatRoom(roomId, senderId);
+        assertThat(room.getDeleteStatus(senderId.toString())).isTrue();
+        then(hashOpsChatRoom).should().put(ChatRoomService.CHAT_ROOMS, roomId.toString(), room);
+        then(hashOpsChatRoom).should(never()).delete(ChatRoomService.CHAT_ROOMS, roomId.toString());
+
+        // 두번째 참가자 삭제 요청
+        room.setDeleteStatus(receiverId.toString(), true);
+        chatRoomService.deleteChatRoom(roomId, receiverId);
+
+        // 양측 삭제 상태가 true면 Redis 에서 제거
+        then(hashOpsChatRoom).should().delete(ChatRoomService.CHAT_ROOMS, roomId.toString());
     }
 
+    // --- leaveChatRoom는 deleteChatRoom 호출 ---
+
+    @Test
+    @DisplayName("채팅방 나가기 및 삭제")
+    void leaveChatRoom_callsDelete() {
+        UUID roomId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        ChatRoomService spyService = Mockito.spy(chatRoomService);
+
+        doNothing().when(spyService).deleteChatRoom(roomId, userId);
+
+        spyService.leaveChatRoom(roomId, userId);
+
+        verify(spyService, times(1)).deleteChatRoom(roomId, userId);
+    }
+
+    // --- findOther 테스트 ---
+
+    @Test
+    @DisplayName("상대 유저 반환 및 권한 예외")
+    void findOther_worksAndThrows() {
+        UUID roomId = UUID.randomUUID();
+        UUID senderId = UUID.randomUUID();
+        UUID receiverId = UUID.randomUUID();
+
+        ChatRoom room = new ChatRoom();
+        room.setRoomId(roomId);
+        room.setSender(senderId);
+        room.setReceiver(receiverId);
+
+        given(hashOpsChatRoom.get(ChatRoomService.CHAT_ROOMS, roomId.toString())).willReturn(room);
+
+        UUID other1 = chatRoomService.findOther(roomId, senderId);
+        assertThat(other1).isEqualTo(receiverId);
+
+        UUID other2 = chatRoomService.findOther(roomId, receiverId);
+        assertThat(other2).isEqualTo(senderId);
+
+        UUID invalidUser = UUID.randomUUID();
+        assertThatThrownBy(() -> chatRoomService.findOther(roomId, invalidUser))
+                .isInstanceOf(ChatAccessDeniedException.class);
+    }
 }
