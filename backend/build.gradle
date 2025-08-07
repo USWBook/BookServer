@@ -95,3 +95,8 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+bootJar {
+	archiveBaseName = 'subook'         // 이름 명확화
+	archiveVersion = ''                // 버전 생략
+	archiveFileName = 'app.jar'        // 최종 파일명을 app.jar로 고정
+}

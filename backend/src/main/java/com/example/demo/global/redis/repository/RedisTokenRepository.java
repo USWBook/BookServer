@@ -44,7 +44,7 @@ public class RedisTokenRepository {
         redisTemplate.delete(REFRESH_PREFIX + email);
     }
 
-    // 액세스 토큰 삭제(로그아웃이나 밴에서 사용)
+    // 액세스 토큰 블랙리스트로 등록
     public void blacklistAccessToken(String accessToken, long expirationMillis) {
         redisTemplate.opsForValue().set(
                 BLACKLIST_PREFIX + accessToken,
@@ -60,7 +60,7 @@ public class RedisTokenRepository {
 
     // 이메일 인증코드 저장함
     public void saveVerificationCode(String email, String code, long expirationMillis) {
-        redisTemplate.opsForValue().set("auth:code:" + email, code, expirationMillis, TimeUnit.MILLISECONDS);
+        redisTemplate.opsForValue().set(EMAIL_AUTH_PREFIX + email, code, expirationMillis, TimeUnit.MILLISECONDS);
     }
 
     // 이메일이 할당받은 인증코드 가져옴
