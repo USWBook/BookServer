@@ -2,7 +2,7 @@ package com.example.demo.domain.auth.controller;
 
 import com.example.demo.DemoApplication;
 import com.example.demo.domain.auth.dto.request.LoginRequest;
-import com.example.demo.domain.auth.dto.request.TokenResponse;
+import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.auth.exception.InvalidPasswordException;
 import com.example.demo.domain.auth.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;

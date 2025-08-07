@@ -8,5 +8,6 @@ import java.util.UUID;
 
 public interface MajorRepository extends JpaRepository<Major, UUID> {
     Optional<Major> findByName(String name); // 전공 이름으로 조회
+    boolean existsByName(String name); // 전공 이름 중복 확인용
 }
 

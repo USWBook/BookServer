@@ -2,13 +2,14 @@ package com.example.demo.domain.auth.service;
 
 import com.example.demo.domain.auth.dto.request.LoginRequest;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
-import com.example.demo.domain.auth.dto.request.TokenResponse;
+import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.auth.exception.*;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.entity.UserStatus;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.jwt.JwtProvider;
+import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -186,7 +187,7 @@ class AuthServiceTest {
         when(redisTokenRepository.getRefreshToken(email)).thenReturn(savedToken);
 
         // when & then
-        assertThrows(InvalidTokenException.class,
+        assertThrows(JwtInvalidSignatureException.class,
                 () -> authService.reissue(refreshToken));
     }
 
@@ -198,7 +199,7 @@ class AuthServiceTest {
         when(jwtProvider.isValid(refreshToken)).thenReturn(false);
 
         // when & then
-        assertThrows(InvalidTokenException.class,
+        assertThrows(JwtInvalidSignatureException.class,
                 () -> authService.reissue(refreshToken));
     }
 

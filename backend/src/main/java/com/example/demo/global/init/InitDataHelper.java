@@ -12,6 +12,13 @@ import com.example.demo.domain.user.role.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import com.example.demo.domain.chat.dto.request.CreateChatRoomRequestDto;
+import com.example.demo.domain.chat.dto.request.SendMessageRequestDto;
+import com.example.demo.domain.chat.entity.ChatRoom;
+import com.example.demo.domain.chat.entity.ChatMessage;
+import com.example.demo.domain.chat.service.ChatRoomService;
+import com.example.demo.domain.chat.service.ChatService;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -21,6 +28,8 @@ public class InitDataHelper {
     private final MajorRepository majorRepository;
     private final PostRepository postRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ChatRoomService chatRoomService;  // 채팅방 관리 서비스
+    private final ChatService chatService;          // 채팅 메시지 관리 서비스
 
     // 사용자 생성
     public User createUser(String email, String rawPassword, String name, String studentId, Major major, Role role, UserStatus status) {
@@ -80,5 +89,25 @@ public class InitDataHelper {
                         .status(PostStatus.판매중)
                         .build()
         );
+    }
+    /**
+     * 채팅방 생성 (이미 있으면 기존 방 반환)
+     */
+    public ChatRoom createChatRoom(UUID postId, UUID sellerId, UUID buyerId) {
+        CreateChatRoomRequestDto request = new CreateChatRoomRequestDto(postId, sellerId, buyerId);
+        return chatRoomService.createOrGetRoom(request);
+    }
+
+    /**
+     * 채팅 메시지 생성(전송)
+     * 기본적으로 신규 메시지이고, receiverId는 null로 둠 (필요 시 변경)
+     */
+    public ChatMessage createChatMessage(UUID roomId, UUID senderId, String message) {
+        SendMessageRequestDto request = new SendMessageRequestDto(
+                roomId,
+                senderId,
+                message
+        );
+        return chatService.sendChatMessage(request);
     }
 }

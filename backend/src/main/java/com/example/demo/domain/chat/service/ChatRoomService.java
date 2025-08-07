@@ -2,16 +2,21 @@ package com.example.demo.domain.chat.service;
 
 import com.example.demo.domain.chat.dto.request.CreateChatRoomRequestDto;
 import com.example.demo.domain.chat.entity.ChatRoom;
+import com.example.demo.domain.chat.entity.ChatRoomUser;
 import com.example.demo.domain.chat.exception.ChatAccessDeniedException;
 import com.example.demo.domain.chat.exception.ChatRoomNotFoundException;
 
 import com.example.demo.domain.chat.exception.InvalidChatArgumentException;
+import com.example.demo.domain.chat.repository.ChatMessageRepository;
+import com.example.demo.domain.chat.repository.ChatRoomUserRepository;
+import com.example.demo.domain.user.entity.User;
+import com.example.demo.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-
+import jakarta.transaction.Transactional;
 import jakarta.annotation.PostConstruct;
 import java.util.*;
 
@@ -27,6 +32,13 @@ public class ChatRoomService {
 
     private HashOperations<String, String, ChatRoom> hashOpsChatRoom;
 
+    private final ChatRoomUserRepository chatRoomUserRepository; // 추가
+
+    private final UserRepository userRepository; // 추가: user 엔티티 조회 용도
+
+    private final ChatMessageRepository chatMessageRepository; // 메시지 삭제용 추가
+
+
     @PostConstruct
     public void init() {
         this.hashOpsChatRoom = redisTemplate.opsForHash();
@@ -35,23 +47,40 @@ public class ChatRoomService {
     // 1:1 채팅방 생성 (동일 참가자 조합 중복 방지)
     public ChatRoom createOrGetRoom(CreateChatRoomRequestDto dto) {
         UUID postId = dto.postId();
-        UUID sellerId = dto.sellerId(); // receiver
-        UUID buyerId = dto.buyerId();   // sender
+        UUID sellerId = dto.sellerId();
+        UUID buyerId = dto.buyerId();
 
-        // 기존 채팅방이 있는지 Redis에서 확인
         for (ChatRoom existingRoom : hashOpsChatRoom.values(CHAT_ROOMS)) {
             if (isSameParticipants(existingRoom, buyerId, sellerId) &&
                     Objects.equals(existingRoom.getPostId(), postId)) {
-                // 구매자(sender)에 대해 논리적 삭제 복구
                 existingRoom.setDeleteStatus(buyerId.toString(), false);
                 hashOpsChatRoom.put(CHAT_ROOMS, existingRoom.getRoomId().toString(), existingRoom);
                 return existingRoom;
             }
         }
 
-        // ❗ 없을 시 새로 생성
+        // 새 채팅방 생성
         ChatRoom chatRoom = new ChatRoom(postId, buyerId, sellerId);
         hashOpsChatRoom.put(CHAT_ROOMS, chatRoom.getRoomId().toString(), chatRoom);
+
+        // DB에 채팅방 참여자 저장 (ChatRoomUser 엔티티)
+        User sellerUser = userRepository.findById(sellerId)
+                .orElseThrow(() -> new IllegalArgumentException("판매자 유저 없음"));
+        User buyerUser = userRepository.findById(buyerId)
+                .orElseThrow(() -> new IllegalArgumentException("구매자 유저 없음"));
+
+        ChatRoomUser sellerMember = ChatRoomUser.builder()
+                .chatRoomId(chatRoom.getRoomId())
+                .user(sellerUser)
+                .build();
+        ChatRoomUser buyerMember = ChatRoomUser.builder()
+                .chatRoomId(chatRoom.getRoomId())
+                .user(buyerUser)
+                .build();
+
+        chatRoomUserRepository.save(sellerMember);
+        chatRoomUserRepository.save(buyerMember);
+
         return chatRoom;
     }
 
@@ -84,11 +113,17 @@ public class ChatRoomService {
         return room;
     }
 
+    public void leaveChatRoom(UUID roomId, UUID userId) {
+        // userId를 String으로 변환하여 deleteChatRoom 호출
+        deleteChatRoom(roomId, userId.toString());
+    }
+
     public void deleteChatRoom(UUID roomId, String username) {
         ChatRoom room = findByRoomId(roomId);
         if (room != null) {
             room.setDeleteStatus(username, true);
             hashOpsChatRoom.put(CHAT_ROOMS, roomId.toString(), room);
+
             if (room.getDeleteStatus(room.getSender().toString()) &&
                     room.getDeleteStatus(room.getReceiver().toString())) {
                 hashOpsChatRoom.delete(CHAT_ROOMS, roomId.toString());
@@ -114,4 +149,6 @@ public class ChatRoomService {
         }
         return room.getSender().equals(sender) ? room.getReceiver() : room.getSender();
     }
+
+
 }
