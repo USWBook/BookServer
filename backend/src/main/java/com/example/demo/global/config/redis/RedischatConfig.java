@@ -4,18 +4,15 @@ import com.example.demo.global.config.chat.RedisSubscriber;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisKeyValueAdapter;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
@@ -29,22 +26,8 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @EnableRedisRepositories(enableKeyspaceEvents = RedisKeyValueAdapter.EnableKeyspaceEvents.ON_STARTUP)
 public class RedischatConfig {
 
-    @Bean
-    public RedisConnectionFactory redisConnectionFactory(Environment environment) {
-        String redisHost = environment.getProperty("spring.data.redis.host");
-        int redisPort = Integer.parseInt(environment.getProperty("spring.data.redis.port"));
-        LettuceConnectionFactory factory = new LettuceConnectionFactory(redisHost, redisPort);
-        factory.afterPropertiesSet();
-        return factory;
-    }
-
-    @Bean
-    public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
-        return new StringRedisTemplate(redisConnectionFactory);
-    }
-
     /**
-     * 단일 Topic 사용을 위한 Bean 설정
+     * 채팅용 Pub/Sub 토픽
      */
     @Bean
     public ChannelTopic channelTopic() {
@@ -52,12 +35,15 @@ public class RedischatConfig {
     }
 
     /**
-     * redis에 발행(publish)된 메시지 처리를 위한 리스너 설정
+     * Redis에 publish된 메시지를 수신하는 리스너 컨테이너
+     * - 전역 RedisConnectionFactory(스프링 부트 자동설정) 주입
      */
     @Bean
-    public RedisMessageListenerContainer redisMessageListener(RedisConnectionFactory connectionFactory,
-                                                              MessageListenerAdapter listenerAdapter,
-                                                              ChannelTopic channelTopic) {
+    public RedisMessageListenerContainer redisMessageListener(
+            RedisConnectionFactory connectionFactory,
+            MessageListenerAdapter listenerAdapter,
+            ChannelTopic channelTopic
+    ) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
         container.addMessageListener(listenerAdapter, channelTopic);
@@ -65,7 +51,7 @@ public class RedischatConfig {
     }
 
     /**
-     * 실제 메시지를 처리하는 subscriber 설정
+     * 실제 메시지 처리 핸들러 (JSON -> 객체 역직렬화 후 WebSocket 전송)
      */
     @Bean
     public MessageListenerAdapter listenerAdapter(RedisSubscriber subscriber) {
@@ -73,50 +59,46 @@ public class RedischatConfig {
     }
 
     /**
-     * Redis에서 ChatRoom 객체를 직렬화/역직렬화할 Template
+     * 객체 직렬화 기반 채팅용 RedisTemplate
      */
     @Bean(name = "chatRedisTemplate")
     public RedisTemplate<String, Object> chatRedisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionFactory(connectionFactory);
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
 
+        // 키는 문자열
         StringRedisSerializer stringSerializer = new StringRedisSerializer();
 
+        // 값은 JSON (LocalDateTime 지원 및 타입 정보 포함)
         ObjectMapper objectMapper = new ObjectMapper();
-
-        // Java 8 날짜/시간 타입 지원 모듈 등록
         objectMapper.registerModule(new JavaTimeModule());
-
-        // 타입 정보 포함 설정 (필수)
         objectMapper.activateDefaultTyping(
                 LaissezFaireSubTypeValidator.instance,
                 ObjectMapper.DefaultTyping.NON_FINAL,
-                JsonTypeInfo.As.PROPERTY);
-
-        // 날짜를 타임스탬프로 저장하지 않고 ISO-8601 문자열로 저장하도록 설정
+                JsonTypeInfo.As.PROPERTY
+        );
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
         GenericJackson2JsonRedisSerializer jsonSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
 
-        redisTemplate.setKeySerializer(stringSerializer);
-        redisTemplate.setHashKeySerializer(stringSerializer);
-        redisTemplate.setValueSerializer(jsonSerializer);
-        redisTemplate.setHashValueSerializer(jsonSerializer);
+        template.setKeySerializer(stringSerializer);
+        template.setHashKeySerializer(stringSerializer);
+        template.setValueSerializer(jsonSerializer);
+        template.setHashValueSerializer(jsonSerializer);
 
-        redisTemplate.afterPropertiesSet();
-        return redisTemplate;
+        template.afterPropertiesSet();
+        return template;
     }
 
     /**
-     * Redis에서 문자열 기반 데이터만 다룰 경우 사용하는 Template
+     * 문자열 전용 채팅용 RedisTemplate
      */
     @Bean(name = "chatStringRedisTemplate")
-    public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+    public RedisTemplate<String, String> chatStringRedisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, String> template = new RedisTemplate<>();
-        template.setConnectionFactory(redisConnectionFactory);
+        template.setConnectionFactory(connectionFactory);
 
         StringRedisSerializer stringSerializer = new StringRedisSerializer();
-
         template.setKeySerializer(stringSerializer);
         template.setValueSerializer(stringSerializer);
         template.setHashKeySerializer(stringSerializer);
