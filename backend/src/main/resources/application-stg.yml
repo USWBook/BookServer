@@ -1,4 +1,3 @@
-# application-stg.yml
 spring:
   datasource:
     url: jdbc:mysql://mysql_1:3306/subook_stg?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
@@ -6,10 +5,11 @@ spring:
     password: ${custom.stg.db.password}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
-  redis:
-    host: redis_1
-    port: 6379
-    password: ${custom.stg.redis.password}
+  data:
+    redis:
+      host: redis_1
+      port: 6379
+      password: ${custom.stg.redis.password}
 
   jpa:
     hibernate:
