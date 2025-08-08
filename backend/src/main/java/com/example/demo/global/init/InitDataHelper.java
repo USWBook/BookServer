@@ -93,10 +93,12 @@ public class InitDataHelper {
     /**
      * 채팅방 생성 (이미 있으면 기존 방 반환)
      */
-    public ChatRoom createChatRoom(UUID postId, UUID sellerId, UUID buyerId) {
-        CreateChatRoomRequestDto request = new CreateChatRoomRequestDto(postId, sellerId, buyerId);
-        return chatRoomService.createOrGetRoom(request);
+    public ChatRoom createChatRoom(UUID postId, UUID buyerId) {
+        // sellerId는 바깥에서 별도로 필요 없음, postId로 서버가 찾음
+        CreateChatRoomRequestDto request = new CreateChatRoomRequestDto(postId);
+        return chatRoomService.createOrGetRoom(request, buyerId);
     }
+
 
     /**
      * 채팅 메시지 생성(전송)

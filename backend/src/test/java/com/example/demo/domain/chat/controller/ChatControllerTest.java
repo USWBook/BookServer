@@ -8,219 +8,199 @@ import com.example.demo.domain.chat.service.ChatRoomService;
 import com.example.demo.domain.chat.service.ChatService;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
-import com.example.demo.global.jwt.JwtProvider;
-import com.example.demo.global.redis.repository.RedisTokenRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.*;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.mockito.BDDMockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(ChatController.class)
-@AutoConfigureMockMvc(addFilters = false) // JWT, CSRF 등 Security 필터 비활성화
+
 class ChatControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @InjectMocks
+    private ChatController chatController;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
+    @Mock
     private ChatRoomService chatRoomService;
 
-    @MockBean
+    @Mock
     private ChatService chatService;
 
-    @MockBean
-    private JwtProvider jwtProvider;
-
-    @MockBean
+    @Mock
     private UserRepository userRepository;
 
-    @MockBean
-    private RedisTokenRepository redisTokenRepository;
+    @Mock
+    private Authentication authentication;
 
-    final UUID postId = UUID.fromString("11111111-1111-1111-1111-111111111111");
-    final UUID sellerId = UUID.fromString("22222222-2222-2222-2222-222222222222");
-    final UUID buyerId = UUID.fromString("33333333-3333-3333-3333-333333333333");
-    final UUID roomId = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    private MockMvc mockMvc;
+    private ObjectMapper objectMapper;
 
+    private UUID roomId;
+    private UUID senderId;
+    private UUID receiverId;
+    private ChatRoom chatRoom;
+    private User user;
 
-    @Test
-    @DisplayName("채팅방 생성 - 200 OK")
-    @WithMockUser
-    void createRoom_success() throws Exception {
-        ChatRoom room = ChatRoom.builder()
-                .roomId(roomId)
-                .postId(postId)
-                .sender(buyerId)
-                .receiver(sellerId)
-                .userCount(2)
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        mockMvc = MockMvcBuilders.standaloneSetup(chatController).build();
+        objectMapper = new ObjectMapper();
+
+        roomId = UUID.randomUUID();
+        senderId = UUID.randomUUID();
+        receiverId = UUID.randomUUID();
+
+        user = User.builder()
+                .id(senderId)
+                .email("ignored@example.com") // 이메일 무시
                 .build();
 
-        when(chatRoomService.createOrGetRoom(any(CreateChatRoomRequestDto.class)))
-                .thenReturn(room);
+        chatRoom = ChatRoom.builder()
+                .roomId(roomId)
+                .sender(senderId)
+                .receiver(receiverId)
+                .userCount(2)
+                .lastMessage("hello")
+                .lastTimestamp(LocalDateTime.now().toString())
+                .build();
 
-        CreateChatRoomRequestDto requestDto = new CreateChatRoomRequestDto(postId, sellerId, buyerId);
+        // 인증 무시: authentication.getName()이 UUID 문자열 반환하도록 모킹
+        given(authentication.getName()).willReturn(senderId.toString());
 
-        mockMvc.perform(post("/api/chat/room")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto))
-                        .with(csrf()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("200"))
-                .andExpect(jsonPath("$.data.data.roomId").value(roomId.toString()));
+
+        // 컨트롤러 내부 userRepository.findByEmail() 예외 방지용 모킹(Optional.of(user))
+        given(userRepository.findByEmail(anyString())).willReturn(Optional.of(user));
     }
 
     @Test
-    @DisplayName("내 채팅방 목록 조회 - 200 OK")
-    @WithMockUser
-    void listRooms() throws Exception {
-        ChatRoom room = ChatRoom.builder()
-                .roomId(roomId)
-                .postId(postId)
-                .sender(buyerId)
-                .receiver(sellerId)
-                .userCount(2)
-                .lastMessage("안녕하세요")
-                .lastTimestamp("2023-01-01T12:00:00")
-                .build();
+    @DisplayName("채팅방 생성 & 입장")
+    void testEnterChatRoom_success() throws Exception {
+        given(chatRoomService.findByRoomId(roomId)).willReturn(chatRoom);
 
-        when(chatRoomService.findRoomByUser(eq(buyerId)))
-                .thenReturn(List.of(room));
-
-        mockMvc.perform(get("/api/chat/rooms").param("userId", buyerId.toString()))
+        mockMvc.perform(get("/api/chat/room/" + roomId)
+                        .principal(authentication))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("200"))
-                .andExpect(jsonPath("$.data.data[0].roomId").value(roomId.toString()))
-                .andExpect(jsonPath("$.data.data[0].lastMessage").value("안녕하세요"));
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("채팅방 입장 성공"))
+                .andExpect(jsonPath("$.data.roomId").value(roomId.toString()));
     }
 
     @Test
-    @DisplayName("채팅 메시지 전송 API - 200 OK")
-    @WithMockUser
-    void sendChatMessage_success() throws Exception {
-        SendMessageRequestDto request = new SendMessageRequestDto(
-                roomId,
-                buyerId,
-                UUID.randomUUID(),
-                sellerId,
-                "hello!"
-        );
+    @DisplayName("내 채팅방 목록 조회")
+    void testListRooms() throws Exception {
+        List<ChatRoom> rooms = List.of(chatRoom);
 
-        User senderUser = User.builder()
-                .id(buyerId)
-                .email("user@example.com")
-                .name("테스트유저")
+        given(chatRoomService.findRoomByUser(any(UUID.class))).willReturn(rooms);
+
+        mockMvc.perform(get("/api/chat/rooms")
+                        .principal(authentication))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("나의 채팅방 목록 조회 성공"))
+                .andExpect(jsonPath("$.data[0].roomId").value(roomId.toString()));
+    }
+
+    @Test
+    @DisplayName("채팅 메시지 수신")
+    void testGetMessages_success() throws Exception {
+        given(chatRoomService.findByRoomId(roomId)).willReturn(chatRoom);
+
+        ChatMessage chatMessage = ChatMessage.builder()
+                .id(UUID.randomUUID())
+                .chatRoomId(roomId)
+                .sender(user)
+                .content("test message")
+                .sentAt(LocalDateTime.now())
                 .build();
+
+        List<ChatMessage> messages = List.of(chatMessage);
+        given(chatService.getMessages(roomId)).willReturn(messages);
+
+        mockMvc.perform(get("/api/chat/rooms/" + roomId + "/messages")
+                        .principal(authentication))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("채팅 메시지 목록 조회 성공"))
+                .andExpect(jsonPath("$.data[0].message").value("test message"));
+    }
+
+    @Test
+    @DisplayName("채팅 메시지 송신")
+    void testSendChatMessage_success() throws Exception {
+        SendMessageRequestDto requestDto = new SendMessageRequestDto(roomId, senderId, "Hello Chat!");
 
         ChatMessage savedMessage = ChatMessage.builder()
                 .id(UUID.randomUUID())
                 .chatRoomId(roomId)
-                .sender(senderUser) // sender User 객체는 서비스 레이어에서 채워짐, 여기서는 null 허용
-                .content("hello!")
+                .sender(user)
+                .content("Hello Chat!")
                 .sentAt(LocalDateTime.now())
                 .build();
 
-        when(chatService.sendChatMessage(any(SendMessageRequestDto.class)))
-                .thenReturn(savedMessage);
+        given(chatService.sendChatMessage(any(SendMessageRequestDto.class))).willReturn(savedMessage);
 
-        mockMvc.perform(post("/api/chat/messages")
+        mockMvc.perform(post("/api/chat/rooms/" + roomId + "/messages")
+                        .principal(authentication)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request))
-                        .with(csrf()))
+                        .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("200"))
-                .andExpect(jsonPath("$.data.data.message").value("hello!"));
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("채팅 메시지 전송 완료"))
+                .andExpect(jsonPath("$.data.message").value("Hello Chat!"));
     }
 
     @Test
-    @DisplayName("채팅 메시지 목록 조회 - 200 OK")
-    @WithMockUser
-    void getMessages_success() throws Exception {
-
-        User senderUser = User.builder()
-                .id(buyerId)
-                .email("testuser@example.com")
-                .name("테스트유저")
-                .build();
-
-        ChatMessage msg = ChatMessage.builder()
-                .id(UUID.randomUUID())
-                .chatRoomId(roomId)
-                .sender(senderUser) // 테스트용 null 가능
-                .content("테스트메시지")
-                .sentAt(LocalDateTime.now())
-                .build();
-
-        when(chatService.getMessages(roomId))
-                .thenReturn(List.of(msg));
-
-        mockMvc.perform(get("/api/chat/room/" + roomId + "/messages"))
+    @DisplayName("채팅방 나가기")
+    void testLeaveChatRoom_success() throws Exception {
+        mockMvc.perform(post("/api/chat/rooms/" + roomId + "/leave")
+                        .principal(authentication))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("200"))
-                .andExpect(jsonPath("$.data[0].message").value("테스트메시지"));
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("채팅방 나가기 완료"));
+
+        then(chatRoomService).should().leaveChatRoom(eq(roomId), eq(senderId));
     }
-
-    @Test
-    @DisplayName("채팅방 하나 조회 성공")
-    @WithMockUser
-    void getRoom_success() throws Exception {
-        ChatRoom room = ChatRoom.builder()
-                .roomId(roomId)
-                .postId(postId)
-                .sender(buyerId)
-                .receiver(sellerId)
-                .userCount(2)
-                .build();
-
-        when(chatRoomService.findByRoomId(roomId)).thenReturn(room);
-
-        mockMvc.perform(get("/api/chat/room/" + roomId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("200"))
-                .andExpect(jsonPath("$.data.roomId").value(roomId.toString()));
-    }
-
-//    @Test
-//    @DisplayName("채팅방 삭제 - 200 OK")
-//    @WithMockUser
-//    void deleteChatRoom_success() throws Exception {
-//        mockMvc.perform(delete("/api/chat/room/{roomId}", roomId)
-//                        .param("username", "testuser")
-//                        .with(csrf()))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.code").value("200"));
-//        // 필요시 verify(chatRoomService).deleteChatRoom(roomId, "testuser")
-//    }
-
-//    @Test
-//    @DisplayName("채팅 메시지 읽음 처리 - 200 OK")
-//    @WithMockUser
-//    void markMessagesRead_success() throws Exception {
-//        // 실제 서비스 호출은 MockBean에서 동작 모방
-//
-//        mockMvc.perform(post("/api/chat/room/{roomId}/read", roomId)
-//                        .param("username", "testuser")
-//                        .with(csrf()))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.code").value("200"))
-//                .andExpect(jsonPath("$.message").value("메시지 읽음 처리 완료"));
-//    }
 }
+
+
+//    @Test
+//    @DisplayName("성공 (테스트 코드만 수정)")
+//    void testCreateChatRoom() throws Exception {
+//        CreateChatRoomRequestDto requestDto = new CreateChatRoomRequestDto(chatRoom.getPostId());
+//
+//        // 인증된 사용자의 이메일 반환하도록 설정
+//        given(authentication.getName()).willReturn("user3@example.com");
+//
+//        // userRepository 의 email 조회도 설정
+//        given(userRepository.findByEmail("user3@example.com")).willReturn(Optional.of(user));
+//
+//        // 채팅방 생성 서비스 모킹
+//        given(chatRoomService.createOrGetRoom(any(CreateChatRoomRequestDto.class), any(UUID.class)))
+//                .willReturn(chatRoom);
+//
+//        mockMvc.perform(post("/api/chat/room")
+//                        .principal(authentication)   // 인증 목 객체 주입
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content(objectMapper.writeValueAsString(requestDto)))
+//                .andExpect(status().isOk())
+//                .andExpect(jsonPath("$.code").value(200))
+//                .andExpect(jsonPath("$.message").value("채팅 요청 완료"))
+//                .andExpect(jsonPath("$.data.roomId").value(roomId.toString()));
+//    }

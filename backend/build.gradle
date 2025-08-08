@@ -82,12 +82,17 @@ dependencies {
 
 	//websocket
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
-
+	implementation 'org.webjars:sockjs-client:1.5.1'
+	implementation 'org.webjars:stomp-websocket:2.3.4'
 	//LocalDateTime 직렬화 오류 해결
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
 	// 이메일 전송을 위해 Spring Boot Starter Mail 의존성을 추가
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.1'
+
+
 }
 
 tasks.named('test') {
