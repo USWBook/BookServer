@@ -11,8 +11,9 @@ spring:
         highlight_sql: false
         use_sql_comments: false
   profiles:
-    active: dev
     include: secret
+    active: dev
+
 
   output:
     ansi:
