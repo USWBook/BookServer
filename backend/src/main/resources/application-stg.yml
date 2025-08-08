@@ -1,15 +1,15 @@
-# 운영 서버와 똑같이 운영되는 스테이징 서버 (테스트 서버) 설정
+# application-stg.yml
 spring:
-  data:
-    redis:
-      host: localhost
-      password: ${custom.stg.redis.password}
-      port: 6379
   datasource:
-    url: jdbc:mysql://localhost:3306/subook_stg?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    url: jdbc:mysql://mysql_1:3306/subook_stg?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: subook_stg_user
     password: ${custom.stg.db.password}
     driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: redis_1
+      port: 6379
+      password: ${custom.stg.redis.password}
 
   jpa:
     hibernate:
@@ -19,6 +19,12 @@ spring:
       hibernate:
         format_sql: true
         default_batch_fetch_size: 100
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
 
 custom:
   site:
