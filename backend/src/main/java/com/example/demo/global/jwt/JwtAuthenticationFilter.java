@@ -43,50 +43,55 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain chain) throws ServletException, IOException{
+                                    FilterChain chain) throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.info("[JWT Filter] Authorization 헤더 없음 또는 잘못됨 → 인증 없이 통과");
+        // ① 액추에이터/헬스는 바로 통과 (의존성 안 타고 빠르게)
+        String path = request.getRequestURI();
+        if (path.startsWith("/actuator/")) {
             chain.doFilter(request, response);
             return;
         }
 
-        String path = request.getRequestURI();
+        // ② 토큰 없으면 통과
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            chain.doFilter(request, response);
+            return;
+        }
 
-        log.info("[JWT Filter] 요청 URI: {}", path);
-        log.info("[JWT Filter] Authorization 헤더: {}", authHeader);
-
-        String token = authHeader.replace("Bearer ", "");
+        String token = authHeader.substring("Bearer ".length());
 
         try {
-
             // 블랙리스트 체크
             if (redisTokenRepository.isBlacklisted(token)) {
-                log.info("[JWT Filter] 블랙리스트 토큰: {}  요청 차단.", token);
-                throw new JwtBlacklistedException();
+                // (선택) 401로 응답하고 종료
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                response.getWriter().write("{\"code\":\"UNAUTHORIZED\",\"message\":\"블랙리스트 토큰\"}");
+                return;
             }
-            String email = jwtProvider.extractEmail(token);
 
+            String email = jwtProvider.extractEmail(token);
             User user = userRepository.findByEmail(email)
                     .orElseThrow(JwtUserNotFoundException::new);
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                             user.getEmail(), null,
-                            List.of(new SimpleGrantedAuthority(
-                                    "ROLE_" + user.getRole().name()))
+                            List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
                     );
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            // 인증 성공 시에만 다음 필터로 진행
             chain.doFilter(request, response);
 
-        }catch (CustomJwtException e) {
-                log.error("[JWT Filter] JWT 예외 발생: {}", e.getMessage());
-                // 이거 로그인 안되어 있거나 토큰이 만료되면 예외 발생 시키고 이걸 프론트가 받으면 프론트에서 리다이렉트 시켜야함
-            throw new JwtTokenExpiredException();
-            }
+        } catch (CustomJwtException e) {
+            // (선택) 기존처럼 throw로 전파해도 되지만,
+            // 헬스체크/프록시와 궁합을 위해 401 응답으로 종료하는 걸 권장
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.getWriter().write("{\"code\":\"UNAUTHORIZED\",\"message\":\"" + e.getMessage() + "\"}");
+            // throw new JwtTokenExpiredException();
+        }
     }
 //    private void setErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
 //        response.setStatus(status);
