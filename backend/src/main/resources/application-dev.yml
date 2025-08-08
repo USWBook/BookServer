@@ -4,14 +4,6 @@ spring:
     driver-class-name: org.h2.Driver
     username: sa
     password:
-    hikari:
-      auto-commit: false
-
-  data:
-    redis:
-      host: localhost # 로컬 Redis 서버 호스트
-      port: 6379
-
   jpa:
     hibernate:
       ddl-auto: update
