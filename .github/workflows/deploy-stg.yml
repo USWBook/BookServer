@@ -96,62 +96,75 @@ jobs:
           working-directory: /
           comment: Deploy
           command: |
+            set -euo pipefail
+
             IMAGE="ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest"
             NETWORK="common"
-            HEALTH_ENDPOINT="/actuator/health"
-            TIMEOUT=120
+            HEALTH_LIVE="/actuator/health/liveness"
+            HEALTH_READY="/actuator/health/readiness"
+            TIMEOUT_LIVE=90
+            TIMEOUT_READY=300
 
             if docker ps --format '{{.Names}}' | grep -q "subookApp1_1"; then
-              CURRENT="subookApp1_1"
-              NEXT="subookApp1_2"
-              CURRENT_PORT=8080
-              NEXT_PORT=8081
+              CURRENT="subookApp1_1"; NEXT="subookApp1_2"; CURRENT_PORT=8080; NEXT_PORT=8081
             else
-              CURRENT="subookApp1_2"
-              NEXT="subookApp1_1"
-              CURRENT_PORT=8081
-              NEXT_PORT=8080
+              CURRENT="subookApp1_2"; NEXT="subookApp1_1"; CURRENT_PORT=8081; NEXT_PORT=8080
             fi
 
-            echo "Starting new container: $NEXT on port $NEXT_PORT..."
+            echo "[1/5] Pull image"
             docker pull "$IMAGE"
-            docker stop "$NEXT" 2>/dev/null
-            docker rm "$NEXT" 2>/dev/null
+
+            echo "[2/5] Start new container: $NEXT on :$NEXT_PORT"
+            docker stop "$NEXT" 2>/dev/null || true
+            docker rm "$NEXT" 2>/dev/null || true
             docker run -d \
-            --name "$NEXT" \
-            --restart unless-stopped \
-            --network $NETWORK \
-            -p "$NEXT_PORT":8080 \
-            -e SPRING_PROFILES_ACTIVE=secret,stg \
-            -e TZ=Asia/Seoul \
-            "$IMAGE"
+              --name "$NEXT" \
+              --restart unless-stopped \
+              --network $NETWORK \
+              -p "$NEXT_PORT":8080 \
+              -e SPRING_PROFILES_ACTIVE=secret,stg \
+              -e TZ=Asia/Seoul \
+              "$IMAGE"
 
-            echo "Waiting for health check..."
-            START_TIME=$(date +%s)
-            while true; do
-              CONTENT=$(curl -s http://localhost:$NEXT_PORT$HEALTH_ENDPOINT)
+            wait_for () {
+              local port="$1" url="$2" timeout="$3"
+              local start=$(date +%s)
+              while true; do
+                if curl -fsS "http://localhost:${port}${url}" >/dev/null; then
+                  return 0
+                fi
+                local elapsed=$(( $(date +%s) - start ))
+                if [ $elapsed -ge $timeout ]; then
+                  return 1
+                fi
+                echo "⏳ waiting ${url} on :${port} ... (${elapsed}s)"
+                sleep 3
+              done
+            }
 
-              if [[ "$CONTENT" == *'"status":"UP"'* ]]; then
-                echo "✅ $NEXT is UP!"
-                break
-              fi
+            echo "[3/5] Wait liveness"
+            if ! wait_for "$NEXT_PORT" "$HEALTH_LIVE" "$TIMEOUT_LIVE"; then
+              echo "❌ Liveness failed within ${TIMEOUT_LIVE}s. Logs:"
+              docker logs --tail=200 "$NEXT" || true
+              docker stop "$NEXT" || true
+              docker rm "$NEXT" || true
+              exit 1
+            fi
+            echo "✅ Liveness UP"
 
-              ELAPSED_TIME=$(( $(date +%s) - START_TIME ))
-              if [[ $ELAPSED_TIME -ge $TIMEOUT ]]; then
-                echo "❌ Timeout: $NEXT did not start in $TIMEOUT seconds."
-                docker stop "$NEXT"
-                docker rm "$NEXT"
-                exit 1
-              fi
+            echo "[4/5] Wait readiness"
+            if ! wait_for "$NEXT_PORT" "$HEALTH_READY" "$TIMEOUT_READY"; then
+              echo "❌ Readiness failed within ${TIMEOUT_READY}s. Logs:"
+              docker logs --tail=200 "$NEXT" || true
+              docker stop "$NEXT" || true
+              docker rm "$NEXT" || true
+              exit 1
+            fi
+            echo "✅ Readiness UP"
 
-              echo "⏳ Waiting for $NEXT to be UP..."
-              sleep 5
-            done
+            echo "[5/5] Switch traffic: stop old $CURRENT"
+            docker stop "$CURRENT" 2>/dev/null || true
+            docker rm "$CURRENT" 2>/dev/null || true
 
-            echo "Stopping old container: $CURRENT"
-            docker stop "$CURRENT" 2>/dev/null
-            docker rm "$CURRENT" 2>/dev/null
-
-            docker rmi $(docker images -f "dangling=true" -q) 2>/dev/null
-
+            docker rmi $(docker images -f "dangling=true" -q) 2>/dev/null || true
             echo "✅ Deployment complete. Running container: $NEXT on port $NEXT_PORT"
