@@ -36,7 +36,7 @@ public class RedischatConfig {
 
     /**
      * Redis에 publish된 메시지를 수신하는 리스너 컨테이너
-     * - 전역 RedisConnectionFactory(스프링 부트 자동설정) 주입
+     * - 스프링 부트가 자동 설정하는 RedisConnectionFactory 주입
      */
     @Bean
     public RedisMessageListenerContainer redisMessageListener(
@@ -66,10 +66,10 @@ public class RedischatConfig {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
-        // 키는 문자열
+        // 키는 문자열 직렬화
         StringRedisSerializer stringSerializer = new StringRedisSerializer();
 
-        // 값은 JSON (LocalDateTime 지원 및 타입 정보 포함)
+        // 값은 JSON 직렬화 (LocalDateTime 지원, 타입 정보 포함)
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.activateDefaultTyping(
