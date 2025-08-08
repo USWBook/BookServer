@@ -99,7 +99,7 @@ jobs:
             IMAGE="ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest"
             NETWORK="common"
             HEALTH_ENDPOINT="/actuator/health"
-            TIMEOUT=60
+            TIMEOUT=120
 
             if docker ps --format '{{.Names}}' | grep -q "subookApp1_1"; then
               CURRENT="subookApp1_1"
@@ -118,11 +118,13 @@ jobs:
             docker stop "$NEXT" 2>/dev/null
             docker rm "$NEXT" 2>/dev/null
             docker run -d \
-              --name "$NEXT" \
-              --restart unless-stopped \
-              --network $NETWORK \
-              -p "$NEXT_PORT":8080 \
-              "$IMAGE"
+            --name "$NEXT" \
+            --restart unless-stopped \
+            --network $NETWORK \
+            -p "$NEXT_PORT":8080 \
+            -e SPRING_PROFILES_ACTIVE=secret,stg \
+            -e TZ=Asia/Seoul \
+            "$IMAGE"
 
             echo "Waiting for health check..."
             START_TIME=$(date +%s)
