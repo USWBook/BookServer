@@ -5,11 +5,11 @@ spring:
     username: subook_stg_user
     password: ${custom.stg.db.password}
     driver-class-name: com.mysql.cj.jdbc.Driver
-  data:
-    redis:
-      host: redis_1
-      port: 6379
-      password: ${custom.stg.redis.password}
+
+  redis:
+    host: redis_1
+    port: 6379
+    password: ${custom.stg.redis.password}
 
   jpa:
     hibernate:
