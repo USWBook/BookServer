@@ -21,11 +21,14 @@ spring:
         default_batch_fetch_size: 100
 
 management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
   endpoints:
     web:
       exposure:
         include: health,info
-
 custom:
   site:
     domain: stg.subook.shop
