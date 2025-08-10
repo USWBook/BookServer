@@ -10,6 +10,7 @@ on:
       - 'backend/build.gradle'
       - 'backend/settings.gradle'
       - 'backend/Dockerfile.stg'
+  workflow_dispatch: {}   # 수동 실행 버튼
 
 jobs:
   buildImageAndPush:
@@ -105,22 +106,35 @@ jobs:
             TIMEOUT_LIVE=90
             TIMEOUT_READY=300
 
-            if docker ps --format '{{.Names}}' | grep -q "subookApp1_1"; then
-              CURRENT="subookApp1_1"; NEXT="subookApp1_2"; CURRENT_PORT=8080; NEXT_PORT=8081
-            else
-              CURRENT="subookApp1_2"; NEXT="subookApp1_1"; CURRENT_PORT=8081; NEXT_PORT=8080
-            fi
+            echo "[0/5] Prepare docker network"
+            docker network create "$NETWORK" >/dev/null 2>&1 || true
 
-            echo "[1/5] Pull image"
+            echo "[1/5] Pull image: $IMAGE"
             docker pull "$IMAGE"
 
-            echo "[2/5] Start new container: $NEXT on :$NEXT_PORT"
+            echo "[1.5/5] Decide CURRENT/NEXT by RUNNING containers"
+            RUNNING=$(docker ps --format '{{.Names}}' | grep -E '^subookApp1_[12]$' || true)
+            if [ "$RUNNING" = "subookApp1_1" ]; then
+              CURRENT="subookApp1_1"; CURRENT_PORT=8080
+              NEXT="subookApp1_2";   NEXT_PORT=8081
+            elif [ "$RUNNING" = "subookApp1_2" ]; then
+              CURRENT="subookApp1_2"; CURRENT_PORT=8081
+              NEXT="subookApp1_1";   NEXT_PORT=8080
+            else
+              CURRENT=""; CURRENT_PORT=""
+              NEXT="subookApp1_1"; NEXT_PORT=8080
+            fi
+            echo "CURRENT=${CURRENT:-none}, NEXT=$NEXT (ports: CURRENT=${CURRENT_PORT:-na}, NEXT=$NEXT_PORT)"
+
+            echo "[2/5] Clean old NEXT if exists (Exited or leftover)"
             docker stop "$NEXT" 2>/dev/null || true
             docker rm "$NEXT" 2>/dev/null || true
+
+            echo "[2.5/5] Start NEXT: $NEXT on :$NEXT_PORT"
             docker run -d \
               --name "$NEXT" \
               --restart unless-stopped \
-              --network $NETWORK \
+              --network "$NETWORK" \
               -p "$NEXT_PORT":8080 \
               -e SPRING_PROFILES_ACTIVE=secret,stg \
               -e TZ=Asia/Seoul \
@@ -128,7 +142,8 @@ jobs:
 
             wait_for () {
               local port="$1" url="$2" timeout="$3"
-              local start=$(date +%s)
+              local start
+              start=$(date +%s)
               while true; do
                 if curl -fsS "http://localhost:${port}${url}" >/dev/null; then
                   return 0
@@ -162,9 +177,11 @@ jobs:
             fi
             echo "✅ Readiness UP"
 
-            echo "[5/5] Switch traffic: stop old $CURRENT"
-            docker stop "$CURRENT" 2>/dev/null || true
-            docker rm "$CURRENT" 2>/dev/null || true
+            echo "[5/5] Switch traffic: stop old CURRENT (if any)"
+            if [ -n "${CURRENT}" ]; then
+              docker stop "$CURRENT" 2>/dev/null || true
+              docker rm "$CURRENT" 2>/dev/null || true
+            fi
 
             docker rmi $(docker images -f "dangling=true" -q) 2>/dev/null || true
             echo "✅ Deployment complete. Running container: $NEXT on port $NEXT_PORT"
