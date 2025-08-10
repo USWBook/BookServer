@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -27,7 +28,6 @@ import org.springframework.security.web.authentication.AnonymousAuthenticationFi
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
-
     private final AuthenticationConfiguration authenticationConfiguration;
 
     @Bean
@@ -59,14 +59,24 @@ public class SecurityConfig {
 
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // ⬇️ 경로 권한 설정
+                // 경로 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ 액추에이터 허용 (헬스체크/무중단 배포용)
-                        .requestMatchers("/actuator/**").permitAll()
+                        // ✅ 프리플라이트 허용
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // 공개 API
-                        .requestMatchers("/api/major/**", "/api/auth/**", "/api/mail/**",
-                                "/h2-console/**", "/api/posts/**", "/api/chat/**").permitAll()
+                        // ✅ 루트/헬스/문서/정적 리소스/에러 공개
+                        .requestMatchers(
+                                "/", "/ping", "/error", "/favicon.ico",
+                                "/actuator/**",
+                                "/swagger-ui/**", "/v3/api-docs/**",
+                                "/css/**", "/js/**", "/images/**"
+                        ).permitAll()
+
+                        // ✅ 공개 API
+                        .requestMatchers(
+                                "/api/major/**", "/api/auth/**", "/api/mail/**",
+                                "/h2-console/**", "/api/posts/**", "/api/chat/**"
+                        ).permitAll()
 
                         // 그 외는 인증 필요
                         .anyRequest().authenticated()
@@ -74,7 +84,7 @@ public class SecurityConfig {
 
                 // 예외 처리
                 .exceptionHandling(exception -> exception
-                        .accessDeniedHandler(customAccessDeniedHandler())      // 403
+                        .accessDeniedHandler(customAccessDeniedHandler())          // 403
                         .authenticationEntryPoint(customAuthenticationEntryPoint()) // 401
                 )
 
