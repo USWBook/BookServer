@@ -110,10 +110,10 @@ jobs:
             TIMEOUT_LIVE=90
             TIMEOUT_READY=300
 
-            echo "[0/6] Prepare docker network"
+            echo "[0/7] Prepare docker network"
             docker network create "$NETWORK" >/dev/null 2>&1 || true
 
-            echo "[1/6] GHCR login via SSM Parameter Store"
+            echo "[1/7] GHCR login via SSM Parameter Store"
             GHCR_USER=$(aws ssm get-parameter --region ${{ secrets.AWS_REGION }} --name "/subook/ghcr/user"  --query 'Parameter.Value' --output text)
             GHCR_TOKEN=$(aws ssm get-parameter --region ${{ secrets.AWS_REGION }} --with-decryption --name "/subook/ghcr/token" --query 'Parameter.Value' --output text)
             if [ -z "${GHCR_USER}" ] || [ -z "${GHCR_TOKEN}" ]; then
@@ -122,10 +122,10 @@ jobs:
             fi
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
-            echo "[2/6] Pull image: $IMAGE"
+            echo "[2/7] Pull image: $IMAGE"
             docker pull "$IMAGE"
 
-            echo "[2.5/6] Decide CURRENT/NEXT by RUNNING containers"
+            echo "[2.5/7] Decide CURRENT/NEXT by RUNNING containers"
             RUNNING=$(docker ps --format '{{.Names}}' | grep -E '^subookApp1_[12]$' || true)
             if [ "$RUNNING" = "subookApp1_1" ]; then
               CURRENT="subookApp1_1"; CURRENT_PORT=8080
@@ -139,11 +139,11 @@ jobs:
             fi
             echo "CURRENT=${CURRENT:-none}, NEXT=$NEXT (ports: CURRENT=${CURRENT_PORT:-na}, NEXT=$NEXT_PORT)"
 
-            echo "[3/6] Clean old NEXT if exists (Exited or leftover)"
+            echo "[3/7] Clean old NEXT if exists (Exited or leftover)"
             docker stop "$NEXT" 2>/dev/null || true
             docker rm "$NEXT" 2>/dev/null || true
 
-            echo "[4/6] Start NEXT: $NEXT on :$NEXT_PORT"
+            echo "[4/7] Start NEXT: $NEXT on :$NEXT_PORT"
             docker run -d \
               --name "$NEXT" \
               --restart unless-stopped \
@@ -170,7 +170,7 @@ jobs:
               done
             }
 
-            echo "[5/6] Wait liveness"
+            echo "[5/7] Wait liveness"
             if ! wait_for "$NEXT_PORT" "$HEALTH_LIVE" "$TIMEOUT_LIVE"; then
               echo "❌ Liveness failed within ${TIMEOUT_LIVE}s. Logs:"
               docker logs --tail=200 "$NEXT" || true
@@ -180,7 +180,7 @@ jobs:
             fi
             echo "✅ Liveness UP"
 
-            echo "[6/6] Wait readiness"
+            echo "[6/7] Wait readiness"
             if ! wait_for "$NEXT_PORT" "$HEALTH_READY" "$TIMEOUT_READY"; then
               echo "❌ Readiness failed within ${TIMEOUT_READY}s. Logs:"
               docker logs --tail=200 "$NEXT" || true
@@ -190,7 +190,53 @@ jobs:
             fi
             echo "✅ Readiness UP"
 
-            echo "[Switch] Stop & remove old CURRENT (if any)"
+            # --- HAProxy cfg for stg.subook.shop (idempotent) ---
+            echo "[6.5/7] Ensure HAProxy config for stg.subook.shop"
+            mkdir -p /dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy
+
+            cat >/dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy/haproxy.cfg <<'EOC'
+            global
+              log stdout format raw local0
+
+            resolvers docker
+              nameserver dns1 127.0.0.11:53
+              resolve_retries 3
+              timeout retry 1s
+              hold valid 10s
+
+            defaults
+              mode http
+              timeout connect 5s
+              timeout client  60s
+              timeout server  60s
+
+            frontend http_front
+              bind *:80
+              acl host_subook hdr(host) -i stg.subook.shop
+              http-request set-header X-Forwarded-Proto https
+              use_backend http_back if host_subook
+              default_backend http_back
+
+            backend http_back
+              balance roundrobin
+              option httpchk GET /actuator/health
+              default-server inter 4s rise 3 fall 3 init-addr last,libc,none resolvers docker
+              option redispatch
+              server subook_server_1 subookApp1_1:8080 check
+              server subook_server_2 subookApp1_2:8080 check
+            EOC
+
+            docker rm -f ha_proxy_1 2>/dev/null || true
+            docker run -d \
+              --name ha_proxy_1 \
+              --restart unless-stopped \
+              --network common \
+              -p 8090:80 \
+              -v /dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy:/usr/local/etc/haproxy \
+              haproxy
+            # --- /HAProxy cfg ---
+
+            echo "[7/7] Switch: stop old CURRENT (if any)"
             if [ -n "${CURRENT}" ]; then
               docker stop "$CURRENT" 2>/dev/null || true
               docker rm "$CURRENT" 2>/dev/null || true
