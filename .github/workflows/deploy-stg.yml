@@ -36,7 +36,7 @@ jobs:
       - name: Docker Buildx 설치
         uses: docker/setup-buildx-action@v2
 
-      - name: 레지스트리 로그인
+      - name: 레지스트리 로그인 (빌드용)
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -83,8 +83,12 @@ jobs:
             "Name=tag:Name,Values=subook-stg-ec2-main" \
             "Name=instance-state-name,Values=running" \
             --query "Reservations[].Instances[].InstanceId" --output text)
+          if [ -z "$INSTANCE_ID" ]; then
+            echo "❌ No running instance found for subook-stg-ec2-main"
+            exit 1
+          fi
           echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
-          echo $INSTANCE_ID
+          echo "Target INSTANCE_ID: $INSTANCE_ID"
 
       - name: AWS SSM Send-Command
         uses: peterkimzz/aws-ssm-send-command@master
@@ -106,13 +110,22 @@ jobs:
             TIMEOUT_LIVE=90
             TIMEOUT_READY=300
 
-            echo "[0/5] Prepare docker network"
+            echo "[0/6] Prepare docker network"
             docker network create "$NETWORK" >/dev/null 2>&1 || true
 
-            echo "[1/5] Pull image: $IMAGE"
+            echo "[1/6] GHCR login via SSM Parameter Store"
+            GHCR_USER=$(aws ssm get-parameter --region ${{ secrets.AWS_REGION }} --name "/subook/ghcr/user"  --query 'Parameter.Value' --output text)
+            GHCR_TOKEN=$(aws ssm get-parameter --region ${{ secrets.AWS_REGION }} --with-decryption --name "/subook/ghcr/token" --query 'Parameter.Value' --output text)
+            if [ -z "${GHCR_USER}" ] || [ -z "${GHCR_TOKEN}" ]; then
+              echo "❌ Missing GHCR credentials in SSM Parameter Store (/subook/ghcr/user, /subook/ghcr/token)"
+              exit 1
+            fi
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+            echo "[2/6] Pull image: $IMAGE"
             docker pull "$IMAGE"
 
-            echo "[1.5/5] Decide CURRENT/NEXT by RUNNING containers"
+            echo "[2.5/6] Decide CURRENT/NEXT by RUNNING containers"
             RUNNING=$(docker ps --format '{{.Names}}' | grep -E '^subookApp1_[12]$' || true)
             if [ "$RUNNING" = "subookApp1_1" ]; then
               CURRENT="subookApp1_1"; CURRENT_PORT=8080
@@ -126,11 +139,11 @@ jobs:
             fi
             echo "CURRENT=${CURRENT:-none}, NEXT=$NEXT (ports: CURRENT=${CURRENT_PORT:-na}, NEXT=$NEXT_PORT)"
 
-            echo "[2/5] Clean old NEXT if exists (Exited or leftover)"
+            echo "[3/6] Clean old NEXT if exists (Exited or leftover)"
             docker stop "$NEXT" 2>/dev/null || true
             docker rm "$NEXT" 2>/dev/null || true
 
-            echo "[2.5/5] Start NEXT: $NEXT on :$NEXT_PORT"
+            echo "[4/6] Start NEXT: $NEXT on :$NEXT_PORT"
             docker run -d \
               --name "$NEXT" \
               --restart unless-stopped \
@@ -157,7 +170,7 @@ jobs:
               done
             }
 
-            echo "[3/5] Wait liveness"
+            echo "[5/6] Wait liveness"
             if ! wait_for "$NEXT_PORT" "$HEALTH_LIVE" "$TIMEOUT_LIVE"; then
               echo "❌ Liveness failed within ${TIMEOUT_LIVE}s. Logs:"
               docker logs --tail=200 "$NEXT" || true
@@ -167,7 +180,7 @@ jobs:
             fi
             echo "✅ Liveness UP"
 
-            echo "[4/5] Wait readiness"
+            echo "[6/6] Wait readiness"
             if ! wait_for "$NEXT_PORT" "$HEALTH_READY" "$TIMEOUT_READY"; then
               echo "❌ Readiness failed within ${TIMEOUT_READY}s. Logs:"
               docker logs --tail=200 "$NEXT" || true
@@ -177,7 +190,7 @@ jobs:
             fi
             echo "✅ Readiness UP"
 
-            echo "[5/5] Switch traffic: stop old CURRENT (if any)"
+            echo "[Switch] Stop & remove old CURRENT (if any)"
             if [ -n "${CURRENT}" ]; then
               docker stop "$CURRENT" 2>/dev/null || true
               docker rm "$CURRENT" 2>/dev/null || true
