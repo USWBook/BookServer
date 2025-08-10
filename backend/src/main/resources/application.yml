@@ -1,3 +1,4 @@
+#application.yml
 spring:
   application:
     name: book
