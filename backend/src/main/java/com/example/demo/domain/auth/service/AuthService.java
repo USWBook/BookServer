@@ -14,6 +14,7 @@ import com.example.demo.global.exception.AuthException;
 import com.example.demo.global.jwt.JwtProvider;
 import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
+import com.example.demo.global.security.UserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,24 +74,25 @@ public class AuthService {
             );
 
             // 2. 인증 성공 시 UserDetails(User 객체) 가져오기
-            User user = (User) authentication.getPrincipal();
+            //User user = (User) authentication.getPrincipal();
+            UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
-            if (!user.isEnabled()) {
-                throw new DisabledException("계정이 활성화되어 있지 않습니다.");
-            }
+            // 3. UserPrincipal에서 이메일과 권한 정보를 가져와 토큰 생성
+            String email = userPrincipal.getUsername();
+            Role role = userPrincipal.getRole();
 
-            // 3. 토큰 생성
-            String accessToken = jwtProvider.generateAccessToken(user.getEmail(), user.getRole());
-            String refreshToken = jwtProvider.generateRefreshToken(user.getEmail(), user.getRole());
+            // 4. 토큰 생성
+            String accessToken = jwtProvider.generateAccessToken(email, role);
+            String refreshToken = jwtProvider.generateRefreshToken(email, role);
 
-            // 4. Redis에 Refresh Token 저장
+            // 5. Redis에 Refresh Token 저장
             redisTokenRepository.saveRefreshToken(
-                    user.getEmail(),
+                    email,
                     refreshToken,
                     jwtProvider.getRefreshTokenExpirationInMillis()
             );
 
-            return new TokenResponse(accessToken, refreshToken);
+            return new TokenResponse(accessToken,refreshToken);
 
         } catch (AuthenticationException e) {
             // 5. 인증 실패 시 예외 처리
