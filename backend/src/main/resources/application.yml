@@ -30,3 +30,7 @@ logging:
   output:
     ansi:
       enabled: always
+
+jwt:
+  # ⛔️ 실제 키가 아닌, AWS Secrets Manager에 저장된 시크릿의 이름 또는 ARN
+  secret-name: "book-server/jwt-secret"
