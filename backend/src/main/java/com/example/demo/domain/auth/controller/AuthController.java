@@ -37,8 +37,8 @@ public class AuthController {
 
         // HttpOnly 쿠키 설정
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokens.refreshToken())
-                .httpOnly(true) // avaScript에서 접근 불가.
-                //.secure(true) // HTTPS 사용 시
+                .httpOnly(true) // JavaScript에서 접근 불가.
+                //.secure(true) // HTTPS 환경에서만 활성화
                 .path("/")
                 .maxAge(Duration.ofMillis(jwtProvider.getRefreshTokenExpirationInMillis()))
                 .sameSite("Strict") // 또는 Lax/None
@@ -46,7 +46,8 @@ public class AuthController {
 
         return  ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                .body(new RsData<>("200", "로그인 완료되었습니다.", tokens.withoutRefreshToken()));
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken())
+                .body(new RsData<>("200", "로그인 완료되었습니다."));
     }
 
     @PostMapping("/logout")
@@ -74,7 +75,7 @@ public class AuthController {
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokens.refreshToken())
                 .httpOnly(true)
-                //.secure(true)  // HTTPS 환경에서만 true, 로컬 개발시 false 가능
+                //.secure(true)  // HTTPS 환경에서만 true, 로컬 개발시 false
                 .path("/")
                 .maxAge(Duration.ofMillis(jwtProvider.getRefreshTokenExpirationInMillis()))
                 .sameSite("Strict")
@@ -82,7 +83,8 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                .body(new RsData<>("200", "토큰 재발행 완료되었습니다.", tokens.withoutRefreshToken()));
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken())
+                .body(new RsData<>("200", "토큰 재발행 완료되었습니다."));
     }
 
     @PostMapping("change-password")
