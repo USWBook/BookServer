@@ -31,7 +31,7 @@ public class AuthController {
         return new RsData<>("200", "회원가입 성공");
     }
 
-    @PostMapping("/login")
+    //@PostMapping("/login")
     public ResponseEntity<RsData<TokenResponse>> login(@RequestBody @Valid LoginRequest request) {
         TokenResponse tokens = authService.login(request);
 

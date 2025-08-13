@@ -4,10 +4,12 @@ import com.example.demo.global.jwt.JwtAuthenticationFilter;
 import com.example.demo.global.jwt.JwtProvider;
 import com.example.demo.global.jwt.handler.JwtAuthenticationFailureHandler;
 import com.example.demo.global.jwt.handler.JwtAuthenticationSuccessHandler;
+import com.example.demo.global.jwt.service.TokenService;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
 import com.example.demo.global.security.filter.LoginAuthenticationFilter;
 import com.example.demo.global.security.handler.CustomAccessDeniedHandler;
 import com.example.demo.global.security.handler.CustomAuthenticationEntryPoint;
+import com.example.demo.global.security.handler.LoginSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,6 +40,7 @@ public class SecurityConfig {
     private final AuthenticationConfiguration authenticationConfiguration;
     private final JwtProvider jwtProvider;
     private final RedisTokenRepository redisTokenRepository;
+    private final TokenService tokenService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -58,6 +61,7 @@ public class SecurityConfig {
         // 커스텀 로그인 필터
         LoginAuthenticationFilter loginFilter = new LoginAuthenticationFilter(authManager);
         loginFilter.setFilterProcessesUrl("/api/auth/login"); // 로그인 URL
+        loginFilter.setAuthenticationSuccessHandler(new LoginSuccessHandler(tokenService));
         loginFilter.setAuthenticationSuccessHandler(new JwtAuthenticationSuccessHandler(jwtProvider, redisTokenRepository));
         loginFilter.setAuthenticationFailureHandler(new JwtAuthenticationFailureHandler());
 

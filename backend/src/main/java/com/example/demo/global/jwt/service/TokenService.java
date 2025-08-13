@@ -90,5 +90,8 @@ public class TokenService {
         user.ban();
     }
 
+    public long getRefreshExpirationInMillis() {
+        return jwtProvider.getRefreshTokenExpirationInMillis();
+    }
 }
 
