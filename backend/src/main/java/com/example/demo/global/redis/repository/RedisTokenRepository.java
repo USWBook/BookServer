@@ -44,18 +44,18 @@ public class RedisTokenRepository {
         redisTemplate.delete(REFRESH_PREFIX + email);
     }
 
-    // 액세스 토큰 블랙리스트로 등록
-    public void blacklistAccessToken(String accessToken, long expirationMillis) {
+    // 토큰 블랙리스트로 등록
+    public void blacklistToken(String Token, long expirationMillis) {
         redisTemplate.opsForValue().set(
-                BLACKLIST_PREFIX + accessToken,
+                BLACKLIST_PREFIX + Token,
                 "logout",
                 Duration.ofMillis(expirationMillis)
         );
     }
 
     // 블랙리스트 확인
-    public boolean isBlacklisted(String accessToken) {
-        return redisTemplate.hasKey(BLACKLIST_PREFIX + accessToken);
+    public boolean isBlacklisted(String token) {
+        return redisTemplate.hasKey(BLACKLIST_PREFIX + token);
     }
 
     // 이메일 인증코드 저장함
