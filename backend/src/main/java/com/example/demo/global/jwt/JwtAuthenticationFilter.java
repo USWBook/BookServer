@@ -8,6 +8,7 @@ import com.example.demo.global.jwt.exception.JwtTokenExpiredException;
 import com.example.demo.global.jwt.exception.JwtUserNotFoundException;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
 import com.example.demo.global.response.RsData;
+import com.example.demo.global.security.UserPrincipal;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -75,11 +76,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             User user = userRepository.findByEmail(email)
                     .orElseThrow(JwtUserNotFoundException::new);
 
+            UserPrincipal principal = new UserPrincipal(user);
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            user.getEmail(), null,
-                            List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
-                    );
+                    new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             chain.doFilter(request, response);
