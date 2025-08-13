@@ -9,19 +9,17 @@
     import io.jsonwebtoken.JwtException;
     import io.jsonwebtoken.Jwts;
     import io.jsonwebtoken.security.Keys;
-    import jakarta.annotation.PostConstruct;
-    import lombok.RequiredArgsConstructor;
-    import org.springframework.beans.factory.annotation.Value;
-    import org.springframework.stereotype.Component;
 
     import javax.crypto.SecretKey;
     import java.nio.charset.StandardCharsets;
     import java.util.Date;
 
     import com.example.demo.domain.user.role.Role;
+    import jakarta.annotation.PostConstruct;
+    import org.springframework.beans.factory.annotation.Value;
+    import org.springframework.stereotype.Component;
 
     @Component
-    @RequiredArgsConstructor
     public class JwtProvider {
 
         @Value("${custom.jwt.secret-key}")
@@ -40,6 +38,20 @@
         public void init() {
             key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         }
+
+        // 개발용 주석임 지우지 말아줘
+//        private SecretKey key;
+//        private final long accessExpirationInSeconds;
+//        private final long refreshExpirationInSeconds;
+//
+//        public JwtProvider(@Value("${jwt.secret}") String secret,
+//                           @Value("${jwt.access-expiration}") long accessExpirationInSeconds,
+//                           @Value("${jwt.refresh-expiration}") long refreshExpirationInSeconds) {
+//            this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+//            this.accessExpirationInSeconds = accessExpirationInSeconds;
+//            this.refreshExpirationInSeconds = refreshExpirationInSeconds;
+//        }
+
 
         private SecretKey getKey(){
             return this.key;
@@ -124,7 +136,7 @@
             return refreshExpirationInSeconds*1000;
         }
 
-        public long getAccessTokenRemainingTime(String token) {
+        public long getTokenRemainingTime(String token) {
             Date exp = parse(token).getPayload().getExpiration();
             return (exp.getTime() - System.currentTimeMillis()) / 1000;
         }
