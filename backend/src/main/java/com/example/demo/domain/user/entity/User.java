@@ -5,18 +5,12 @@ import com.example.demo.domain.user.role.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.UUID;
 
 @Entity
 @Table(name = "users")
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -50,20 +44,23 @@ public class User {
     @Column(nullable = false)
     private UserStatus status;
 
-    public void completeSignUp() {
-        this.status = UserStatus.ACTIVE;
-    }
 
     public void ban() {
         this.status = UserStatus.BANNED;
     }
 
-    public boolean isBanned() {
-        return this.status == UserStatus.BANNED;
-    }
 
     public void changePassword(String newEncodedPassword) {
         this.password = newEncodedPassword;
+    }
+
+    public void updateProfile(String name, Major major) {
+        if (name != null) {
+            this.name = name;
+        }
+        if (major != null) {
+            this.major = major;
+        }
     }
 
 }
