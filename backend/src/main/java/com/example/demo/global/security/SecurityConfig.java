@@ -1,6 +1,11 @@
 package com.example.demo.global.security;
 
 import com.example.demo.global.jwt.JwtAuthenticationFilter;
+import com.example.demo.global.jwt.JwtProvider;
+import com.example.demo.global.jwt.handler.JwtAuthenticationFailureHandler;
+import com.example.demo.global.jwt.handler.JwtAuthenticationSuccessHandler;
+import com.example.demo.global.redis.repository.RedisTokenRepository;
+import com.example.demo.global.security.filter.LoginAuthenticationFilter;
 import com.example.demo.global.security.handler.CustomAccessDeniedHandler;
 import com.example.demo.global.security.handler.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +24,7 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -29,6 +35,9 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtFilter;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final AuthenticationConfiguration authenticationConfiguration;
+    private final JwtProvider jwtProvider;
+    private final RedisTokenRepository redisTokenRepository;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -43,6 +52,15 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
+        AuthenticationManager authManager = authenticationManager(authenticationConfiguration);
+
+        // 커스텀 로그인 필터
+        LoginAuthenticationFilter loginFilter = new LoginAuthenticationFilter(authManager);
+        loginFilter.setFilterProcessesUrl("/api/auth/login"); // 로그인 URL
+        loginFilter.setAuthenticationSuccessHandler(new JwtAuthenticationSuccessHandler(jwtProvider, redisTokenRepository));
+        loginFilter.setAuthenticationFailureHandler(new JwtAuthenticationFailureHandler());
+
         http
                 // CSRF 비활성화
                 .csrf(AbstractHttpConfigurer::disable)
@@ -87,6 +105,9 @@ public class SecurityConfig {
                         .accessDeniedHandler(customAccessDeniedHandler)          // 403
                         .authenticationEntryPoint(customAuthenticationEntryPoint) // 401
                 )
+
+                // 로그인 필터를 UsernamePasswordAuthenticationFilter 자리에 등록
+                .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class)
 
                 // ⬇️ JWT 필터 등록 (익명인증 필터보다 앞에 두어 컨텍스트 채워넣기)
                 .addFilterBefore(jwtFilter, AnonymousAuthenticationFilter.class);
