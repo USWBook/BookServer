@@ -42,6 +42,8 @@ public class SecurityConfig {
     private final RedisTokenRepository redisTokenRepository;
     private final TokenService tokenService;
 
+
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         // {bcrypt} 등의 접두어를 자동으로 붙여주는 DelegatingPasswordEncoder
@@ -61,7 +63,7 @@ public class SecurityConfig {
         // 커스텀 로그인 필터
         LoginAuthenticationFilter loginFilter = new LoginAuthenticationFilter(authManager);
         loginFilter.setFilterProcessesUrl("/api/auth/login"); // 로그인 URL
-        loginFilter.setAuthenticationSuccessHandler(new LoginSuccessHandler(tokenService));
+        // loginFilter.setAuthenticationSuccessHandler(new LoginSuccessHandler(tokenService));
         loginFilter.setAuthenticationSuccessHandler(new JwtAuthenticationSuccessHandler(jwtProvider, redisTokenRepository));
         loginFilter.setAuthenticationFailureHandler(new JwtAuthenticationFailureHandler());
 
@@ -110,11 +112,14 @@ public class SecurityConfig {
                         .authenticationEntryPoint(customAuthenticationEntryPoint) // 401
                 )
 
-                // 로그인 필터를 UsernamePasswordAuthenticationFilter 자리에 등록
-                .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class)
 
-                // ⬇️ JWT 필터 등록 (익명인증 필터보다 앞에 두어 컨텍스트 채워넣기)
-                .addFilterBefore(jwtFilter, AnonymousAuthenticationFilter.class);
+                //  JWT 필터 등록 (로그인 필터보다 앞에 두어 컨텍스트 채워넣기)
+                .addFilterBefore(jwtFilter, LoginAuthenticationFilter.class)
+
+                // 로그인 필터를 UsernamePasswordAuthenticationFilter 자리에 등록
+                .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class);
+
+
 
         return http.build();
     }
