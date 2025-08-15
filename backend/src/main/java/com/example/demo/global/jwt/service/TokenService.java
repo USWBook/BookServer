@@ -57,8 +57,9 @@ public class TokenService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(MemberNotFoundException::new);
 
-        // 기존 refreshToken 블랙리스트 처리
-        blacklistToken(refreshToken);
+        // 기존 refreshToken 레디스에서 삭제 처리
+        deleteRefreshToken(email);
+        //blacklistToken(refreshToken);
 
         // 새 토큰 발급
         return generateTokens(email, user.getRole());
