@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
@@ -32,23 +33,23 @@ public class AuthController {
     }
 
     //@PostMapping("/login")
-    public ResponseEntity<RsData<TokenResponse>> login(@RequestBody @Valid LoginRequest request) {
-        TokenResponse tokens = authService.login(request);
-
-        // HttpOnly 쿠키 설정
-        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokens.refreshToken())
-                .httpOnly(true) // JavaScript에서 접근 불가.
-                //.secure(true) // HTTPS 환경에서만 활성화
-                .path("/")
-                .maxAge(Duration.ofMillis(jwtProvider.getRefreshTokenExpirationInMillis()))
-                .sameSite("Strict") // 또는 Lax/None
-                .build();
-
-        return  ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken())
-                .body(new RsData<>("200", "로그인 완료되었습니다."));
-    }
+//    public ResponseEntity<RsData<TokenResponse>> login(@RequestBody @Valid LoginRequest request) {
+//        TokenResponse tokens = authService.login(request);
+//
+//        // HttpOnly 쿠키 설정
+//        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokens.refreshToken())
+//                .httpOnly(true) // JavaScript에서 접근 불가.
+//                //.secure(true) // HTTPS 환경에서만 활성화
+//                .path("/")
+//                .maxAge(Duration.ofMillis(jwtProvider.getRefreshTokenExpirationInMillis()))
+//                .sameSite("Strict") // 또는 Lax/None
+//                .build();
+//
+//        return  ResponseEntity.ok()
+//                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+//                .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken())
+//                .body(new RsData<>("200", "로그인 완료되었습니다."));
+//    }
 
     @PostMapping("/logout")
     public ResponseEntity<RsData<?>> logout(@RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -100,4 +101,9 @@ public class AuthController {
         return new RsData<>("200", "비밀번호 초기화 완료되었습니다.");
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin")
+    public String adminOnly() {
+        return "관리자 전용 페이지";
+    }
 }
