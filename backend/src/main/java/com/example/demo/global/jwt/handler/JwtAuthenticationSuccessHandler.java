@@ -3,7 +3,7 @@ package com.example.demo.global.jwt.handler;
 import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.jwt.JwtProvider;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
-import com.example.demo.global.security.UserPrincipal;
+import com.example.demo.domain.user.dto.UserPrincipal;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
