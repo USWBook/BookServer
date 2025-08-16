@@ -2,7 +2,7 @@ package com.example.demo.global.security.handler;
 
 import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.global.jwt.service.TokenService;
-import com.example.demo.global.security.UserPrincipal;
+import com.example.demo.domain.user.dto.UserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
@@ -33,7 +33,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         // refreshToken은 HttpOnly 쿠키에
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokens.refreshToken())
-                //.httpOnly(true)
+                .httpOnly(true)
                 .path("/")
                 .maxAge(Duration.ofMillis(tokenService.getRefreshExpirationInMillis()))
                 .sameSite("Strict")

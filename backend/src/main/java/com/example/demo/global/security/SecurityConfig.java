@@ -38,8 +38,6 @@ public class SecurityConfig {
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final AuthenticationConfiguration authenticationConfiguration;
-    private final JwtProvider jwtProvider;
-    private final RedisTokenRepository redisTokenRepository;
     private final TokenService tokenService;
 
 
@@ -64,7 +62,7 @@ public class SecurityConfig {
         LoginAuthenticationFilter loginFilter = new LoginAuthenticationFilter(authManager);
         loginFilter.setFilterProcessesUrl("/api/auth/login"); // 로그인 URL
         // loginFilter.setAuthenticationSuccessHandler(new LoginSuccessHandler(tokenService));
-        loginFilter.setAuthenticationSuccessHandler(new JwtAuthenticationSuccessHandler(jwtProvider, redisTokenRepository));
+        loginFilter.setAuthenticationSuccessHandler(new JwtAuthenticationSuccessHandler(tokenService));
         loginFilter.setAuthenticationFailureHandler(new JwtAuthenticationFailureHandler());
 
         http

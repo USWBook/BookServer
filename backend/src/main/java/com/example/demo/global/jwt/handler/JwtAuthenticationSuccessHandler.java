@@ -1,7 +1,9 @@
 package com.example.demo.global.jwt.handler;
 
+import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.jwt.JwtProvider;
+import com.example.demo.global.jwt.service.TokenService;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
 import com.example.demo.domain.user.dto.UserPrincipal;
 import jakarta.servlet.ServletException;
@@ -19,8 +21,7 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
-    private final JwtProvider jwtProvider;
-    private final RedisTokenRepository redisTokenRepository;
+    private final TokenService tokenService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -30,24 +31,28 @@ public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHan
         String email = userPrincipal.getUsername();
         Role role = userPrincipal.getRole();
 
-        String accessToken = jwtProvider.generateAccessToken(email, role);
-        String refreshToken = jwtProvider.generateRefreshToken(email, role);
+
+        TokenResponse tokenResponse = tokenService.generateTokens(email, role);
+
+        // String accessToken = jwtProvider.generateAccessToken(email, role);
+        // String refreshToken = jwtProvider.generateRefreshToken(email, role);
 
         // Redis에 refresh 저장 (화이트리스트)
-        redisTokenRepository.saveRefreshToken(email, refreshToken, jwtProvider.getRefreshTokenExpirationInMillis());
+        //redisTokenRepository.saveRefreshToken(email, refreshToken, jwtProvider.getRefreshTokenExpirationInMillis());
 
         // refreshToken HttpOnly 쿠키로 세팅
-        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenResponse.getRefreshToken())
                 .httpOnly(true)
                 // .secure(true) // 운영에서 true
                 .path("/")
-                .maxAge(Duration.ofMillis(jwtProvider.getRefreshTokenExpirationInMillis()).getSeconds())
+                .maxAge(Duration.ofMillis(tokenService.getRefreshExpirationInMillis()).getSeconds())
                 .sameSite("Lax")
                 .build();
 
         // AccessToken은 Authorization 헤더로 전달
         response.setHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-        response.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+        response.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + tokenResponse.getAccessToken());
+
 
         // 응답 바디 (선택) — 간단한 성공 메시지
         response.setStatus(HttpServletResponse.SC_OK);

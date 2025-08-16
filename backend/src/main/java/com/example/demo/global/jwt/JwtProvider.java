@@ -11,6 +11,7 @@
     import io.jsonwebtoken.security.Keys;
 
     import javax.crypto.SecretKey;
+    import javax.crypto.spec.SecretKeySpec;
     import java.nio.charset.StandardCharsets;
     import java.util.Date;
 
@@ -32,22 +33,23 @@
         @Value("${custom.jwt.refresh-token-expire-seconds}")
         private long refreshExpirationInSeconds;
 
-        private SecretKey key;
+        private final SecretKey key;
 
         @PostConstruct
         public void init() {
             key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         }
 
-        // 개발용 주석임 지우지 말아줘
-//        private SecretKey key;
+//        // 개발용 주석임 지우지 말아줘
+//        private final SecretKey key;
 //        private final long accessExpirationInSeconds;
 //        private final long refreshExpirationInSeconds;
 //
 //        public JwtProvider(@Value("${jwt.secret}") String secret,
 //                           @Value("${jwt.access-expiration}") long accessExpirationInSeconds,
 //                           @Value("${jwt.refresh-expiration}") long refreshExpirationInSeconds) {
-//            this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+////            this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+//            this.key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm()/*"AES"*/);
 //            this.accessExpirationInSeconds = accessExpirationInSeconds;
 //            this.refreshExpirationInSeconds = refreshExpirationInSeconds;
 //        }
@@ -67,30 +69,26 @@
              리프레시 토큰 만료 시간만큼 Redis에 자동으로 남아 있도록 설정하는 역할.
              토큰과 서버 저장소의 만료 시점을 맞추기 위해 필요
              */
-        public String generateAccessToken(String email,Role role){
+        public String generateToken(String email, Role role, String category, long expirationSeconds) {
             Date now = new Date();
-            Date expiry = new Date(now.getTime() + accessExpirationInSeconds * 1000);
-
-            return Jwts.builder()
-                    .subject(email)
-                    .claim("role",role.name())
-                    .issuedAt(now)
-                    .expiration(expiry)
-                    .signWith(key,Jwts.SIG.HS256)
-                    .compact();
-        }
-
-        public String generateRefreshToken(String email, Role role) {
-            Date now = new Date();
-            Date expiry = new Date(now.getTime() + refreshExpirationInSeconds * 1000);
+            Date expiry = new Date(now.getTime() + expirationSeconds * 1000);
 
             return Jwts.builder()
                     .subject(email)
                     .claim("role", role.name())
+                    .claim("category", category) // Access / Refresh 구분
                     .issuedAt(now)
                     .expiration(expiry)
                     .signWith(key, Jwts.SIG.HS256)
                     .compact();
+        }
+
+        public String generateAccessToken(String email, Role role) {
+            return generateToken(email, role, "access", accessExpirationInSeconds);
+        }
+
+        public String generateRefreshToken(String email, Role role) {
+            return generateToken(email, role, "refresh", refreshExpirationInSeconds);
         }
 
         public Jws<Claims> parse(String token) {
@@ -127,8 +125,10 @@
             return parse(token).getPayload().getSubject();
         }
 
-        public String extractRole(String token) {
-            return parse(token).getPayload().get("role", String.class);
+        public Role extractRole(String token) {
+            // return parse(token).getPayload().get("role", String.class);
+            String roleName = parse(token).getPayload().get("role", String.class);
+            return Role.valueOf(roleName); // 문자열 → enum 변환
         }
 
 
@@ -149,6 +149,12 @@
             } catch (CustomJwtException e) {
                 return false;
             }
+        }
+
+
+        public Boolean isExpired(String token) {
+
+            return parse(token).getPayload().getExpiration().before(new Date());
         }
 
     }
