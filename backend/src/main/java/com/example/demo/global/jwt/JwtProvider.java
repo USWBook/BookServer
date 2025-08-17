@@ -33,7 +33,7 @@
         @Value("${custom.jwt.refresh-token-expire-seconds}")
         private long refreshExpirationInSeconds;
 
-        private final SecretKey key;
+        private SecretKey key;
 
         @PostConstruct
         public void init() {

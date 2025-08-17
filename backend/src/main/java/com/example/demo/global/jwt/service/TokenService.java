@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
+
 @RequiredArgsConstructor
 @Service
 public class TokenService {
@@ -44,7 +46,10 @@ public class TokenService {
 
     @Transactional
     public TokenResponse reissueTokens(String refreshToken) {
-        if (!jwtProvider.isValid(refreshToken) || redisTokenRepository.isBlacklisted(refreshToken)) {
+        if (!jwtProvider.isValid(refreshToken) ||
+                redisTokenRepository.isBlacklisted(refreshToken) ||
+                !Objects.equals(jwtProvider.getCategory(refreshToken), "refresh") ||
+                jwtProvider.isExpired(refreshToken)) {
             throw new JwtInvalidSignatureException();
         }
 
