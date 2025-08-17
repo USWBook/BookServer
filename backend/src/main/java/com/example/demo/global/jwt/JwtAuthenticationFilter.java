@@ -4,6 +4,7 @@ import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.exception.CustomJwtException;
+import com.example.demo.global.jwt.exception.JwtTokenExpiredException;
 import com.example.demo.global.jwt.exception.JwtUserNotFoundException;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
 import com.example.demo.domain.user.dto.UserPrincipal;
@@ -53,9 +54,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authHeader.substring("Bearer ".length());
 
         // 토큰이 만료되면 통과
-        if(jwtProvider.isExpired(token)) {
-            chain.doFilter(request, response);
-            return;
+        try {
+            jwtProvider.isExpired(token);
+        } catch (Exception e) {
+
+            throw new JwtTokenExpiredException();
         }
 
         try {
