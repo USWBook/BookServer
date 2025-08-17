@@ -157,4 +157,7 @@
             return parse(token).getPayload().getExpiration().before(new Date());
         }
 
+        public String getCategory(String token) {
+            return parse(token).getPayload().get("category", String.class);
+        }
     }

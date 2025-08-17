@@ -4,6 +4,7 @@ import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.exception.CustomJwtException;
+import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
 import com.example.demo.global.jwt.exception.JwtTokenExpiredException;
 import com.example.demo.global.jwt.exception.JwtUserNotFoundException;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -53,13 +55,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring("Bearer ".length());
 
-        // 토큰이 만료되면 통과
+        // 토큰이 만료되면 401 코드
         try {
             jwtProvider.isExpired(token);
         } catch (Exception e) {
 
             throw new JwtTokenExpiredException();
         }
+
+        // access토큰이 아니면 401
+        if(!Objects.equals(jwtProvider.getCategory(token), "access")) throw new JwtInvalidSignatureException();
 
         try {
             // 블랙리스트 체크
