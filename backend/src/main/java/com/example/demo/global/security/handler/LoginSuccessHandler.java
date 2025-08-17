@@ -2,7 +2,7 @@ package com.example.demo.global.security.handler;
 
 import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.global.jwt.service.TokenService;
-import com.example.demo.domain.user.dto.UserPrincipal;
+import com.example.demo.domain.user.dto.CustomUserDetails;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
@@ -25,7 +25,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        CustomUserDetails userPrincipal = (CustomUserDetails) authentication.getPrincipal();
         TokenResponse tokens = tokenService.generateTokens(userPrincipal.getUsername(), userPrincipal.getRole());
 
         // accessToken은 Authorization 헤더에

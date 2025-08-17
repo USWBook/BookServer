@@ -1,6 +1,5 @@
 package com.example.demo.domain.auth.service;
 
-import com.example.demo.domain.auth.dto.request.LoginRequest;
 import com.example.demo.domain.auth.dto.request.PasswordChangeRequest;
 import com.example.demo.domain.auth.dto.request.ResetPasswordRequest;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
@@ -10,17 +9,12 @@ import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.entity.UserStatus;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
-import com.example.demo.global.exception.AuthException;
 import com.example.demo.global.jwt.service.TokenService;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
-import com.example.demo.domain.user.dto.UserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

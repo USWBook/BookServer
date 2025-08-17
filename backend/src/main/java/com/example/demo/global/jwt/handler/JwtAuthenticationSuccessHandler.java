@@ -2,10 +2,8 @@ package com.example.demo.global.jwt.handler;
 
 import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.user.role.Role;
-import com.example.demo.global.jwt.JwtProvider;
 import com.example.demo.global.jwt.service.TokenService;
-import com.example.demo.global.redis.repository.RedisTokenRepository;
-import com.example.demo.domain.user.dto.UserPrincipal;
+import com.example.demo.domain.user.dto.CustomUserDetails;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -27,7 +25,7 @@ public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHan
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
 
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        CustomUserDetails userPrincipal = (CustomUserDetails) authentication.getPrincipal();
         String email = userPrincipal.getUsername();
         Role role = userPrincipal.getRole();
 

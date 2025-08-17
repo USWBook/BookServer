@@ -6,9 +6,8 @@ import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.exception.CustomJwtException;
 import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
 import com.example.demo.global.jwt.exception.JwtTokenExpiredException;
-import com.example.demo.global.jwt.exception.JwtUserNotFoundException;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
-import com.example.demo.domain.user.dto.UserPrincipal;
+import com.example.demo.domain.user.dto.CustomUserDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -88,9 +87,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             user.setEmail(email);
             user.setRole(role);
 
-            UserPrincipal principal = new UserPrincipal(user);
+            CustomUserDetails customUserDetails = new CustomUserDetails(user);
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+                    new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 

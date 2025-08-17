@@ -2,7 +2,7 @@ package com.example.demo.domain.user.service;
 
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
-import com.example.demo.domain.user.dto.UserPrincipal;
+import com.example.demo.domain.user.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,6 +24,6 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("해당 이메일을 찾을 수 없습니다: " + email));
 
         // 2. User 엔티티를 사용해 새로운 UserPrincipal(완제품)을 생성하여 반환합니다.
-        return new UserPrincipal(user);
+        return new CustomUserDetails(user);
     }
 }
