@@ -97,4 +97,8 @@ public class RedisTokenRepository {
         redisTemplate.delete(EMAIL_AUTH_PREFIX + email);
     }
 
+    // 레디스에 토큰이 존재하는지 검증
+    public boolean existsRefreshToken(String email) {
+        return Boolean.TRUE.equals(redisTemplate.hasKey(REFRESH_PREFIX + email));
+    }
 }

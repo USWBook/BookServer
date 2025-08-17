@@ -54,6 +54,11 @@ public class TokenService {
         }
 
         String email = jwtProvider.extractEmail(refreshToken);
+
+        if (!redisTokenRepository.existsRefreshToken(email)) {
+            throw new JwtInvalidSignatureException();
+        }
+
         String savedToken = redisTokenRepository.getRefreshToken(email);
         if (!refreshToken.equals(savedToken)) {
             throw new JwtInvalidSignatureException();
