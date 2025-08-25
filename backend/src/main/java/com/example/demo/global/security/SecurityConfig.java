@@ -1,7 +1,15 @@
 package com.example.demo.global.security;
 
 import com.example.demo.global.jwt.JwtAuthenticationFilter;
-import jakarta.servlet.http.HttpServletResponse;
+import com.example.demo.global.jwt.JwtProvider;
+import com.example.demo.global.jwt.handler.JwtAuthenticationFailureHandler;
+import com.example.demo.global.jwt.handler.JwtAuthenticationSuccessHandler;
+import com.example.demo.global.jwt.service.TokenService;
+import com.example.demo.global.redis.repository.RedisTokenRepository;
+import com.example.demo.global.security.filter.LoginAuthenticationFilter;
+import com.example.demo.global.security.handler.CustomAccessDeniedHandler;
+import com.example.demo.global.security.handler.CustomAuthenticationEntryPoint;
+import com.example.demo.global.security.handler.LoginSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,10 +24,9 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -28,7 +35,12 @@ import org.springframework.security.web.authentication.AnonymousAuthenticationFi
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final AuthenticationConfiguration authenticationConfiguration;
+    private final TokenService tokenService;
+
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -43,6 +55,16 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
+        AuthenticationManager authManager = authenticationManager(authenticationConfiguration);
+
+        // 커스텀 로그인 필터
+        LoginAuthenticationFilter loginFilter = new LoginAuthenticationFilter(authManager);
+        loginFilter.setFilterProcessesUrl("/api/auth/login"); // 로그인 URL
+        // loginFilter.setAuthenticationSuccessHandler(new LoginSuccessHandler(tokenService));
+        loginFilter.setAuthenticationSuccessHandler(new JwtAuthenticationSuccessHandler(tokenService));
+        loginFilter.setAuthenticationFailureHandler(new JwtAuthenticationFailureHandler());
+
         http
                 // CSRF 비활성화
                 .csrf(AbstractHttpConfigurer::disable)
@@ -61,10 +83,10 @@ public class SecurityConfig {
 
                 // 경로 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ 프리플라이트 허용
+                        //  프리플라이트 허용
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // ✅ 루트/헬스/문서/정적 리소스/에러 공개
+                        //  루트/헬스/문서/정적 리소스/에러 공개
                         .requestMatchers(
                                 "/", "/ping", "/error", "/favicon.ico",
                                 "/actuator/**",
@@ -72,7 +94,7 @@ public class SecurityConfig {
                                 "/css/**", "/js/**", "/images/**"
                         ).permitAll()
 
-                        // ✅ 공개 API
+                        // 공개 API
                         .requestMatchers(
                                 "/api/major/**", "/api/auth/**", "/api/mail/**",
                                 "/h2-console/**", "/api/posts/**", "/api/chat/**"
@@ -84,41 +106,20 @@ public class SecurityConfig {
 
                 // 예외 처리
                 .exceptionHandling(exception -> exception
-                        .accessDeniedHandler(customAccessDeniedHandler())          // 403
-                        .authenticationEntryPoint(customAuthenticationEntryPoint()) // 401
+                        .accessDeniedHandler(customAccessDeniedHandler)          // 403
+                        .authenticationEntryPoint(customAuthenticationEntryPoint) // 401
                 )
 
-                // ⬇️ JWT 필터 등록 (익명인증 필터보다 앞에 두어 컨텍스트 채워넣기)
-                .addFilterBefore(jwtFilter, AnonymousAuthenticationFilter.class);
+
+                //  JWT 필터 등록 (로그인 필터보다 앞에 두어 컨텍스트 채워넣기)
+                .addFilterBefore(jwtFilter, LoginAuthenticationFilter.class)
+
+                // 로그인 필터를 UsernamePasswordAuthenticationFilter 자리에 등록
+                .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class);
+
+
 
         return http.build();
     }
 
-    @Bean
-    public AccessDeniedHandler customAccessDeniedHandler() {
-        return (request, response, ex) -> {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("""
-                {
-                  "code": "FORBIDDEN",
-                  "message": "접근 권한이 없습니다."
-                }
-            """);
-        };
-    }
-
-    @Bean
-    public AuthenticationEntryPoint customAuthenticationEntryPoint() {
-        return (request, response, ex) -> {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("""
-                {
-                  "code": "UNAUTHORIZED",
-                  "message": "인증이 필요합니다."
-                }
-            """);
-        };
-    }
 }

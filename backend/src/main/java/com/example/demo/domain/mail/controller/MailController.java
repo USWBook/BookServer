@@ -5,7 +5,6 @@ import com.example.demo.domain.mail.dto.MailVerificationDto;
 import com.example.demo.domain.mail.service.MailService;
 import com.example.demo.global.response.RsData;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;

@@ -3,17 +3,13 @@ package com.example.demo.domain.mail.service;
 import com.example.demo.domain.mail.exception.InvalidOrExpiredVerificationCodeException;
 import com.example.demo.domain.mail.exception.MessagingFailException;
 import com.example.demo.domain.mail.exception.VerificationCodeNotRequestedException;
-import com.example.demo.domain.user.entity.User;
-import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
-import com.example.demo.global.redis.util.RedisUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 
-import com.example.demo.domain.auth.exception.MemberNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -21,7 +17,6 @@ public class MailService {
 
     private final EmailSendingService emailSendingService;
     private final RedisTokenRepository redisTokenRepository;
-    private final UserRepository userRepository;
 
     private static final long AUTH_CODE_EXPIRATION_MILLIS = 1800000L; // 30분
 

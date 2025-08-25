@@ -2,14 +2,12 @@ package com.example.demo.global.jwt;
 
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
+import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.exception.CustomJwtException;
-import com.example.demo.global.jwt.exception.JwtBlacklistedException;
+import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
 import com.example.demo.global.jwt.exception.JwtTokenExpiredException;
-import com.example.demo.global.jwt.exception.JwtUserNotFoundException;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
-import com.example.demo.global.response.RsData;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.JwtException;
+import com.example.demo.domain.user.dto.CustomUserDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,17 +16,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static io.lettuce.core.pubsub.PubSubOutput.Type.message;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -61,6 +54,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring("Bearer ".length());
 
+        // 토큰이 만료되면 401 코드
+        try {
+            jwtProvider.isExpired(token);
+        } catch (Exception e) {
+
+            throw new JwtTokenExpiredException();
+        }
+
+        // access토큰이 아니면 401
+        if(!Objects.equals(jwtProvider.getCategory(token), "access")) throw new JwtInvalidSignatureException();
+
         try {
             // 블랙리스트 체크
             if (redisTokenRepository.isBlacklisted(token)) {
@@ -72,14 +76,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             String email = jwtProvider.extractEmail(token);
-            User user = userRepository.findByEmail(email)
-                    .orElseThrow(JwtUserNotFoundException::new);
+            Role role = jwtProvider.extractRole(token);
 
+            // 이방식은 DB를 조회 해야해서 성능이 떨어짐. 하지만 보안적으론 좋음
+//            User user = userRepository.findByEmail(email)
+//                    .orElseThrow(JwtUserNotFoundException::new);
+
+            // UserDetails 구현체 생성 (DB 조회 없이)
+            User user = new User();
+            user.setEmail(email);
+            user.setRole(role);
+
+            CustomUserDetails customUserDetails = new CustomUserDetails(user);
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            user.getEmail(), null,
-                            List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
-                    );
+                    new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
+
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             chain.doFilter(request, response);

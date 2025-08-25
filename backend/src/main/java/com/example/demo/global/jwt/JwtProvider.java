@@ -9,19 +9,18 @@
     import io.jsonwebtoken.JwtException;
     import io.jsonwebtoken.Jwts;
     import io.jsonwebtoken.security.Keys;
-    import jakarta.annotation.PostConstruct;
-    import lombok.RequiredArgsConstructor;
-    import org.springframework.beans.factory.annotation.Value;
-    import org.springframework.stereotype.Component;
 
     import javax.crypto.SecretKey;
+    import javax.crypto.spec.SecretKeySpec;
     import java.nio.charset.StandardCharsets;
     import java.util.Date;
 
     import com.example.demo.domain.user.role.Role;
+    import jakarta.annotation.PostConstruct;
+    import org.springframework.beans.factory.annotation.Value;
+    import org.springframework.stereotype.Component;
 
     @Component
-    @RequiredArgsConstructor
     public class JwtProvider {
 
         @Value("${custom.jwt.secret-key}")
@@ -41,6 +40,21 @@
             key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         }
 
+//        // 개발용 주석임 지우지 말아줘
+//        private final SecretKey key;
+//        private final long accessExpirationInSeconds;
+//        private final long refreshExpirationInSeconds;
+//
+//        public JwtProvider(@Value("${jwt.secret}") String secret,
+//                           @Value("${jwt.access-expiration}") long accessExpirationInSeconds,
+//                           @Value("${jwt.refresh-expiration}") long refreshExpirationInSeconds) {
+////            this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+//            this.key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm()/*"AES"*/);
+//            this.accessExpirationInSeconds = accessExpirationInSeconds;
+//            this.refreshExpirationInSeconds = refreshExpirationInSeconds;
+//        }
+
+
         private SecretKey getKey(){
             return this.key;
         }
@@ -55,41 +69,39 @@
              리프레시 토큰 만료 시간만큼 Redis에 자동으로 남아 있도록 설정하는 역할.
              토큰과 서버 저장소의 만료 시점을 맞추기 위해 필요
              */
-        public String generateAccessToken(String email,Role role){
+        public String generateToken(String email, Role role, String category, long expirationSeconds) {
             Date now = new Date();
-            Date expiry = new Date(now.getTime() + accessExpirationInSeconds * 1000);
-
-            return Jwts.builder()
-                    .subject(email)
-                    .claim("role",role.name())
-                    .issuedAt(now)
-                    .expiration(expiry)
-                    .signWith(key,Jwts.SIG.HS256)
-                    .compact();
-        }
-
-        public String generateRefreshToken(String email, Role role) {
-            Date now = new Date();
-            Date expiry = new Date(now.getTime() + refreshExpirationInSeconds * 1000);
+            Date expiry = new Date(now.getTime() + expirationSeconds * 1000);
 
             return Jwts.builder()
                     .subject(email)
                     .claim("role", role.name())
+                    .claim("category", category) // Access / Refresh 구분
                     .issuedAt(now)
                     .expiration(expiry)
                     .signWith(key, Jwts.SIG.HS256)
                     .compact();
         }
 
+        public String generateAccessToken(String email, Role role) {
+            return generateToken(email, role, "access", accessExpirationInSeconds);
+        }
+
+        public String generateRefreshToken(String email, Role role) {
+            return generateToken(email, role, "refresh", refreshExpirationInSeconds);
+        }
+
         public Jws<Claims> parse(String token) {
             try {
-                // 1. 파서 빌더 생성(내부적으로는 DefaultJwtParserBuilder 객체를 반환)
+                //  파서 빌더 생성(내부적으로는 DefaultJwtParserBuilder 객체를 반환)
                 return Jwts.parser()
-                // 2. 검증용 키 등록(JWT의 Signature를 검증)
+                //  검증용 키 등록(JWT의 Signature를 검증)
                         .verifyWith(getKey())
-                // 3. 파서 객체 완성
+                        // 현재 시간 기준으로 만료되었는지 검증
+                        .requireExpiration(new Date())
+                //  파서 객체 완성
                         .build()
-                // 4. 토큰 파싱 + 서명 검증
+                //  토큰 파싱 + 서명 검증
                         // token 문자열을 . 기준으로 세 조각(Header, Payload, Signature)으로 나눔
                         //Header의 alg 값을 보고 적절한 검증 방식 선택
                         //.verifyWith(getKey())에서 지정한 키로 Signature가 유효한지 검증
@@ -115,8 +127,10 @@
             return parse(token).getPayload().getSubject();
         }
 
-        public String extractRole(String token) {
-            return parse(token).getPayload().get("role", String.class);
+        public Role extractRole(String token) {
+            // return parse(token).getPayload().get("role", String.class);
+            String roleName = parse(token).getPayload().get("role", String.class);
+            return Role.valueOf(roleName); // 문자열 → enum 변환
         }
 
 
@@ -124,7 +138,7 @@
             return refreshExpirationInSeconds*1000;
         }
 
-        public long getAccessTokenRemainingTime(String token) {
+        public long getTokenRemainingTime(String token) {
             Date exp = parse(token).getPayload().getExpiration();
             return (exp.getTime() - System.currentTimeMillis()) / 1000;
         }
@@ -139,4 +153,13 @@
             }
         }
 
+
+        public Boolean isExpired(String token) {
+
+            return parse(token).getPayload().getExpiration().before(new Date());
+        }
+
+        public String getCategory(String token) {
+            return parse(token).getPayload().get("category", String.class);
+        }
     }
