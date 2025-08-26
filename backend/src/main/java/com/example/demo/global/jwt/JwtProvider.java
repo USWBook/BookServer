@@ -40,7 +40,7 @@
             key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         }
 
-//        // 개발용 주석임 지우지 말아줘
+        // 개발용 주석임 지우지 말아줘
 //        private final SecretKey key;
 //        private final long accessExpirationInSeconds;
 //        private final long refreshExpirationInSeconds;
@@ -97,8 +97,6 @@
                 return Jwts.parser()
                 //  검증용 키 등록(JWT의 Signature를 검증)
                         .verifyWith(getKey())
-                        // 현재 시간 기준으로 만료되었는지 검증
-                        .requireExpiration(new Date())
                 //  파서 객체 완성
                         .build()
                 //  토큰 파싱 + 서명 검증

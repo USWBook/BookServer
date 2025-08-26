@@ -7,6 +7,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Repository
@@ -35,8 +36,8 @@ public class RedisTokenRepository {
     }
 
     // 리프레시 토큰값 가져옴
-    public String getRefreshToken(String email) {
-        return redisTemplate.opsForValue().get(REFRESH_PREFIX + email);
+    public Optional<String> getRefreshToken(String email) {
+        return Optional.ofNullable(redisTemplate.opsForValue().get(REFRESH_PREFIX + email));
     }
 
     // 리프레시 토큰 삭제

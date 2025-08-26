@@ -6,6 +6,7 @@ import com.example.demo.domain.auth.exception.UserNotFoundException;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
+import com.example.demo.global.exception.CustomJwtException;
 import com.example.demo.global.jwt.JwtProvider;
 import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
@@ -59,10 +61,10 @@ public class TokenService {
             throw new JwtInvalidSignatureException();
         }
 
-        String savedToken = redisTokenRepository.getRefreshToken(email);
-        if (!refreshToken.equals(savedToken)) {
-            throw new JwtInvalidSignatureException();
-        }
+
+        redisTokenRepository.getRefreshToken(email)
+                .filter(saved -> saved.equals(refreshToken))
+                .orElseThrow(JwtInvalidSignatureException::new);
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(MemberNotFoundException::new);
@@ -103,6 +105,10 @@ public class TokenService {
 
     public long getRefreshExpirationInMillis() {
         return jwtProvider.getRefreshTokenExpirationInMillis();
+    }
+
+    public void validateRefreshToken(String refreshToken, String email) {
+        if (!Objects.equals(jwtProvider.extractEmail(refreshToken), email)) throw new JwtInvalidSignatureException();
     }
 }
 

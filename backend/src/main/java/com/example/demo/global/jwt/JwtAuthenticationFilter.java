@@ -1,7 +1,6 @@
 package com.example.demo.global.jwt;
 
 import com.example.demo.domain.user.entity.User;
-import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.exception.CustomJwtException;
 import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
@@ -29,9 +28,9 @@ import java.util.Objects;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
-    private final UserRepository userRepository;
     private final RedisTokenRepository redisTokenRepository;
-    //private final ObjectMapper objectMapper;
+
+
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,

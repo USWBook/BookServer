@@ -32,6 +32,13 @@ public class User {
     @Column(unique = true)
     private String studentId;
 
+    @Column(nullable = false)
+    private Integer grade;
+
+    @Column(nullable = false)
+    private Integer semester;
+
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "major_id")
     private Major major;
@@ -55,13 +62,11 @@ public class User {
         this.password = newEncodedPassword;
     }
 
-    public void updateProfile(String name, Major major) {
-        if (name != null) {
-            this.name = name;
-        }
-        if (major != null) {
-            this.major = major;
-        }
+    public void updateProfile(String name, Major major, Integer grade, Integer semester) {
+        if (name != null) this.name = name;
+        if (major != null) this.major = major;
+        if (grade != null) this.grade = grade;
+        if (semester != null) this.semester = semester;
     }
 
 }
