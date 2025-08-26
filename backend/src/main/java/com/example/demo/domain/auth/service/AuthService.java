@@ -5,10 +5,14 @@ import com.example.demo.domain.auth.dto.request.ResetPasswordRequest;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
 import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.auth.exception.*;
+import com.example.demo.domain.major.entity.Major;
+import com.example.demo.domain.major.exception.MajorNotFoundException;
+import com.example.demo.domain.major.repository.MajorRepository;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.entity.UserStatus;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
+import com.example.demo.global.exception.AuthException;
 import com.example.demo.global.jwt.service.TokenService;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
 import jakarta.validation.Valid;
@@ -31,6 +35,7 @@ public class AuthService {
     private final RedisTokenRepository redisTokenRepository;
     private final AuthenticationManager authenticationManager;
     private final TokenService tokenService;
+    private final MajorRepository majorRepository;
 
     @Transactional
     public void signUp(SignUpRequest request) {
@@ -45,10 +50,17 @@ public class AuthService {
             throw new EmailNotVerifiedException();
         }
 
+        Major major = majorRepository.findByName(request.majorName())
+                .orElseThrow(MajorNotFoundException::new);
+
         User user = User.builder()
                 .email(request.email())
                 .password(passwordEncoder.encode(request.password()))
                 .name(request.name())
+                .studentId(request.studentId())
+                .major(major)
+                .grade(request.grade())
+                .semester(request.semester())
                 .role(Role.USER)
                 .status(UserStatus.ACTIVE)
                 .build();
@@ -115,6 +127,9 @@ public class AuthService {
 
         String token = authHeader.replace("Bearer ", "");
         String email = tokenService.getEmailFromToken(token);
+        if (!request.email().equals(email)) {
+            throw new AuthException("403","사용자 이메일과 토큰 이메일이 다릅니다");
+        }
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(UserNotFoundException::new);
