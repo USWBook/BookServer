@@ -1,4 +1,5 @@
 # 실제 배포중인 운영 서버에 대한 설정
+#application-prod.yml
 spring:
   data:
     redis:

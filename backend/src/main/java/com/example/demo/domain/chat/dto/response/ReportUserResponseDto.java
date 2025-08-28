@@ -1,6 +1,15 @@
 package com.example.demo.domain.chat.dto.response;
 
-//신고 기능 나중에 구현
+import com.example.demo.domain.report.enums.ReportReason;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 public record ReportUserResponseDto(
-        int code, String message
+        UUID reportId,
+        UUID roomId,
+        UUID reportUserId,
+        UUID reportedUserId,
+        ReportReason reason,
+        LocalDateTime reportedAt
 ) {}

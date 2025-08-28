@@ -10,6 +10,7 @@ on:
       - 'backend/build.gradle'
       - 'backend/settings.gradle'
       - 'backend/Dockerfile.stg'
+  workflow_dispatch: {}   # 수동 실행 버튼
 
 jobs:
   buildImageAndPush:
@@ -35,7 +36,7 @@ jobs:
       - name: Docker Buildx 설치
         uses: docker/setup-buildx-action@v2
 
-      - name: 레지스트리 로그인
+      - name: 레지스트리 로그인 (빌드용)
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -82,8 +83,12 @@ jobs:
             "Name=tag:Name,Values=subook-stg-ec2-main" \
             "Name=instance-state-name,Values=running" \
             --query "Reservations[].Instances[].InstanceId" --output text)
+          if [ -z "$INSTANCE_ID" ]; then
+            echo "❌ No running instance found for subook-stg-ec2-main"
+            exit 1
+          fi
           echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
-          echo $INSTANCE_ID
+          echo "Target INSTANCE_ID: $INSTANCE_ID"
 
       - name: AWS SSM Send-Command
         uses: peterkimzz/aws-ssm-send-command@master
@@ -96,60 +101,146 @@ jobs:
           working-directory: /
           comment: Deploy
           command: |
+            set -euo pipefail
+
             IMAGE="ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest"
             NETWORK="common"
-            HEALTH_ENDPOINT="/actuator/health"
-            TIMEOUT=60
+            HEALTH_LIVE="/actuator/health/liveness"
+            HEALTH_READY="/actuator/health/readiness"
+            TIMEOUT_LIVE=90
+            TIMEOUT_READY=300
 
-            if docker ps --format '{{.Names}}' | grep -q "subookApp1_1"; then
-              CURRENT="subookApp1_1"
-              NEXT="subookApp1_2"
-              CURRENT_PORT=8080
-              NEXT_PORT=8081
-            else
-              CURRENT="subookApp1_2"
-              NEXT="subookApp1_1"
-              CURRENT_PORT=8081
-              NEXT_PORT=8080
+            echo "[0/7] Prepare docker network"
+            docker network create "$NETWORK" >/dev/null 2>&1 || true
+
+            echo "[1/7] GHCR login via SSM Parameter Store"
+            GHCR_USER=$(aws ssm get-parameter --region ${{ secrets.AWS_REGION }} --name "/subook/ghcr/user"  --query 'Parameter.Value' --output text)
+            GHCR_TOKEN=$(aws ssm get-parameter --region ${{ secrets.AWS_REGION }} --with-decryption --name "/subook/ghcr/token" --query 'Parameter.Value' --output text)
+            if [ -z "${GHCR_USER}" ] || [ -z "${GHCR_TOKEN}" ]; then
+              echo "❌ Missing GHCR credentials in SSM Parameter Store (/subook/ghcr/user, /subook/ghcr/token)"
+              exit 1
             fi
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
-            echo "Starting new container: $NEXT on port $NEXT_PORT..."
+            echo "[2/7] Pull image: $IMAGE"
             docker pull "$IMAGE"
-            docker stop "$NEXT" 2>/dev/null
-            docker rm "$NEXT" 2>/dev/null
+
+            echo "[2.5/7] Decide CURRENT/NEXT by RUNNING containers"
+            RUNNING=$(docker ps --format '{{.Names}}' | grep -E '^subookApp1_[12]$' || true)
+            if [ "$RUNNING" = "subookApp1_1" ]; then
+              CURRENT="subookApp1_1"; CURRENT_PORT=8080
+              NEXT="subookApp1_2";   NEXT_PORT=8081
+            elif [ "$RUNNING" = "subookApp1_2" ]; then
+              CURRENT="subookApp1_2"; CURRENT_PORT=8081
+              NEXT="subookApp1_1";   NEXT_PORT=8080
+            else
+              CURRENT=""; CURRENT_PORT=""
+              NEXT="subookApp1_1"; NEXT_PORT=8080
+            fi
+            echo "CURRENT=${CURRENT:-none}, NEXT=$NEXT (ports: CURRENT=${CURRENT_PORT:-na}, NEXT=$NEXT_PORT)"
+
+            echo "[3/7] Clean old NEXT if exists (Exited or leftover)"
+            docker stop "$NEXT" 2>/dev/null || true
+            docker rm "$NEXT" 2>/dev/null || true
+
+            echo "[4/7] Start NEXT: $NEXT on :$NEXT_PORT"
             docker run -d \
               --name "$NEXT" \
               --restart unless-stopped \
-              --network $NETWORK \
+              --network "$NETWORK" \
               -p "$NEXT_PORT":8080 \
+              -e SPRING_PROFILES_ACTIVE=secret,stg \
+              -e TZ=Asia/Seoul \
               "$IMAGE"
 
-            echo "Waiting for health check..."
-            START_TIME=$(date +%s)
-            while true; do
-              CONTENT=$(curl -s http://localhost:$NEXT_PORT$HEALTH_ENDPOINT)
+            wait_for () {
+              local port="$1" url="$2" timeout="$3"
+              local start
+              start=$(date +%s)
+              while true; do
+                if curl -fsS "http://localhost:${port}${url}" >/dev/null; then
+                  return 0
+                fi
+                local elapsed=$(( $(date +%s) - start ))
+                if [ $elapsed -ge $timeout ]; then
+                  return 1
+                fi
+                echo "⏳ waiting ${url} on :${port} ... (${elapsed}s)"
+                sleep 3
+              done
+            }
 
-              if [[ "$CONTENT" == *'"status":"UP"'* ]]; then
-                echo "✅ $NEXT is UP!"
-                break
-              fi
+            echo "[5/7] Wait liveness"
+            if ! wait_for "$NEXT_PORT" "$HEALTH_LIVE" "$TIMEOUT_LIVE"; then
+              echo "❌ Liveness failed within ${TIMEOUT_LIVE}s. Logs:"
+              docker logs --tail=200 "$NEXT" || true
+              docker stop "$NEXT" || true
+              docker rm "$NEXT" || true
+              exit 1
+            fi
+            echo "✅ Liveness UP"
 
-              ELAPSED_TIME=$(( $(date +%s) - START_TIME ))
-              if [[ $ELAPSED_TIME -ge $TIMEOUT ]]; then
-                echo "❌ Timeout: $NEXT did not start in $TIMEOUT seconds."
-                docker stop "$NEXT"
-                docker rm "$NEXT"
-                exit 1
-              fi
+            echo "[6/7] Wait readiness"
+            if ! wait_for "$NEXT_PORT" "$HEALTH_READY" "$TIMEOUT_READY"; then
+              echo "❌ Readiness failed within ${TIMEOUT_READY}s. Logs:"
+              docker logs --tail=200 "$NEXT" || true
+              docker stop "$NEXT" || true
+              docker rm "$NEXT" || true
+              exit 1
+            fi
+            echo "✅ Readiness UP"
 
-              echo "⏳ Waiting for $NEXT to be UP..."
-              sleep 5
-            done
+            # --- HAProxy cfg for stg.subook.shop (idempotent) ---
+            echo "[6.5/7] Ensure HAProxy config for stg.subook.shop"
+            mkdir -p /dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy
 
-            echo "Stopping old container: $CURRENT"
-            docker stop "$CURRENT" 2>/dev/null
-            docker rm "$CURRENT" 2>/dev/null
+            cat >/dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy/haproxy.cfg <<'EOC'
+            global
+              log stdout format raw local0
 
-            docker rmi $(docker images -f "dangling=true" -q) 2>/dev/null
+            resolvers docker
+              nameserver dns1 127.0.0.11:53
+              resolve_retries 3
+              timeout retry 1s
+              hold valid 10s
 
+            defaults
+              mode http
+              timeout connect 5s
+              timeout client  60s
+              timeout server  60s
+
+            frontend http_front
+              bind *:80
+              acl host_subook hdr(host) -i stg.subook.shop
+              http-request set-header X-Forwarded-Proto https
+              use_backend http_back if host_subook
+              default_backend http_back
+
+            backend http_back
+              balance roundrobin
+              option httpchk GET /actuator/health
+              default-server inter 4s rise 3 fall 3 init-addr last,libc,none resolvers docker
+              option redispatch
+              server subook_server_1 subookApp1_1:8080 check
+              server subook_server_2 subookApp1_2:8080 check
+            EOC
+
+            docker rm -f ha_proxy_1 2>/dev/null || true
+            docker run -d \
+              --name ha_proxy_1 \
+              --restart unless-stopped \
+              --network common \
+              -p 8090:80 \
+              -v /dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy:/usr/local/etc/haproxy \
+              haproxy
+            # --- /HAProxy cfg ---
+
+            echo "[7/7] Switch: stop old CURRENT (if any)"
+            if [ -n "${CURRENT}" ]; then
+              docker stop "$CURRENT" 2>/dev/null || true
+              docker rm "$CURRENT" 2>/dev/null || true
+            fi
+
+            docker rmi $(docker images -f "dangling=true" -q) 2>/dev/null || true
             echo "✅ Deployment complete. Running container: $NEXT on port $NEXT_PORT"

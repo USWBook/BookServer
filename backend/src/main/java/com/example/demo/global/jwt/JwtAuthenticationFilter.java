@@ -1,15 +1,12 @@
 package com.example.demo.global.jwt;
 
 import com.example.demo.domain.user.entity.User;
-import com.example.demo.domain.user.repository.UserRepository;
+import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.exception.CustomJwtException;
-import com.example.demo.global.jwt.exception.JwtBlacklistedException;
+import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
 import com.example.demo.global.jwt.exception.JwtTokenExpiredException;
-import com.example.demo.global.jwt.exception.JwtUserNotFoundException;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
-import com.example.demo.global.response.RsData;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.JwtException;
+import com.example.demo.domain.user.dto.CustomUserDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,17 +15,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static io.lettuce.core.pubsub.PubSubOutput.Type.message;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -36,57 +28,80 @@ import static io.lettuce.core.pubsub.PubSubOutput.Type.message;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
-    private final UserRepository userRepository;
     private final RedisTokenRepository redisTokenRepository;
-    //private final ObjectMapper objectMapper;
+
+
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain chain) throws ServletException, IOException{
+                                    FilterChain chain) throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.info("[JWT Filter] Authorization 헤더 없음 또는 잘못됨 → 인증 없이 통과");
+        // ① 액추에이터/헬스는 바로 통과 (의존성 안 타고 빠르게)
+        String path = request.getRequestURI();
+        if (path.startsWith("/actuator/")) {
             chain.doFilter(request, response);
             return;
         }
 
-        String path = request.getRequestURI();
+        // ② 토큰 없으면 통과
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            chain.doFilter(request, response);
+            return;
+        }
 
-        log.info("[JWT Filter] 요청 URI: {}", path);
-        log.info("[JWT Filter] Authorization 헤더: {}", authHeader);
+        String token = authHeader.substring("Bearer ".length());
 
-        String token = authHeader.replace("Bearer ", "");
+        // 토큰이 만료되면 401 코드
+        try {
+            jwtProvider.isExpired(token);
+        } catch (Exception e) {
+
+            throw new JwtTokenExpiredException();
+        }
+
+        // access토큰이 아니면 401
+        if(!Objects.equals(jwtProvider.getCategory(token), "access")) throw new JwtInvalidSignatureException();
 
         try {
-
             // 블랙리스트 체크
             if (redisTokenRepository.isBlacklisted(token)) {
-                log.info("[JWT Filter] 블랙리스트 토큰: {}  요청 차단.", token);
-                throw new JwtBlacklistedException();
+                // (선택) 401로 응답하고 종료
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                response.getWriter().write("{\"code\":\"UNAUTHORIZED\",\"message\":\"블랙리스트 토큰\"}");
+                return;
             }
+
             String email = jwtProvider.extractEmail(token);
+            Role role = jwtProvider.extractRole(token);
 
-            User user = userRepository.findByEmail(email)
-                    .orElseThrow(JwtUserNotFoundException::new);
+            // 이방식은 DB를 조회 해야해서 성능이 떨어짐. 하지만 보안적으론 좋음
+//            User user = userRepository.findByEmail(email)
+//                    .orElseThrow(JwtUserNotFoundException::new);
 
+            // UserDetails 구현체 생성 (DB 조회 없이)
+            User user = new User();
+            user.setEmail(email);
+            user.setRole(role);
+
+            CustomUserDetails customUserDetails = new CustomUserDetails(user);
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            user.getEmail(), null,
-                            List.of(new SimpleGrantedAuthority(
-                                    "ROLE_" + user.getRole().name()))
-                    );
+                    new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
+
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            // 인증 성공 시에만 다음 필터로 진행
             chain.doFilter(request, response);
 
-        }catch (CustomJwtException e) {
-                log.error("[JWT Filter] JWT 예외 발생: {}", e.getMessage());
-                // 이거 로그인 안되어 있거나 토큰이 만료되면 예외 발생 시키고 이걸 프론트가 받으면 프론트에서 리다이렉트 시켜야함
-            throw new JwtTokenExpiredException();
-            }
+        } catch (CustomJwtException e) {
+            // (선택) 기존처럼 throw로 전파해도 되지만,
+            // 헬스체크/프록시와 궁합을 위해 401 응답으로 종료하는 걸 권장
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.getWriter().write("{\"code\":\"UNAUTHORIZED\",\"message\":\"" + e.getMessage() + "\"}");
+            // throw new JwtTokenExpiredException();
+        }
     }
 //    private void setErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
 //        response.setStatus(status);

@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
@@ -31,27 +32,29 @@ public class AuthController {
         return new RsData<>("200", "회원가입 성공");
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<RsData<TokenResponse>> login(@RequestBody @Valid LoginRequest request) {
-        TokenResponse tokens = authService.login(request);
-
-        // HttpOnly 쿠키 설정
-        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokens.refreshToken())
-                .httpOnly(true) // avaScript에서 접근 불가.
-                //.secure(true) // HTTPS 사용 시
-                .path("/")
-                .maxAge(Duration.ofMillis(jwtProvider.getRefreshTokenExpirationInMillis()))
-                .sameSite("Strict") // 또는 Lax/None
-                .build();
-
-        return  ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                .body(new RsData<>("200", "로그인 완료되었습니다.", tokens.withoutRefreshToken()));
-    }
+    //@PostMapping("/login")
+//    public ResponseEntity<RsData<TokenResponse>> login(@RequestBody @Valid LoginRequest request) {
+//        TokenResponse tokens = authService.login(request);
+//
+//        // HttpOnly 쿠키 설정
+//        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokens.refreshToken())
+//                .httpOnly(true) // JavaScript에서 접근 불가.
+//                //.secure(true) // HTTPS 환경에서만 활성화
+//                .path("/")
+//                .maxAge(Duration.ofMillis(jwtProvider.getRefreshTokenExpirationInMillis()))
+//                .sameSite("Strict") // 또는 Lax/None
+//                .build();
+//
+//        return  ResponseEntity.ok()
+//                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+//                .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken())
+//                .body(new RsData<>("200", "로그인 완료되었습니다."));
+//    }
 
     @PostMapping("/logout")
-    public ResponseEntity<RsData<?>> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
-        authService.logout(authHeader);
+    public ResponseEntity<RsData<?>> logout(@RequestHeader(value = "Authorization", required = false) String authHeader,
+                                            @CookieValue(value = "refreshToken", required = false) String refreshToken) {
+        authService.logout(authHeader, refreshToken);
 
         // refreshToken 쿠키 삭제
         ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
@@ -74,7 +77,7 @@ public class AuthController {
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokens.refreshToken())
                 .httpOnly(true)
-                //.secure(true)  // HTTPS 환경에서만 true, 로컬 개발시 false 가능
+                //.secure(true)  // HTTPS 환경에서만 true, 로컬 개발시 false
                 .path("/")
                 .maxAge(Duration.ofMillis(jwtProvider.getRefreshTokenExpirationInMillis()))
                 .sameSite("Strict")
@@ -82,7 +85,8 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                .body(new RsData<>("200", "토큰 재발행 완료되었습니다.", tokens.withoutRefreshToken()));
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken())
+                .body(new RsData<>("200", "토큰 재발행 완료되었습니다."));
     }
 
     @PostMapping("change-password")
@@ -97,4 +101,9 @@ public class AuthController {
         return new RsData<>("200", "비밀번호 초기화 완료되었습니다.");
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin")
+    public String adminOnly() {
+        return "관리자 전용 페이지";
+    }
 }

@@ -7,6 +7,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Repository
@@ -35,8 +36,8 @@ public class RedisTokenRepository {
     }
 
     // 리프레시 토큰값 가져옴
-    public String getRefreshToken(String email) {
-        return redisTemplate.opsForValue().get(REFRESH_PREFIX + email);
+    public Optional<String> getRefreshToken(String email) {
+        return Optional.ofNullable(redisTemplate.opsForValue().get(REFRESH_PREFIX + email));
     }
 
     // 리프레시 토큰 삭제
@@ -44,18 +45,18 @@ public class RedisTokenRepository {
         redisTemplate.delete(REFRESH_PREFIX + email);
     }
 
-    // 액세스 토큰 블랙리스트로 등록
-    public void blacklistAccessToken(String accessToken, long expirationMillis) {
+    // 토큰 블랙리스트로 등록
+    public void blacklistToken(String Token, long expirationMillis) {
         redisTemplate.opsForValue().set(
-                BLACKLIST_PREFIX + accessToken,
+                BLACKLIST_PREFIX + Token,
                 "logout",
                 Duration.ofMillis(expirationMillis)
         );
     }
 
     // 블랙리스트 확인
-    public boolean isBlacklisted(String accessToken) {
-        return redisTemplate.hasKey(BLACKLIST_PREFIX + accessToken);
+    public boolean isBlacklisted(String token) {
+        return redisTemplate.hasKey(BLACKLIST_PREFIX + token);
     }
 
     // 이메일 인증코드 저장함
@@ -97,4 +98,8 @@ public class RedisTokenRepository {
         redisTemplate.delete(EMAIL_AUTH_PREFIX + email);
     }
 
+    // 레디스에 토큰이 존재하는지 검증
+    public boolean existsRefreshToken(String email) {
+        return Boolean.TRUE.equals(redisTemplate.hasKey(REFRESH_PREFIX + email));
+    }
 }

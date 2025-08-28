@@ -1,3 +1,4 @@
+#application.yml
 spring:
   application:
     name: book
@@ -11,8 +12,9 @@ spring:
         highlight_sql: false
         use_sql_comments: false
   profiles:
-    active: dev
     include: secret
+    active: dev
+
 
   output:
     ansi:
@@ -22,9 +24,32 @@ spring:
 server:
   port: 8080
 
-
+jwt:
+  access-expiration: 3600 # 1시간
+  refresh-expiration: 604800 # 7일
 
 logging:
   output:
     ansi:
       enabled: always
+
+---
+# local 프로필 설정
+spring:
+  config:
+    activate:
+      on-profile: local # 'local' 프로필일 때 활성화 (또는 기본값)
+
+# 로컬에서 사용할 JWT 시크릿 키 (노출되어도 상관없는 테스트용 키)
+jwt:
+  secret: "VGhpcyBpcyBhIHRlc3Qgc2VjcmV0IGtleSBmb3IgdXN3IGJvb2sgcHJvamVjdC4="
+---
+# prod 프로필 설정
+spring:
+  config:
+    activate:
+      on-profile: prod # 'prod' 프로필일 때 활성화
+
+# 운영 서버에서 사용할 AWS Secrets Manager의 시크릿 이름
+jwt:
+  secret-name: "book-server/jwt-secret"

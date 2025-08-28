@@ -1,10 +1,9 @@
 package com.example.demo.domain.chat.dto.request;
 
+import com.example.demo.domain.report.enums.ReportReason;
+
 import java.util.UUID;
 
-//신고 기능 나중에 구현
-public record ReportUserRequestDto
-        (UUID reportedUserId,
-         UUID reporterId,
-         String reason)
-{}
+public record ReportUserRequestDto(
+        ReportReason reason
+) {}

@@ -92,6 +92,9 @@ dependencies {
 
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.1'
 
+	// AWS Secrets Manager SDK
+	implementation 'software.amazon.awssdk:secretsmanager:2.25.45'
+
 
 }
 

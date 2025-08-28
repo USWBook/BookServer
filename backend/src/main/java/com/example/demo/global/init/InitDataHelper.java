@@ -32,7 +32,7 @@ public class InitDataHelper {
     private final ChatService chatService;          // 채팅 메시지 관리 서비스
 
     // 사용자 생성
-    public User createUser(String email, String rawPassword, String name, String studentId, Major major, Role role, UserStatus status) {
+    public User createUser(String email, String rawPassword, String name, String studentId, Major major, Role role, UserStatus status, int grade,int semester) {
         return userRepository.save(
                 User.builder()
                         .email(email)
@@ -42,6 +42,8 @@ public class InitDataHelper {
                         .major(major)
                         .role(role)
                         .status(status)
+                        .grade(grade)
+                        .semester(semester)
                         .build()
         );
     }
@@ -104,12 +106,12 @@ public class InitDataHelper {
      * 채팅 메시지 생성(전송)
      * 기본적으로 신규 메시지이고, receiverId는 null로 둠 (필요 시 변경)
      */
-    public ChatMessage createChatMessage(UUID roomId, UUID senderId, String message) {
+    public ChatMessage createChatMessage(UUID roomId, String message, UUID senderId) {
         SendMessageRequestDto request = new SendMessageRequestDto(
                 roomId,
-                senderId,
                 message
         );
-        return chatService.sendChatMessage(request);
+        return chatService.sendChatMessage(request, senderId);
     }
+
 }
