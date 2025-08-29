@@ -15,16 +15,18 @@ import java.util.UUID;
 @Table(name = "chat_room_users")
 public class ChatRoomUser {
 
+    //roomId PK
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     @Column(name = "chat_room_user_id", updatable = false, nullable = false)
     private UUID id;
 
-    // JPA 연관관계 없이 단순 UUID 보관
+    // 참여자가 어느 채팅방 소속인지 알 수 있음 FK
     @Column(name = "chat_room_id", nullable = false)
     private UUID chatRoomId;
 
+    //채팅방에 속해있는 유저
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

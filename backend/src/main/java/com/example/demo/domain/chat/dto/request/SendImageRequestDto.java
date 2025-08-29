@@ -6,6 +6,5 @@ import org.springframework.web.multipart.MultipartFile;
 //이미지 전송
 public record SendImageRequestDto(
         UUID roomId,
-        UUID senderId,
         MultipartFile image
 ) {}
