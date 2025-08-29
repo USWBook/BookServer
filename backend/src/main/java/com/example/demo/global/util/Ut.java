@@ -6,6 +6,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
 import javax.crypto.SecretKey;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Date;
 import java.util.Map;
 
@@ -18,6 +20,14 @@ public class Ut {
             try {
                 return objectMapper.writeValueAsString(obj);
             } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static void write(PrintWriter writer, Object obj) {
+            try {
+                objectMapper.writeValue(writer, obj);
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }

@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.example.demo.global.util.Ut.Json.objectMapper;
+import com.example.demo.global.util.Ut;
 
 public class JwtAuthenticationFailureHandler implements AuthenticationFailureHandler {
 
@@ -46,7 +46,7 @@ public class JwtAuthenticationFailureHandler implements AuthenticationFailureHan
         errorDetails.put("message", errorMessage);
 
         // ObjectMapper를 사용해 Map을 JSON 문자열로 변환하고 응답
-        objectMapper.writeValue(response.getWriter(), errorDetails);
+        Ut.Json.write(response.getWriter(), errorDetails);
     }
 }
 
