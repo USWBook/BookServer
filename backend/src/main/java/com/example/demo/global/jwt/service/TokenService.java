@@ -6,7 +6,6 @@ import com.example.demo.domain.auth.exception.UserNotFoundException;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
-import com.example.demo.global.exception.CustomJwtException;
 import com.example.demo.global.jwt.JwtProvider;
 import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
-import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service

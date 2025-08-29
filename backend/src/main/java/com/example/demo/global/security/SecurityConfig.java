@@ -1,5 +1,6 @@
 package com.example.demo.global.security;
 
+import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.global.jwt.JwtAuthenticationFilter;
 import com.example.demo.global.jwt.JwtProvider;
 import com.example.demo.global.jwt.handler.JwtAuthenticationFailureHandler;
@@ -39,6 +40,7 @@ public class SecurityConfig {
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final AuthenticationConfiguration authenticationConfiguration;
     private final TokenService tokenService;
+    private final UserRepository userRepository;
 
 
 
@@ -59,9 +61,8 @@ public class SecurityConfig {
         AuthenticationManager authManager = authenticationManager(authenticationConfiguration);
 
         // 커스텀 로그인 필터
-        LoginAuthenticationFilter loginFilter = new LoginAuthenticationFilter(authManager);
+        LoginAuthenticationFilter loginFilter = new LoginAuthenticationFilter(authManager,userRepository);
         loginFilter.setFilterProcessesUrl("/api/auth/login"); // 로그인 URL
-        // loginFilter.setAuthenticationSuccessHandler(new LoginSuccessHandler(tokenService));
         loginFilter.setAuthenticationSuccessHandler(new JwtAuthenticationSuccessHandler(tokenService));
         loginFilter.setAuthenticationFailureHandler(new JwtAuthenticationFailureHandler());
 

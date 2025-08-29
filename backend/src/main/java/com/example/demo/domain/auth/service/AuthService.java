@@ -108,7 +108,6 @@ public class AuthService {
 
         // RefreshToken 블랙리스트 처리
         if (refreshToken != null && !refreshToken.isEmpty()) {
-            tokenService.blacklistToken(refreshToken);
 
             String email = tokenService.getEmailFromToken(refreshToken);
             tokenService.deleteRefreshToken(email);
@@ -127,9 +126,6 @@ public class AuthService {
 
         String token = authHeader.replace("Bearer ", "");
         String email = tokenService.getEmailFromToken(token);
-        if (!request.email().equals(email)) {
-            throw new AuthException("403","사용자 이메일과 토큰 이메일이 다릅니다");
-        }
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(UserNotFoundException::new);

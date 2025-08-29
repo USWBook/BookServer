@@ -11,7 +11,7 @@ public record SignUpRequest(
         String email,
 
         @NotBlank(message = "비밀번호는 필수입니다.")
-        // 비밀번호 정규식 (예: 영문, 숫자, 특수문자 포함 8~20자)
+        // 비밀번호 정규식 (영문, 숫자, 특수문자 포함 8~20자)
         @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$",
                 message = "비밀번호는 영문, 숫자, 특수문자를 포함한 8~20자여야 합니다.")
         String password,
