@@ -33,7 +33,7 @@ public class EmailSendingService {
             javaMailSender.send(mimeMessage);
 
         } catch (MessagingException e) {
-            throw new MessagingFailException(e.getMessage());
+            throw new MessagingFailException("메세지 발송에 실패했습니다.");
         }
     }
 }
