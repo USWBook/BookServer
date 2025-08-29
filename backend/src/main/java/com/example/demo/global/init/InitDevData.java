@@ -44,7 +44,9 @@ public class InitDevData {
                 "20230001",
                 csMajor,
                 Role.USER,
-                UserStatus.ACTIVE
+                UserStatus.ACTIVE,
+                1,
+                1
         );
         //채팅확인을 위해 유저 추가
         User user2 = helper.createUser(
@@ -54,7 +56,9 @@ public class InitDevData {
                 "20230002",
                 csMajor,
                 Role.USER,
-                UserStatus.ACTIVE
+                UserStatus.ACTIVE,
+                2,
+                2
         );
         User user3 = helper.createUser(
                 "user3@example.com",
@@ -63,7 +67,9 @@ public class InitDevData {
                 "20230003",
                 mechMajor,
                 Role.USER,
-                UserStatus.ACTIVE
+                UserStatus.ACTIVE,
+                3,
+                1
         );
 
         // 관리자 계정 생성
@@ -74,7 +80,9 @@ public class InitDevData {
                 "00000000",
                 mechMajor,
                 Role.ADMIN,
-                UserStatus.ACTIVE
+                UserStatus.ACTIVE,
+                4,
+                2
         );
 
         // 게시글 생성
@@ -102,8 +110,8 @@ public class InitDevData {
         // 샘플 채팅 메시지 생성
         ChatMessage chatMessage = helper.createChatMessage(
                 chatRoom.getRoomId(),
-                user2.getId(),
-                "안녕하세요! 이 책 아직 판매 중인가요?"
+                "안녕하세요! 이 책 아직 판매 중인가요?",
+                user2.getId()
         );
 
         log.info("✅ 개발용 초기 데이터 및 채팅방 생성 완료");

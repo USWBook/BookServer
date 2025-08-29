@@ -48,7 +48,9 @@ public class InitTestData {
                 "20230001",
                 csMajor,
                 Role.USER,
-                UserStatus.ACTIVE
+                UserStatus.ACTIVE,
+                1,
+                2
         );
 
         User admin = helper.createUser(
@@ -58,7 +60,9 @@ public class InitTestData {
                 "00000000",
                 mechMajor,
                 Role.ADMIN,
-                UserStatus.ACTIVE
+                UserStatus.ACTIVE,
+                2,
+                1
         );
 
         // 4. 게시글 생성

@@ -1,24 +1,29 @@
     package com.example.demo.domain.chat.controller;
 
-    import com.example.demo.domain.chat.dto.request.CreateChatRoomRequestDto;
-    import com.example.demo.domain.chat.dto.request.SendMessageRequestDto;
+    import com.example.demo.domain.chat.dto.request.*;
     import com.example.demo.domain.chat.dto.response.*;
     import com.example.demo.domain.chat.entity.ChatMessage;
     import com.example.demo.domain.chat.entity.ChatRoom;
     import com.example.demo.domain.chat.exception.ChatRoomNotFoundException;
     import com.example.demo.domain.chat.service.ChatRoomService;
     import com.example.demo.domain.chat.service.ChatService;
+    import com.example.demo.domain.post.entity.Post;
+    import com.example.demo.domain.post.repository.PostRepository;
+    import com.example.demo.domain.report.entity.UserReport;
+    import com.example.demo.domain.report.enums.ReportReason;
+    import com.example.demo.domain.report.repository.UserReportRepository;
     import com.example.demo.domain.user.entity.User;
     import com.example.demo.domain.user.repository.UserRepository;
     import com.example.demo.global.response.RsData;
     import com.example.demo.global.response.Empty;
+    import jakarta.validation.Valid;
     import org.springframework.security.core.Authentication;
     import org.springframework.security.core.annotation.AuthenticationPrincipal;
     import org.springframework.security.core.context.SecurityContextHolder;
     import org.springframework.security.core.userdetails.UserDetails;
+    import org.springframework.security.core.userdetails.UsernameNotFoundException;
     import org.springframework.web.bind.annotation.*;
     import org.springframework.web.multipart.MultipartFile;
-    import com.example.demo.domain.chat.dto.request.LeaveChatRoomRequestDto;
     import com.example.demo.domain.chat.dto.response.LeaveChatRoomResponseDto;
     import com.example.demo.domain.chat.dto.response.DeleteChatRoomResponseDto;
 
@@ -27,6 +32,7 @@
     import org.springframework.web.multipart.MultipartFile;
 
     import java.security.Principal;
+    import java.time.LocalDateTime;
     import java.util.List;
     import java.util.Optional;
     import java.util.UUID;
@@ -42,6 +48,8 @@
         private final ChatRoomService chatRoomService;
         private final ChatService chatService;
         private final UserRepository userRepository;
+        private final PostRepository postRepository;
+        private final UserReportRepository userReportRepository;
         private static final Logger log = LoggerFactory.getLogger(ChatController.class);
 
 
@@ -68,7 +76,10 @@
             // 2) 이제 postId로 채팅방 생성 시도
             try {
                 ChatRoom room = chatRoomService.createOrGetRoom(dto, user.getId());
-                return new RsData<>("200", "채팅 요청 완료", CreateChatRoomResponseDto.from(room));
+                UUID postId = room.getPostId();
+                Optional<Post> postOptional = postRepository.findById(postId);
+                String title = postOptional.map(Post::getTitle).orElse("제목 없음");
+                return new RsData<>("200", "채팅 요청 완료", CreateChatRoomResponseDto.from(room,title));
             } catch(Exception ex) {
                 log.error("채팅방 생성 중 오류. postId={}, buyerId={}", dto.postId(), user.getId(), ex);
                 throw ex; // 필요하면 커스텀 에러로 변환
@@ -130,15 +141,29 @@
             return new RsData<>("200", "나의 채팅방 목록 조회 성공", dtos);
         }
 
-        // 채팅방 메시지 수신
+        // 채팅 메시지 수신
         @GetMapping("/rooms/{roomId}/messages")
         public RsData<List<SendMessageResponseDto.Data>> getMessages(@PathVariable UUID roomId, Authentication authentication) {
+            // 채팅방 조회
             ChatRoom room = chatRoomService.findByRoomId(roomId);
-            UUID userId = UUID.fromString(authentication.getName());
+
+            // 인증 정보에서 사용자 이메일 가져오기
+            String userEmail = authentication.getName();
+
+            // 이메일로 User 조회 후 UUID 획득
+            User user = userRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+            UUID userId = user.getId();
+
+            // 권한 검사 (room.getSender(), room.getReceiver()가 User 객체일 경우)
             if (!room.getSender().equals(userId) && !room.getReceiver().equals(userId)) {
-                return new RsData<>("403", "채팅방 조회 권한 없음", null);
+                return new RsData<>("403", "채팅방 입장 권한이 없습니다.", null);
             }
+
+            // 채팅 메시지 목록 조회
             List<ChatMessage> messages = chatService.getMessages(roomId);
+
+            // DTO 변환
             List<SendMessageResponseDto.Data> dtos = messages.stream()
                     .map(m -> new SendMessageResponseDto.Data(
                             m.getId(),
@@ -149,23 +174,27 @@
                     ))
                     .collect(Collectors.toList());
 
+            // 결과 반환
             return new RsData<>("200", "채팅 메시지 목록 조회 성공", dtos);
         }
 
-        // 채팅 메시지 송신 (POST)
-        @PostMapping("/rooms/{roomId}/messages")
-        public RsData<SendMessageResponseDto.Data> sendChatMessage(
-                @PathVariable UUID roomId,
-                @RequestBody SendMessageRequestDto request,
-                Authentication authentication) {
-            UUID senderId = UUID.fromString(authentication.getName());
-            // DTO에 senderId 넣어서 호출!
-            SendMessageRequestDto fixedRequest = new SendMessageRequestDto(
-                    roomId,
-                    senderId,
-                    request.message()
-            );
-            ChatMessage savedMessage = chatService.sendChatMessage(fixedRequest);
+
+        // 채팅 메시지 송신
+            @PostMapping("/rooms/messages")
+            public RsData<SendMessageResponseDto.Data> sendChatMessage(
+                    @RequestBody SendMessageRequestDto request,
+                    Authentication authentication) {
+
+                // 기존 UUID 변환 코드 대신 이메일로 사용자 조회 후 UUID 추출
+                String userEmail = authentication.getName();
+
+                User senderUser = userRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+
+            UUID senderId = senderUser.getId();
+
+            // 서비스 호출 시 DTO와 senderId 같이 넘기기
+            ChatMessage savedMessage = chatService.sendChatMessage(request, senderId);
 
             SendMessageResponseDto.Data data = new SendMessageResponseDto.Data(
                     savedMessage.getId(),
@@ -179,13 +208,18 @@
         }
 
         // 이미지 전송
-        @PostMapping("/rooms/{roomId}/images")
+        @PostMapping("/rooms/images")
         public RsData<SendImageResponseDto.Data> sendImageMessage(
-                @PathVariable UUID roomId,
-                @RequestPart MultipartFile image,
+                @ModelAttribute SendImageRequestDto request,
                 Authentication authentication) {
-            UUID senderId = UUID.fromString(authentication.getName());
-            ChatMessage imageMessage = chatService.sendImageMessage(roomId, senderId, image);
+
+            String userEmail = authentication.getName();
+            User senderUser = userRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+            UUID senderId = senderUser.getId();
+
+            ChatMessage imageMessage = chatService.sendImageMessage(request, senderId);
+
             SendImageResponseDto.Data data = new SendImageResponseDto.Data(
                     imageMessage.getId(),
                     imageMessage.getChatRoomId(),
@@ -193,27 +227,79 @@
                     imageMessage.getImageUrl(),
                     imageMessage.getSentAt()
             );
+
             return new RsData<>("200", "이미지 메시지 전송 완료", data);
         }
 
-        // 채팅방 나가기 (논리 삭제)
-        @PostMapping("/rooms/{roomId}/leave")
-        public RsData<Empty> leaveChatRoom(
+        //유저 신고
+        @PostMapping("/{roomId}/report")
+        public RsData<ReportUserResponseDto> reportUser(
                 @PathVariable UUID roomId,
+                @RequestBody @Valid ReportUserRequestDto requestDto,
                 Authentication authentication) {
-            UUID userId = UUID.fromString(authentication.getName());
-            chatRoomService.leaveChatRoom(roomId, userId);
-            return new RsData<>("200", "채팅방 나가기 완료", null);
+
+            String email = authentication.getName();
+            User reporter = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("신고자 유저를 찾을 수 없습니다."));
+
+            UserReport report = chatRoomService.reportUserByRoom(roomId, reporter, requestDto.reason());
+
+            ReportUserResponseDto responseDto = new ReportUserResponseDto(
+                    report.getId(),
+                    roomId,
+                    report.getReporter().getId(),
+                    report.getReported().getId(),
+                    report.getReason(),
+                    report.getReportedAt()
+            );
+
+            return new RsData<>("200", "신고 완료", responseDto);
+        }
+
+        // 채팅방 나가기 (논리 삭제)
+        @PostMapping("/rooms/leave")
+        public RsData<LeaveChatRoomResponseDto> leaveChatRoom(
+                @RequestBody LeaveChatRoomRequestDto request,
+                Authentication authentication) {
+            String email = authentication.getName();
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+            UUID userId = user.getId();
+
+            chatRoomService.leaveChatRoom(request.roomId(), userId);
+
+            int userCount = chatRoomService.getUserCount(request.roomId());
+
+            LeaveChatRoomResponseDto responseDto = new LeaveChatRoomResponseDto(userCount);
+            return new RsData<>("200", "채팅방 나가기 완료", responseDto);
+
         }
 
         // 채팅방 삭제
-    //    @DeleteMapping("/rooms/{roomId}")
-    //    public RsData<DeleteChatRoomResponseDto> deleteChatRoom(
-    //            @PathVariable UUID roomId,
-    //            Authentication authentication) {
-    //        UUID userId = UUID.fromString(authentication.getName());
-    //        chatRoomService.deleteChatRoom(roomId, userId.toString());
-    //        return new RsData<>("200", "채팅방 삭제 완료", new DeleteChatRoomResponseDto(200, "채팅방 삭제 완료"));
-    //    }
+        @DeleteMapping("/rooms/remove")
+        public RsData<Empty> removeChatRoom(
+                @RequestBody LeaveChatRoomRequestDto request,
+                Authentication authentication) {
+            // 인증된 사용자 정보에서 UUID 획득
+            String email = authentication.getName();
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+            UUID userId = user.getId();
+
+            // 채팅방 나가기 처리 (soft delete)
+            chatRoomService.leaveChatRoom(request.roomId(), userId);
+
+            // 남아있는 사용자 수 조회
+            int userCount = chatRoomService.getUserCount(request.roomId());
+
+            // 사용자 0명일 경우 DB와 Redis에서 채팅방 완전 삭제
+            if (userCount == 0) {
+                chatRoomService.deleteChatRoomFromDb(request.roomId());
+                chatRoomService.deleteChatRoomFromRedis(request.roomId());
+            }
+
+            return new RsData<>("200", "채팅방 완전 삭제 처리 완료", null);
+        }
+
     }
 
