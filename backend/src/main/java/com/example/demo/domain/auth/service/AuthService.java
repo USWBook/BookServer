@@ -33,7 +33,6 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RedisTokenRepository redisTokenRepository;
-    private final AuthenticationManager authenticationManager;
     private final TokenService tokenService;
     private final MajorRepository majorRepository;
 
@@ -97,8 +96,8 @@ public class AuthService {
 
 
     @Transactional
-    public void logout(@RequestHeader(value = "Authorization", required = false) String authHeader,
-                       @CookieValue(value = "refreshToken", required = false) String refreshToken) {
+    public void logout(@RequestHeader(value = "Authorization") String authHeader,
+                       String email) {
 
         // AccessToken 블랙리스트 처리
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -106,12 +105,8 @@ public class AuthService {
             tokenService.blacklistToken(accessToken);
         }
 
-        // RefreshToken 블랙리스트 처리
-        if (refreshToken != null && !refreshToken.isEmpty()) {
-
-            String email = tokenService.getEmailFromToken(refreshToken);
-            tokenService.deleteRefreshToken(email);
-        }
+        // RefreshToken 삭제
+        tokenService.deleteRefreshToken(email);
 
     }
 
@@ -122,10 +117,7 @@ public class AuthService {
 
 
     @Transactional
-    public void changePassword(String authHeader ,PasswordChangeRequest request) {
-
-        String token = authHeader.replace("Bearer ", "");
-        String email = tokenService.getEmailFromToken(token);
+    public void changePassword(String email ,PasswordChangeRequest request) {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(UserNotFoundException::new);

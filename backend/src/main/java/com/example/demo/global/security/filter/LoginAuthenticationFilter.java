@@ -53,7 +53,7 @@ public class LoginAuthenticationFilter extends UsernamePasswordAuthenticationFil
             });
 
             UsernamePasswordAuthenticationToken authRequest =
-                    new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password());
+                    new UsernamePasswordAuthenticationToken(email, loginRequest.password());
 
             setDetails(request, authRequest);
 
@@ -63,4 +63,3 @@ public class LoginAuthenticationFilter extends UsernamePasswordAuthenticationFil
         }
     }
 }
-

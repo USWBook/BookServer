@@ -6,6 +6,7 @@ import com.example.demo.domain.auth.dto.request.ResetPasswordRequest;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
 import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.auth.service.AuthService;
+import com.example.demo.domain.user.dto.CustomUserDetails;
 import com.example.demo.global.jwt.JwtProvider;
 import com.example.demo.global.response.RsData;
 import jakarta.validation.Valid;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
@@ -53,8 +55,9 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<RsData<?>> logout(@RequestHeader(value = "Authorization", required = false) String authHeader,
-                                            @CookieValue(value = "refreshToken", required = false) String refreshToken) {
-        authService.logout(authHeader, refreshToken);
+                                            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        // 리프레쉬 토큰 안받고 레디스에서 뒤지도록 하였음 => 어차피 토큰 삭제하는 과정에서 db접근이 일어나기에 차라리 리프레쉬 토큰이 통신상 노출이 덜 되는 방향으로 바꿈
+        authService.logout(authHeader, userDetails.getUsername());
 
         // refreshToken 쿠키 삭제
         ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
@@ -90,8 +93,8 @@ public class AuthController {
     }
 
     @PostMapping("change-password")
-    public RsData<?> changePassword(@RequestHeader(value = "Authorization",required = false) String authHeader,@RequestBody @Valid PasswordChangeRequest passwordChangeRequest){
-        authService.changePassword(authHeader,passwordChangeRequest);
+    public RsData<?> changePassword(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody @Valid PasswordChangeRequest passwordChangeRequest){
+        authService.changePassword(userDetails.getUsername(),passwordChangeRequest);
         return new RsData<>("200", "비밀번호 변경 완료되었습니다.");
     }
 

@@ -24,11 +24,10 @@ import java.util.function.Consumer;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final JwtProvider jwtProvider;
     private final MajorRepository majorRepository;
 
-    public UserInfoResponse getUserInfo(String authHeader) {
-        User user = userRepository.findByEmail(jwtProvider.extractEmail(authHeader.replace("Bearer ", "")))
+    public UserInfoResponse getUserInfo(String email) {
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(UserNotFoundException::new);
 
 
@@ -42,9 +41,8 @@ public class UserService {
     }
 
     @Transactional
-    public void changeInformation(ChangeInfoRequest request) {
-        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByEmail(userEmail)
+    public void changeInformation(String email,ChangeInfoRequest request) {
+        User currentUser = userRepository.findByEmail(email)
                 .orElseThrow(MemberNotFoundException::new);
 
         updateFieldIfNotNull(request.grade(), currentUser::setGrade);
