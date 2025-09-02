@@ -1,6 +1,5 @@
 package com.example.demo.global.jwt;
 
-import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.exception.CustomJwtException;
 import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
@@ -66,10 +65,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             // 블랙리스트 체크
             if (redisTokenRepository.isBlacklisted(token)) {
-                // (선택) 401로 응답하고 종료
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                response.getWriter().write("{\"code\":\"UNAUTHORIZED\",\"message\":\"블랙리스트 토큰\"}");
+                response.getWriter().write("{\"code\":\"FORBIDDEN\",\"message\":\"밴 먹은 유저입니다\"}");
                 return;
             }
 
@@ -81,11 +79,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 //                    .orElseThrow(JwtUserNotFoundException::new);
 
             // UserDetails 구현체 생성 (DB 조회 없이)
-            User user = new User();
-            user.setEmail(email);
-            user.setRole(role);
-
-            CustomUserDetails customUserDetails = new CustomUserDetails(user);
+            CustomUserDetails customUserDetails = new CustomUserDetails(email, role);
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
 
