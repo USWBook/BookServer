@@ -4,10 +4,7 @@
     import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
     import com.example.demo.global.jwt.exception.JwtMalformedTokenException;
     import com.example.demo.global.jwt.exception.JwtTokenExpiredException;
-    import io.jsonwebtoken.Claims;
-    import io.jsonwebtoken.Jws;
-    import io.jsonwebtoken.JwtException;
-    import io.jsonwebtoken.Jwts;
+    import io.jsonwebtoken.*;
     import io.jsonwebtoken.security.Keys;
 
     import javax.crypto.SecretKey;
@@ -159,5 +156,15 @@
 
         public String getCategory(String token) {
             return parse(token).getPayload().get("category", String.class);
+        }
+
+        public String extractEmailFromExpiredToken(String token) {
+            try {
+                // 일반적인 파싱 시도
+                return parse(token).getPayload().getSubject();
+            } catch (ExpiredJwtException e) {
+                // 토큰이 만료된 경우, 예외 객체에서 Claims를 직접 얻어 이메일을 반환
+                return e.getClaims().getSubject();
+            }
         }
     }
