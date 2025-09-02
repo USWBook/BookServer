@@ -53,7 +53,7 @@ public class AuthController {
 //                .body(new RsData<>("200", "로그인 완료되었습니다."));
 //    }
 
-    @PostMapping("/logout")
+    //@PostMapping("/logout")
     public ResponseEntity<RsData<?>> logout(@RequestHeader(value = "Authorization", required = false) String authHeader,
                                             @AuthenticationPrincipal CustomUserDetails userDetails) {
         // 리프레쉬 토큰 안받고 레디스에서 뒤지도록 하였음 => 어차피 토큰 삭제하는 과정에서 db접근이 일어나기에 차라리 리프레쉬 토큰이 통신상 노출이 덜 되는 방향으로 바꿈
