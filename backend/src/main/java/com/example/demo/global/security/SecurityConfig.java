@@ -2,17 +2,14 @@ package com.example.demo.global.security;
 
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.global.jwt.JwtAuthenticationFilter;
-import com.example.demo.global.jwt.JwtProvider;
 import com.example.demo.global.jwt.handler.JwtAuthenticationFailureHandler;
 import com.example.demo.global.jwt.handler.JwtAuthenticationSuccessHandler;
 import com.example.demo.global.jwt.service.TokenService;
-import com.example.demo.global.redis.repository.RedisTokenRepository;
 import com.example.demo.global.response.RsData;
 import com.example.demo.global.security.filter.LoginAuthenticationFilter;
 import com.example.demo.global.security.handler.CustomAccessDeniedHandler;
 import com.example.demo.global.security.handler.CustomAuthenticationEntryPoint;
 import com.example.demo.global.security.handler.CustomLogoutHandler;
-import com.example.demo.global.security.handler.LoginSuccessHandler;
 import com.example.demo.global.util.Ut;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +29,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 
