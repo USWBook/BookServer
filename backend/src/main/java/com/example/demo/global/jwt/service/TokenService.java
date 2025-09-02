@@ -48,8 +48,8 @@ public class TokenService {
 
     @Transactional
     public TokenResponse reissueTokens(String refreshToken) {
-        if (!jwtProvider.isValid(refreshToken) ||
-                redisTokenRepository.isBlacklisted(refreshToken) ||
+        jwtProvider.validateToken(refreshToken);
+        if (redisTokenRepository.isBlacklisted(refreshToken) ||
                 !Objects.equals(jwtProvider.getCategory(refreshToken), "refresh") ||
                 jwtProvider.isExpired(refreshToken)) {
             throw new JwtInvalidSignatureException();
@@ -104,6 +104,7 @@ public class TokenService {
     public long getRefreshExpirationInMillis() {
         return jwtProvider.getRefreshTokenExpirationInMillis();
     }
+
 
     // reissue시 이미 만료된 access토큰도 받아서 두 토큰 이메일 값도 비교해볼까 고민중
     // 이러면 리프레쉬 토큰만 탈취한 해커가 리프레시토큰 단독으론 못뚫지 않나 생각하면서도

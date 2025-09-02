@@ -117,6 +117,19 @@
             }
         }
 
+        public void validateToken(String token) {
+            try {
+                Jwts.parser().verifyWith(getKey()).build().parseSignedClaims(token);
+            } catch (io.jsonwebtoken.security.SignatureException e) {
+                throw new JwtInvalidSignatureException();
+            } catch (io.jsonwebtoken.ExpiredJwtException e) {
+                throw new JwtTokenExpiredException();
+            } catch (io.jsonwebtoken.MalformedJwtException e) {
+                throw new JwtMalformedTokenException();
+            } catch (JwtException | IllegalArgumentException e) {
+                throw new CustomJwtException("유효하지 않은 토큰입니다.", "401");
+            }
+        }
 
         public String extractEmail(String token) {
             return parse(token).getPayload().getSubject();
@@ -148,9 +161,17 @@
             }
         }
 
+        public boolean isValidAccessToken(String token) {
+            try {
+                parse(token);
+                return true;
+            } catch (JwtException e) {
+               throw new JwtException(e.getMessage());
+            }
+        }
+
 
         public Boolean isExpired(String token) {
-
             return parse(token).getPayload().getExpiration().before(new Date());
         }
 
