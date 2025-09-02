@@ -31,7 +31,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final RedisTokenRepository redisTokenRepository;
 
 
-
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -103,15 +102,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // throw new JwtTokenExpiredException();
         }
     }
-//    private void setErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
-//        response.setStatus(status);
-//        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-//        response.setCharacterEncoding("UTF-8");
-//
-//        RsData<Void> rsData = new RsData<>(String.valueOf(status), message);
-//
-//        String responseBody = objectMapper.writeValueAsString(rsData);
-//
-//        response.getWriter().write(responseBody);
-//    }
+
 }
