@@ -36,7 +36,9 @@ public class TokenService {
     @Transactional
     public void blacklistToken(String token) {
         long expiration = jwtProvider.getTokenRemainingTime(token);
-        redisTokenRepository.blacklistToken(token, expiration);
+        if (expiration > 0) {
+            redisTokenRepository.blacklistToken(token, expiration);
+        }
     }
 
     @Transactional
@@ -69,7 +71,6 @@ public class TokenService {
 
         // 기존 refreshToken 레디스에서 삭제 처리
         deleteRefreshToken(email);
-        //blacklistToken(refreshToken);
 
         // 새 토큰 발급
         return generateTokens(email, user.getRole());
@@ -109,4 +110,3 @@ public class TokenService {
         if (!Objects.equals(jwtProvider.extractEmail(refreshToken), email)) throw new JwtInvalidSignatureException();
     }
 }
-
