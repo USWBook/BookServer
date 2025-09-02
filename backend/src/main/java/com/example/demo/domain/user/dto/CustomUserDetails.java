@@ -17,22 +17,6 @@ import java.util.List;
 public class CustomUserDetails implements UserDetails {
 
     private final User user;
-//    private final UUID id;
-//    private final String email;
-//    private final String password;
-//    private final Collection<? extends GrantedAuthority> authorities;
-//    private final UserStatus status;
-//    private final Role role;
-
-//    // 생성자: User 엔티티를 받아서 UserDetails로 필요한 정보만 가공합니다.
-//    public UserPrincipal(User user) {
-//        this.id = user.getId();
-//        this.email = user.getEmail();
-//        this.password = user.getPassword();
-//        this.authorities = Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()));
-//        this.status = user.getStatus();
-//        this.role = user.getRole();
-//    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
