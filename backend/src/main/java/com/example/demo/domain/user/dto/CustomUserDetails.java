@@ -22,6 +22,15 @@ public class CustomUserDetails implements UserDetails {
     private final UserStatus status;
 
     // 1. (DB 조회 시 사용) User 엔티티 전체를 받는 생성자
+    // 클라이언트 로그인 요청시
+    // [LoginAuthenticationFilter] 에서 ID/PW로 토큰 생성
+    // authenticationManager.authenticate(토큰) 호출
+    // [AuthenticationManager] 가 [DaoAuthenticationProvider] 에게 위임
+    // [DaoAuthenticationProvider] 는 내가가 등록한 [CustomUserDetailsService] 를 사용
+    // CustomUserDetailsService.loadUserByUsername(이메일) 호출
+    // DB에서 사용자 정보 조회 후 [CustomUserDetails] 반환
+    // [DaoAuthenticationProvider] 가 비밀번호 및 밴 여부 비교 후 인증 완료
+    //인증 성공/실패 핸들러 실행
     public CustomUserDetails(User user) {
         this.email = user.getEmail();
         this.password = user.getPassword();
