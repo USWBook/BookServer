@@ -33,7 +33,6 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RedisTokenRepository redisTokenRepository;
-    private final AuthenticationManager authenticationManager;
     private final TokenService tokenService;
     private final MajorRepository majorRepository;
 
@@ -71,49 +70,6 @@ public class AuthService {
         redisTokenRepository.deleteVerifiedEmail(request.email());
     }
 
-//    @Transactional
-//    public TokenResponse login(LoginRequest request) {
-//        try {
-//            // 1. AuthenticationManager에게 인증 위임
-//            Authentication authentication = authenticationManager.authenticate(
-//                    new UsernamePasswordAuthenticationToken(request.email(), request.password())
-//            );
-//
-//            // 2. 인증 성공 시 UserDetails(User 객체) 가져오기
-//            //User user = (User) authentication.getPrincipal();
-//            UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-//            return tokenService.generateTokens(userPrincipal.getUsername(), userPrincipal.getRole());
-//
-//
-//        } catch (AuthenticationException e) {
-//            // 5. 인증 실패 시 예외 처리
-//            // BannedUserException 등 특정 상태에 대한 분기는 UserDetails의 isAccountNonLocked() 등에서 처리됩니다.
-//            // DaoAuthenticationProvider가 적절한 예외(BadCredentialsException, LockedException 등)를 던져줍니다.
-//            log.warn("Login failed for email {}: {}", request.email(), e.getMessage());
-//            log.error(">>>> [AuthService] 인증 실패!", e);
-//            throw new AuthException(e.getMessage(),"400");
-//        }
-//    }
-
-
-    @Transactional
-    public void logout(@RequestHeader(value = "Authorization", required = false) String authHeader,
-                       @CookieValue(value = "refreshToken", required = false) String refreshToken) {
-
-        // AccessToken 블랙리스트 처리
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String accessToken = authHeader.substring("Bearer ".length());
-            tokenService.blacklistToken(accessToken);
-        }
-
-        // RefreshToken 블랙리스트 처리
-        if (refreshToken != null && !refreshToken.isEmpty()) {
-
-            String email = tokenService.getEmailFromToken(refreshToken);
-            tokenService.deleteRefreshToken(email);
-        }
-
-    }
 
     @Transactional
     public TokenResponse reissue(@CookieValue("refreshToken") String refreshToken) {
@@ -122,10 +78,7 @@ public class AuthService {
 
 
     @Transactional
-    public void changePassword(String authHeader ,PasswordChangeRequest request) {
-
-        String token = authHeader.replace("Bearer ", "");
-        String email = tokenService.getEmailFromToken(token);
+    public void changePassword(String email ,PasswordChangeRequest request) {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(UserNotFoundException::new);

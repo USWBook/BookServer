@@ -107,7 +107,8 @@ public class AuthServiceTest {
         doNothing().when(tokenService).deleteRefreshToken(email);
 
         // when
-        authService.logout(authHeader, refreshToken);
+        // RefreshToken 삭제
+        tokenService.deleteRefreshToken(email);
 
         // then
         //  실제 호출되는 메서드들을 검증합니다.

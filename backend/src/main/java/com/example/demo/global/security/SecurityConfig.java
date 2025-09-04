@@ -2,19 +2,22 @@ package com.example.demo.global.security;
 
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.global.jwt.JwtAuthenticationFilter;
-import com.example.demo.global.jwt.JwtProvider;
 import com.example.demo.global.jwt.handler.JwtAuthenticationFailureHandler;
 import com.example.demo.global.jwt.handler.JwtAuthenticationSuccessHandler;
 import com.example.demo.global.jwt.service.TokenService;
-import com.example.demo.global.redis.repository.RedisTokenRepository;
+import com.example.demo.global.response.RsData;
 import com.example.demo.global.security.filter.LoginAuthenticationFilter;
 import com.example.demo.global.security.handler.CustomAccessDeniedHandler;
 import com.example.demo.global.security.handler.CustomAuthenticationEntryPoint;
-import com.example.demo.global.security.handler.LoginSuccessHandler;
+import com.example.demo.global.security.handler.CustomLogoutHandler;
+import com.example.demo.global.util.Ut;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -26,8 +29,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
 
 @Configuration
 @EnableWebSecurity
@@ -41,7 +44,7 @@ public class SecurityConfig {
     private final AuthenticationConfiguration authenticationConfiguration;
     private final TokenService tokenService;
     private final UserRepository userRepository;
-
+    private final CustomLogoutHandler customLogoutHandler;
 
 
     @Bean
@@ -78,7 +81,32 @@ public class SecurityConfig {
                 // 세션/폼로그인/기본인증 비활성화 (JWT 사용)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
-                .logout(AbstractHttpConfigurer::disable)
+                .logout(logout -> logout
+                        .logoutUrl("/api/auth/logout") // 로그아웃 처리 URL 지정
+                        .addLogoutHandler(customLogoutHandler) // 위에서 만든 로그아웃 핸들러 등록
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            // 1. refreshToken 쿠키 삭제
+                            ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
+                                    .httpOnly(true)
+                                    .secure(true) // HTTPS 환경에서는 true로 설정
+                                    .path("/")
+                                    .maxAge(0)
+                                    .build();
+
+                            // 2. 응답 헤더에 쿠키 삭제 설정 추가
+                            response.setHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
+
+                            // 3. 응답 상태 및 Content-Type 설정
+                            response.setStatus(HttpServletResponse.SC_OK);
+                            response.setContentType("application/json;charset=UTF-8");
+
+                            // 4. RsData 객체를 JSON으로 변환하여 응답 본문에 작성
+                            RsData<?> rsData = new RsData<>("200", "로그아웃 완료되었습니다.");
+                            String result = Ut.Json.toString(rsData);
+                            response.getWriter().write(result);
+                        })
+
+                )
 
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
