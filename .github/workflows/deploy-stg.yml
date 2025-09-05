@@ -10,7 +10,17 @@ on:
       - 'backend/build.gradle'
       - 'backend/settings.gradle'
       - 'backend/Dockerfile.stg'
-  workflow_dispatch: {}   # 수동 실행 버튼
+  workflow_dispatch: {}
+
+# GHCR 푸시 권한 필요
+permissions:
+  contents: read
+  packages: write
+
+# (선택) 동시에 2개 이상 배포 막기
+concurrency:
+  group: deploy-stg
+  cancel-in-progress: false
 
 jobs:
   buildImageAndPush:
@@ -43,15 +53,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # 조직 소유 레포면 이 값이 자동으로 '조직명'이 됩니다.
+      # 혹시 개인 레포라면 echo "owner_lc=조직명소문자" 로 고정하세요.
       - name: 소유자 설정
         id: export_owner
+        shell: bash
         run: |
           OWNER_LC="${GITHUB_REPOSITORY_OWNER,,}"
-          echo "owner_lc=$OWNER_LC" >> $GITHUB_OUTPUT
+          echo "owner_lc=$OWNER_LC" >> "$GITHUB_OUTPUT"
 
       - name: 이미지 이름 설정
         id: export_image
-        run: echo "image_name=subook_backend_stg" >> $GITHUB_OUTPUT
+        run: echo "image_name=subook_backend_stg" >> "$GITHUB_OUTPUT"
 
       - name: 빌드 및 푸시 (Dockerfile.stg)
         uses: docker/build-push-action@v3
