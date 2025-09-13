@@ -8,6 +8,7 @@ public record ListChatRoomsResponseDto(List<ChatRoomDto> data) {
             String roomId,
             String postId,
             String name,
+            String postName,
             int userCount,
             String lastMessage,
             String lastTimestamp
