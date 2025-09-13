@@ -43,6 +43,7 @@
 
         @RestController
         @RequiredArgsConstructor
+        @CrossOrigin(origins="*")
         @RequestMapping("/api/chat")
         public class ChatController {
             private final ChatRoomService chatRoomService;
@@ -132,18 +133,35 @@
                 UUID userId = user.getId();
 
                 List<ChatRoom> rooms = chatRoomService.findRoomByUser(userId);
-                List<ListChatRoomsResponseDto.ChatRoomDto> dtos = rooms.stream()
-                        .map(room -> new ListChatRoomsResponseDto.ChatRoomDto(
-                                room.getRoomId().toString(),
-                                room.getPostId() != null ? room.getPostId().toString() : null,
-                                room.getName(),
-                                room.getUserCount(),
-                                room.getLastMessage(),
-                                room.getLastTimestamp()
-                        )).collect(Collectors.toList());
+                List<ListChatRoomsResponseDto.ChatRoomDto> dtos = rooms.stream().map(room -> {
+                    // 게시글 제목 조회
+                    String postName = null;
+                    if (room.getPostId() != null) {
+                        postName = postRepository.findById(room.getPostId())
+                                .map(Post::getPostName)
+                                .orElse("제목 없음");
+                    }
+
+                    // 채팅 상대 사용자 닉네임 조회 (자신이 sender면 receiver 정보, receiver면 sender 정보)
+                    UUID otherUserId = room.getSender().equals(userId) ? room.getReceiver() : room.getSender();
+                    String name = userRepository.findById(otherUserId)
+                            .map(User::getName)
+                            .orElse("알 수 없음");
+
+                    return new ListChatRoomsResponseDto.ChatRoomDto(
+                            room.getRoomId().toString(),
+                            room.getPostId() != null ? room.getPostId().toString() : null,
+                            name,
+                            postName,
+                            room.getUserCount(),
+                            room.getLastMessage(),
+                            room.getLastTimestamp()
+                    );
+                }).collect(Collectors.toList());
 
                 return new RsData<>("200", "나의 채팅방 목록 조회 성공", dtos);
             }
+
 
             // 채팅 메시지 수신
             @GetMapping("/rooms/{roomId}/messages")
