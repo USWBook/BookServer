@@ -163,7 +163,7 @@ public class SecurityConfig {
         // 1. 허용할 출처(Origin) 설정
         // 프론트엔드 개발 서버 주소를 명시적으로 추가합니다.usw-bookfront-test.vercel.app
         //configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://127.0.0.1:3000")); // 예: React, Vue 개발 서버
-        configuration.setAllowedOrigins(List.of("usw-bookfront-test.vercel.app"));
+        configuration.setAllowedOrigins(List.of("https://usw-bookfront-test.vercel.app","http://localhost:5173"));
         // 2. 허용할 HTTP 메소드 설정 ("*": 모든 메소드 허용)
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
