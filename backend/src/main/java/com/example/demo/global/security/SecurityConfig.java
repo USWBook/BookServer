@@ -168,7 +168,7 @@ public class SecurityConfig {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
         // 허용할 요청 헤더를 설정합니다.
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization"));
 
         // 핵심: 브라우저에 노출할 헤더를 설정합니다.
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
