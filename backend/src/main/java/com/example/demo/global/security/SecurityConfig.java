@@ -160,29 +160,24 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // 1. 허용할 출처(Origin) 설정
-        // 프론트엔드 개발 서버 주소를 명시적으로 추가합니다.usw-bookfront-test.vercel.app
-        //configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://127.0.0.1:3000")); // 예: React, Vue 개발 서버
-        configuration.setAllowedOrigins(List.of("https://usw-bookfront-test.vercel.app","http://localhost:5173"));
-        // 2. 허용할 HTTP 메소드 설정 ("*": 모든 메소드 허용)
+        // 프론트엔드 서버의 출처(Origin)를 명시적으로 허용합니다.
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://127.0.0.1:3000",
+                "http://192.168.219.108:3000","https://usw-bookfront-test.vercel.app"));
+
+        // 허용할 HTTP 메소드를 설정합니다.
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
-        // 3. 허용할 요청 헤더 설정
-        // "*" 로 모든 헤더를 허용하거나, "Authorization", "Content-Type" 등 필요한 헤더만 명시할 수 있습니다.
+        // 허용할 요청 헤더를 설정합니다.
         configuration.setAllowedHeaders(Arrays.asList("*"));
 
-        // 4. 브라우저에 노출할 응답 헤더 설정
-        // 이 부분이 가장 중요합니다! "Authorization" 헤더를 클라이언트에서 읽을 수 있게 해줍니다.
+        // 핵심: 브라우저에 노출할 헤더를 설정합니다.
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
 
-        // 5. 자격 증명(쿠키, 인증 헤더 등)을 포함한 요청 허용
+        // 자격 증명(쿠키 등)을 포함한 요청을 허용합니다.
         configuration.setAllowCredentials(true);
 
-        // 6. Preflight 요청의 캐시 시간(초) 설정
-        configuration.setMaxAge(3600L);
-
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // 모든 경로("/**")에 대해 위에서 정의한 CORS 설정을 적용합니다.
+        // 모든 경로("/**")에 위 CORS 설정을 적용합니다.
         source.registerCorsConfiguration("/**", configuration);
 
         return source;
