@@ -20,6 +20,17 @@ spring:
     ansi:
       enabled: always
 
+  spring:
+    mail:
+      host: smtp.suwon.ac.kr
+      port: 25
+      properties:
+        mail:
+          smtp:
+            auth: true
+            ssl:
+              enable: false
+
 
 server:
   port: 8080
