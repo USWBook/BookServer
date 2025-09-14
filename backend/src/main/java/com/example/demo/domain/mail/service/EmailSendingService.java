@@ -25,7 +25,7 @@ public class EmailSendingService {
             mimeMessageHelper.setSubject("[USWBook] 이메일 인증을 위한 인증 코드 발송");
 
             // HTML 형식의 이메일 본문
-            String htmlContent = "<p>USWBook 가입해주셔서 감사합니다.</p>"
+            String htmlContent = "<p>USWBook 인증코드 입니다.</p>"
                     + "<p>인증을 완료하려면 아래의 6자리 코드를 입력해주세요.(유효기간은 30분입니다)</p>"
                     + "<h2>" + authCode + "</h2>";
             mimeMessageHelper.setText(htmlContent, true);
