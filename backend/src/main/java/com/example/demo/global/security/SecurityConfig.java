@@ -162,13 +162,13 @@ public class SecurityConfig {
 
         // 프론트엔드 서버의 출처(Origin)를 명시적으로 허용합니다.
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://127.0.0.1:3000",
-                "http://192.168.219.108:3000","https://usw-bookfront-test.vercel.app"));
+                "http://192.168.219.108:3000","https://usw-bookfront-test.vercel.app"," https://stg.subook.shop"));
 
         // 허용할 HTTP 메소드를 설정합니다.
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
         // 허용할 요청 헤더를 설정합니다.
-        configuration.setAllowedHeaders(Arrays.asList("Authorization"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
 
         // 핵심: 브라우저에 노출할 헤더를 설정합니다.
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
