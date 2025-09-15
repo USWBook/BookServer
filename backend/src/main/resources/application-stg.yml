@@ -32,12 +32,14 @@ management:
 custom:
   site:
     domain: stg.subook.shop
-    backUrl: https://stg.subook.shop
+    backUrl: https://api.stg.subook.shop
     frontUrl: https://stg.subook.shop
 
-# CORS 허용 오리진
 cors:
   allowed-origins:
     - "https://stg.subook.shop"
+    - "https://usw-bookfront-test.vercel.app"
+    - "http://localhost:3000"
+    - "http://localhost:5173"
   allowed-origin-patterns:
     - "https://*.vercel.app"
