@@ -22,14 +22,14 @@ spring:
 
   spring:
     mail:
-      host: smtp.suwon.ac.kr
-      port: 25
+      host: smtp.gmail.com
+      port: 465
       properties:
         mail:
           smtp:
             auth: true
             ssl:
-              enable: false
+              enable: true
 
 
 server:
