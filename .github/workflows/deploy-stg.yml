@@ -228,6 +228,13 @@ jobs:
               # 오직 API 서브도메인만 백엔드로 라우팅
               acl host_api hdr(host) -i api.stg.subook.shop
               http-request set-header X-Forwarded-Proto https
+              # ⚠️ CORS 헤더를 명시적으로 추가합니다. ⚠️
+              http-response add-header Access-Control-Allow-Origin "https://stg.subook.shop"
+              http-response add-header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+              http-response add-header Access-Control-Allow-Headers "Origin, Content-Type, Authorization, Accept"
+              http-response add-header Access-Control-Expose-Headers "Authorization, Content-Disposition"
+              http-response add-header Access-Control-Allow-Credentials "true"
+              
               use_backend api_back if host_api
               default_backend not_found
 
