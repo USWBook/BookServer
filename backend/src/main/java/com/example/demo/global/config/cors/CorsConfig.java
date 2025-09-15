@@ -22,20 +22,16 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
 
-        // 정확 매칭: allowedOrigins / 패턴 매칭: allowedOriginPatterns
+        // 정확 매칭 / 패턴 매칭
         Optional.ofNullable(corsProps.allowedOrigins()).ifPresent(cfg::setAllowedOrigins);
         Optional.ofNullable(corsProps.allowedOriginPatterns()).ifPresent(cfg::setAllowedOriginPatterns);
 
-        cfg.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
-        cfg.setAllowedHeaders(List.of("Authorization","Content-Type","X-Requested-With","Accept","Origin"));
-
-        // ✅ 브라우저 JS에서 읽히도록
-        cfg.setExposedHeaders(List.of("Authorization","Content-Disposition"));
-
-        // 쿠키/자격증명 전송 허용 (SameSite=None 쿠키 등 사용 시 필수)
+        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        cfg.setAllowedHeaders(List.of("*")); // 개발 편의상 넓게 허용
+        // 브라우저에서 읽을 헤더는 '명시'로
+        cfg.setExposedHeaders(List.of("Authorization", "Content-Disposition"));
         cfg.setAllowCredentials(true);
 
-        // 적용 경로
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cfg);
         return source;
