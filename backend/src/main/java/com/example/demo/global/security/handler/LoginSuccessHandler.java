@@ -29,7 +29,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         TokenResponse tokens = tokenService.generateTokens(userPrincipal.getUsername(), userPrincipal.getRole());
 
         // accessToken은 Authorization 헤더에
-        response.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken());
+        response.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken());
 
         // refreshToken은 HttpOnly 쿠키에
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokens.refreshToken())
@@ -38,7 +38,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
                 .maxAge(Duration.ofMillis(tokenService.getRefreshExpirationInMillis()))
                 .sameSite("Strict")
                 .build();
-        response.setHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter().write("{\"code\":\"200\",\"message\":\"로그인 성공\"}");
