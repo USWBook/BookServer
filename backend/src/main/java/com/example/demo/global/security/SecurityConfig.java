@@ -161,6 +161,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // 프론트엔드 서버의 출처(Origin)를 명시적으로 허용합니다.
+        // 주소 문제인건지 aws인지 확인해야함
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://127.0.0.1:3000",
                 "http://192.168.219.108:3000","https://usw-bookfront-test.vercel.app","https://stg.subook.shop","https://Usw-bookfront-test"));
 
