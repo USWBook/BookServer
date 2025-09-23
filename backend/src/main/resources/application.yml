@@ -20,16 +20,15 @@ spring:
     ansi:
       enabled: always
 
-  spring:
-    mail:
-      host: smtp.gmail.com
-      port: 465
-      properties:
-        mail:
-          smtp:
-            auth: true
-            ssl:
-              enable: true
+  mail:
+    host: smtp.gmail.com
+    port: 465
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
 
 
 server:
