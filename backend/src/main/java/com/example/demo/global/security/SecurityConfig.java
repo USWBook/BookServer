@@ -34,9 +34,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
+import java.time.Duration;
 import java.util.List;
-
 
 @Configuration
 @EnableWebSecurity
@@ -51,7 +50,6 @@ public class SecurityConfig {
     private final TokenService tokenService;
     private final UserRepository userRepository;
     private final CustomLogoutHandler customLogoutHandler;
-
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -70,7 +68,7 @@ public class SecurityConfig {
         AuthenticationManager authManager = authenticationManager(authenticationConfiguration);
 
         // 커스텀 로그인 필터
-        LoginAuthenticationFilter loginFilter = new LoginAuthenticationFilter(authManager,userRepository);
+        LoginAuthenticationFilter loginFilter = new LoginAuthenticationFilter(authManager, userRepository);
         loginFilter.setFilterProcessesUrl("/api/auth/login"); // 로그인 URL
         loginFilter.setAuthenticationSuccessHandler(new JwtAuthenticationSuccessHandler(tokenService));
         loginFilter.setAuthenticationFailureHandler(new JwtAuthenticationFailureHandler());
@@ -89,12 +87,12 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .logout(logout -> logout
                         .logoutUrl("/api/auth/logout") // 로그아웃 처리 URL 지정
-                        .addLogoutHandler(customLogoutHandler) // 위에서 만든 로그아웃 핸들러 등록
+                        .addLogoutHandler(customLogoutHandler) // 커스텀 로그아웃 핸들러
                         .logoutSuccessHandler((request, response, authentication) -> {
                             // 1. refreshToken 쿠키 삭제
                             ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
                                     .httpOnly(true)
-                                    .secure(true) // HTTPS 환경에서는 true로 설정
+                                    .secure(true) // HTTPS 환경에서는 true
                                     .path("/")
                                     .maxAge(0)
                                     .build();
@@ -106,34 +104,39 @@ public class SecurityConfig {
                             response.setStatus(HttpServletResponse.SC_OK);
                             response.setContentType("application/json;charset=UTF-8");
 
-                            // 4. RsData 객체를 JSON으로 변환하여 응답 본문에 작성
+                            // 4. 바디 반환
                             RsData<?> rsData = new RsData<>("200", "로그아웃 완료되었습니다.");
                             String result = Ut.Json.toString(rsData);
                             response.getWriter().write(result);
                         })
-
                 )
 
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 // 경로 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        //  프리플라이트 허용
+                        // 프리플라이트 허용
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        //  루트/헬스/문서/정적 리소스/에러 공개
+                        // 루트/헬스/문서/정적 리소스/에러 공개
                         .requestMatchers(
                                 "/", "/ping", "/error", "/favicon.ico",
                                 "/actuator/**",
                                 "/swagger-ui/**", "/v3/api-docs/**",
-                                "/css/**", "/js/**", "/images/**"
+                                "/css/**", "/js/**", "/images/**",
+                                "/h2-console/**"
                         ).permitAll()
 
                         // 공개 API
                         .requestMatchers(
-                                "/api/major/**", "/api/auth/**", "/api/mail/**",
-                                "/h2-console/**", "/api/posts/**", "/api/chat/**"
+                                "/api/major/**",
+                                "/api/auth/**",
+                                "/api/mail/**",
+                                "/api/posts/**"
                         ).permitAll()
+
+                        // 채팅은 인증 필요
+                        .requestMatchers("/api/chat/**").authenticated()
 
                         // 그 외는 인증 필요
                         .anyRequest().authenticated()
@@ -145,43 +148,39 @@ public class SecurityConfig {
                         .authenticationEntryPoint(customAuthenticationEntryPoint) // 401
                 )
 
-
-                //  JWT 필터 등록 (로그인 필터보다 앞에 두어 컨텍스트 채워넣기)
-                .addFilterBefore(jwtFilter, LoginAuthenticationFilter.class)
+                // JWT 필터: UsernamePasswordAuthenticationFilter 앞에 두기 (표준 순서)
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
 
                 // 로그인 필터를 UsernamePasswordAuthenticationFilter 자리에 등록
                 .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class);
 
-
-
         return http.build();
     }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
+        CorsConfiguration cfg = new CorsConfiguration();
 
-        // 프론트엔드 서버의 출처(Origin)를 명시적으로 허용합니다.
-        // 주소 문제인건지 aws인지 확인해야함
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://127.0.0.1:3000",
-                "http://192.168.219.108:3000","https://usw-bookfront-test.vercel.app","https://stg.subook.shop","https://Usw-bookfront-test"));
+        // allowCredentials=true 인 경우, origin은 구체적으로 명시해야 함(와일드카드 불가)
+        cfg.setAllowedOriginPatterns(List.of(
+                "https://stg.subook.shop",
+                "https://usw-bookfront-test.vercel.app",
+                "https://*.vercel.app",
+                "http://localhost:3000",
+                "http://127.0.0.1:3000"
+        ));
 
-        // 허용할 HTTP 메소드를 설정합니다.
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        cfg.setAllowedHeaders(List.of("*"));
 
-        // 허용할 요청 헤더를 설정합니다.
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+        // 브라우저에 노출할 응답 헤더 (Authorization 등)
+        cfg.setExposedHeaders(List.of("Authorization", "Content-Disposition", "Set-Cookie"));
 
-        // 핵심: 브라우저에 노출할 헤더를 설정합니다.
-        configuration.setExposedHeaders(Arrays.asList("Authorization"));
-
-        // 자격 증명(쿠키 등)을 포함한 요청을 허용합니다.
-        configuration.setAllowCredentials(true);
+        cfg.setAllowCredentials(true);
+        cfg.setMaxAge(Duration.ofHours(1).getSeconds());
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // 모든 경로("/**")에 위 CORS 설정을 적용합니다.
-        source.registerCorsConfiguration("/**", configuration);
-
+        source.registerCorsConfiguration("/**", cfg);
         return source;
     }
-
 }

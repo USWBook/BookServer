@@ -27,10 +27,17 @@ RUN rm -rf /app/build/libs/*-plain.jar
 FROM container-registry.oracle.com/graalvm/jdk:23
 WORKDIR /app
 
+# JVM/Locale 환경 변수 (UTF-8 & 타임존 고정)
+ENV LANG=ko_KR.UTF-8 \
+    LC_ALL=ko_KR.UTF-8 \
+    LANGUAGE=ko_KR:ko \
+    JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8 -Duser.timezone=Asia/Seoul"
+
 # 빌드 결과 JAR 복사
 COPY --from=builder /app/build/libs/app.jar app.jar
 
 # 서비스 포트(가시성용)
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-Duser.timezone=Asia/Seoul", "-jar", "app.jar"]
+# 실행
+ENTRYPOINT ["java", "-jar", "app.jar"]
