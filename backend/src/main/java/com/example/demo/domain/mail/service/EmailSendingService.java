@@ -17,7 +17,7 @@ public class EmailSendingService {
 
     @Async
     // 인증 코드를 이메일로 발송
-    public void sendAuthCodeEmail(String email, String authCode) {
+    public void sendAuthCodeEmail(String email, String authCode) throws Exception {
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         try {
             MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, false, "UTF-8");
@@ -33,7 +33,8 @@ public class EmailSendingService {
             javaMailSender.send(mimeMessage);
 
         } catch (MessagingException e) {
-            throw new MessagingFailException("메세지 발송에 실패했습니다.");
+            //throw new MessagingFailException("메세지 발송에 실패했습니다.");
+            throw new Exception(e.getMessage());
         }
     }
 }
