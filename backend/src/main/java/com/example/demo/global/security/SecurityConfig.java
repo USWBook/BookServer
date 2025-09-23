@@ -158,29 +158,27 @@ public class SecurityConfig {
     }
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
+        CorsConfiguration cfg = new CorsConfiguration();
 
-        // 프론트엔드 서버의 출처(Origin)를 명시적으로 허용합니다.
-        // 주소 문제인건지 aws인지 확인해야함
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://127.0.0.1:3000",
-                "http://192.168.219.108:3000","https://usw-bookfront-test.vercel.app","https://stg.subook.shop","https://Usw-bookfront-test"));
+        cfg.setAllowedOriginPatterns(List.of(
+                "https://stg.subook.shop",
+                "https://usw-bookfront-test.vercel.app",
+                "https://*.vercel.app",
+                "http://localhost:3000",
+                "http://127.0.0.1:3000"
+        ));
 
-        // 허용할 HTTP 메소드를 설정합니다.
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        cfg.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+        cfg.setAllowedHeaders(List.of("*"));
 
-        // 허용할 요청 헤더를 설정합니다.
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+        // ✅ 브라우저에 노출할 헤더들 (Authorization 포함!)
+        cfg.setExposedHeaders(List.of("Authorization","Content-Disposition","Set-Cookie"));
 
-        // 핵심: 브라우저에 노출할 헤더를 설정합니다.
-        configuration.setExposedHeaders(Arrays.asList("Authorization"));
-
-        // 자격 증명(쿠키 등)을 포함한 요청을 허용합니다.
-        configuration.setAllowCredentials(true);
+        cfg.setAllowCredentials(true);
+        cfg.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // 모든 경로("/**")에 위 CORS 설정을 적용합니다.
-        source.registerCorsConfiguration("/**", configuration);
-
+        source.registerCorsConfiguration("/**", cfg);
         return source;
     }
 

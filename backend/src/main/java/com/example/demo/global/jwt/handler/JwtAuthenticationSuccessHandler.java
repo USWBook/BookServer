@@ -50,7 +50,7 @@ public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHan
         // AccessToken은 Authorization 헤더로 전달
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
         response.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + tokenResponse.getAccessToken());
-
+        response.addHeader("Access-Control-Expose-Headers", "Authorization, Content-Disposition, Set-Cookie");
 
         // 응답 바디 (선택) — 간단한 성공 메시지
         response.setStatus(HttpServletResponse.SC_OK);
