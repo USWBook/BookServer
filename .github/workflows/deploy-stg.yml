@@ -45,7 +45,6 @@ jobs:
         shell: bash
         run: |
           mkdir -p backend/src/main/resources
-          # echo 대신 printf: 개행/특수문자 그대로 보존
           printf '%s' "$APPLICATION_SECRET" > backend/src/main/resources/application-secret.yml
 
       - name: Docker Buildx 설치
@@ -141,7 +140,8 @@ jobs:
 
             echo "[2/7] Pull image: $IMAGE"
             docker pull "$IMAGE"
-            docker image inspect "$IMAGE" --format 'Pulled digest: {{index .RepoDigests 0}}' || true
+            DIGEST=$(docker image inspect "$IMAGE" --format '{{index .RepoDigests 0}}')
+            echo "Pulled digest: $DIGEST"
 
             echo "[2.5/7] Decide CURRENT/NEXT by RUNNING containers"
             HAS1=$(docker ps --format '{{.Names}}' | grep -Fx 'subookApp1_1' || true)
@@ -163,7 +163,7 @@ jobs:
             docker stop "$NEXT" 2>/dev/null || true
             docker rm "$NEXT" 2>/dev/null || true
 
-            echo "[4/7] Start NEXT: $NEXT on :$NEXT_PORT"
+            echo "[4/7] Start NEXT: $NEXT on :$NEXT_PORT (digest 기반)"
             docker run -d \
               --name "$NEXT" \
               --restart unless-stopped \
@@ -171,7 +171,7 @@ jobs:
               -p "$NEXT_PORT":8080 \
               -e SPRING_PROFILES_ACTIVE=secret,stg \
               -e TZ=Asia/Seoul \
-              "$IMAGE"
+              "$DIGEST"
 
             wait_for () {
               local port="$1" url="$2" timeout="$3"
@@ -194,10 +194,6 @@ jobs:
             if ! wait_for "$NEXT_PORT" "$HEALTH_LIVE" "$TIMEOUT_LIVE"; then
               echo "❌ Liveness failed within ${TIMEOUT_LIVE}s. Logs:"
               docker logs --tail=200 "$NEXT" || true
-              echo "❌ Curl debug:"
-              curl -v "http://localhost:${NEXT_PORT}${HEALTH_LIVE}" || true
-              docker stop "$NEXT" || true
-              docker rm "$NEXT" || true
               exit 1
             fi
             echo "✅ Liveness UP"
@@ -206,15 +202,10 @@ jobs:
             if ! wait_for "$NEXT_PORT" "$HEALTH_READY" "$TIMEOUT_READY"; then
               echo "❌ Readiness failed within ${TIMEOUT_READY}s. Logs:"
               docker logs --tail=200 "$NEXT" || true
-              echo "❌ Curl debug:"
-              curl -v "http://localhost:${NEXT_PORT}${HEALTH_READY}" || true
-              docker stop "$NEXT" || true
-              docker rm "$NEXT" || true
               exit 1
             fi
             echo "✅ Readiness UP"
 
-            # --- HAProxy cfg for api.stg.subook.shop (idempotent) ---
             echo "[6.5/7] Ensure HAProxy config for api.stg.subook.shop"
             mkdir -p /dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy
 
@@ -261,7 +252,6 @@ jobs:
               -p 8090:80 \
               -v /dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy:/usr/local/etc/haproxy \
               haproxy
-            # --- /HAProxy cfg ---
 
             echo "[7/7] Switch: stop old CURRENT (if any)"
             if [ -n "${CURRENT}" ]; then
