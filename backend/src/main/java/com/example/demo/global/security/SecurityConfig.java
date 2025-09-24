@@ -115,30 +115,29 @@ public class SecurityConfig {
 
                 // 경로 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        // 프리플라이트 허용
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // 루트/헬스/문서/정적 리소스/에러 공개
-                        .requestMatchers(
-                                "/", "/ping", "/error", "/favicon.ico",
+                        .requestMatchers("/", "/ping", "/error", "/favicon.ico",
                                 "/actuator/**",
                                 "/swagger-ui/**", "/v3/api-docs/**",
                                 "/css/**", "/js/**", "/images/**",
-                                "/h2-console/**"
-                        ).permitAll()
+                                "/h2-console/**").permitAll()
 
-                        // 공개 API
+                        // 공개 API만 선별 허용
                         .requestMatchers(
                                 "/api/major/**",
-                                "/api/auth/**",
+                                "/api/auth/login",
+                                "/api/auth/signup",
                                 "/api/mail/**",
                                 "/api/posts/**"
                         ).permitAll()
 
-                        // 채팅은 인증 필요
-                        .requestMatchers("/api/chat/**").authenticated()
+                        // 재발급/내정보/로그아웃 등은 인증 필요
+                        .requestMatchers(
+                                "/api/auth/reissue",
+                                "/api/auth/logout",
+                                "/api/users/**"
+                        ).authenticated()
 
-                        // 그 외는 인증 필요
                         .anyRequest().authenticated()
                 )
 
