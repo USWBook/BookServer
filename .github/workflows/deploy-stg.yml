@@ -36,16 +36,12 @@ jobs:
       - name: .env 파일 생성
         env:
           ENV: ${{ secrets.ENV }}
-        run: |
-          mkdir -p backend
-          echo "$ENV" > backend/.env
+        run: echo "$ENV" > backend/.env
 
-      - name: application-secret.yml 생성 (안전)
-        run: |
-          mkdir -p backend/src/main/resources
-          cat > backend/src/main/resources/application-secret.yml <<'EOF'
-${{ secrets.APPLICATION_SECRET }}
-EOF
+      - name: application-secret.yml 생성
+        env:
+          APPLICATION_SECRET: ${{ secrets.APPLICATION_SECRET }}
+        run: echo "$APPLICATION_SECRET" > backend/src/main/resources/application-secret.yml
 
       - name: Docker Buildx 설치
         uses: docker/setup-buildx-action@v2
@@ -141,16 +137,13 @@ EOF
 
             echo "[2/7] Pull image: $IMAGE"
             docker pull "$IMAGE"
-            docker image inspect "$IMAGE" --format 'Pulled digest: {{index .RepoDigests 0}}' || true
 
             echo "[2.5/7] Decide CURRENT/NEXT by RUNNING containers"
-            HAS1=$(docker ps --format '{{.Names}}' | grep -Fx 'subookApp1_1' || true)
-            HAS2=$(docker ps --format '{{.Names}}' | grep -Fx 'subookApp1_2' || true)
-
-            if [ -n "$HAS1" ] && [ -z "$HAS2" ]; then
+            RUNNING=$(docker ps --format '{{.Names}}' | grep -E '^subookApp1_[12]$' || true)
+            if [ "$RUNNING" = "subookApp1_1" ]; then
               CURRENT="subookApp1_1"; CURRENT_PORT=8080
               NEXT="subookApp1_2";   NEXT_PORT=8081
-            elif [ -n "$HAS2" ] && [ -z "$HAS1" ]; then
+            elif [ "$RUNNING" = "subookApp1_2" ]; then
               CURRENT="subookApp1_2"; CURRENT_PORT=8081
               NEXT="subookApp1_1";   NEXT_PORT=8080
             else
@@ -175,13 +168,13 @@ EOF
 
             wait_for () {
               local port="$1" url="$2" timeout="$3"
-              local start elapsed
+              local start
               start=$(date +%s)
               while true; do
                 if curl -fsS "http://localhost:${port}${url}" >/dev/null; then
                   return 0
                 fi
-                elapsed=$(( $(date +%s) - start ))
+                local elapsed=$(( $(date +%s) - start ))
                 if [ $elapsed -ge $timeout ]; then
                   return 1
                 fi
@@ -194,8 +187,6 @@ EOF
             if ! wait_for "$NEXT_PORT" "$HEALTH_LIVE" "$TIMEOUT_LIVE"; then
               echo "❌ Liveness failed within ${TIMEOUT_LIVE}s. Logs:"
               docker logs --tail=200 "$NEXT" || true
-              echo "❌ Curl debug:"
-              curl -v "http://localhost:${NEXT_PORT}${HEALTH_LIVE}" || true
               docker stop "$NEXT" || true
               docker rm "$NEXT" || true
               exit 1
@@ -206,8 +197,6 @@ EOF
             if ! wait_for "$NEXT_PORT" "$HEALTH_READY" "$TIMEOUT_READY"; then
               echo "❌ Readiness failed within ${TIMEOUT_READY}s. Logs:"
               docker logs --tail=200 "$NEXT" || true
-              echo "❌ Curl debug:"
-              curl -v "http://localhost:${NEXT_PORT}${HEALTH_READY}" || true
               docker stop "$NEXT" || true
               docker rm "$NEXT" || true
               exit 1
