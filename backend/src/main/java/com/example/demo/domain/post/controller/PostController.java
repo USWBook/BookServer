@@ -4,9 +4,12 @@ import com.example.demo.domain.post.dto.request.PostCreateRequest;
 import com.example.demo.domain.post.dto.request.PostUpdateRequest;
 import com.example.demo.domain.post.dto.response.PostResponse;
 import com.example.demo.domain.post.service.PostService;
+import com.example.demo.domain.user.dto.CustomUserDetails;
+import com.example.demo.domain.user.service.UserService;
 import com.example.demo.global.response.Empty;
 import com.example.demo.global.response.RsData;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,11 +21,12 @@ import java.util.UUID;
 public class PostController {
 
     private final PostService postService;
+    private final UserService userService;
 
     // 게시글 생성
     @PostMapping
-    public RsData<?> createPost(@RequestBody PostCreateRequest request) {
-        UUID postId = postService.createPost(request);
+    public RsData<?> createPost(@AuthenticationPrincipal CustomUserDetails userDetails,@RequestBody PostCreateRequest request) {
+        UUID postId = postService.createPost(userDetails.getId(),request);
         return new RsData<>("201", "게시글이 성공적으로 등록되었습니다.", postId);
     }
 
