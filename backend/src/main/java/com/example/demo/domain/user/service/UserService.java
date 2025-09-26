@@ -10,10 +10,10 @@ import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.response.UserInfoResponse;
 import com.example.demo.global.jwt.JwtProvider;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -48,8 +48,8 @@ public class UserService {
         updateFieldIfNotNull(request.grade(), currentUser::setGrade);
         updateFieldIfNotNull(request.semester(), currentUser::setSemester);
 
-        if (request.majorName() != null) {
-            Major newMajor = majorRepository.findByName(request.majorName())
+        if (request.majorId() != null) {
+            Major newMajor = majorRepository.findById(request.majorId())
                     .orElseThrow(MajorNotFoundException::new);
             currentUser.setMajor(newMajor);
         }

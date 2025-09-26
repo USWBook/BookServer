@@ -10,5 +10,5 @@ import java.util.UUID;
 
 public interface PostLikeRepository extends JpaRepository<PostLike, UUID> {
     Optional<PostLike> findByUserIdAndPost(UUID userId, Post post);
-    void deleteByuserIdAndPost(UUID userId, Post post);
+    void deleteByUserIdAndPost(UUID userId, Post post);
 }
