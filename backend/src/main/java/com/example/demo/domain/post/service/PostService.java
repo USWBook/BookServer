@@ -33,12 +33,12 @@ public class PostService {
 
     // 게시글 생성
     @Transactional
-    public UUID createPost(PostCreateRequest request) {
+    public UUID createPost(UUID userId,PostCreateRequest request) {
         Major major = majorRepository.findById(request.majorId())
                 .orElseThrow(MajorNotFoundException::new);
 
-        // seller: 로그인 구현 전까지 임의의 user 할당 또는 예외 처리
-        User seller = userRepository.findAll().stream().findFirst()
+
+        User seller = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
         Post post = PostCreateRequest.toEntity(request, seller, major);

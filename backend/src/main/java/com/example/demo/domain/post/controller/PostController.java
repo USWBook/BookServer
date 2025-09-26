@@ -4,9 +4,12 @@ import com.example.demo.domain.post.dto.request.PostCreateRequest;
 import com.example.demo.domain.post.dto.request.PostUpdateRequest;
 import com.example.demo.domain.post.dto.response.PostResponse;
 import com.example.demo.domain.post.service.PostService;
+import com.example.demo.domain.user.dto.CustomUserDetails;
+import com.example.demo.domain.user.service.UserService;
 import com.example.demo.global.response.Empty;
 import com.example.demo.global.response.RsData;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,8 +24,8 @@ public class PostController {
 
     // 게시글 생성
     @PostMapping
-    public RsData<?> createPost(@RequestBody PostCreateRequest request) {
-        UUID postId = postService.createPost(request);
+    public RsData<?> createPost(@AuthenticationPrincipal CustomUserDetails userDetails,@RequestBody PostCreateRequest request) {
+        UUID postId = postService.createPost(userDetails.getId(),request);
         return new RsData<>("201", "게시글이 성공적으로 등록되었습니다.", postId);
     }
 
@@ -56,15 +59,15 @@ public class PostController {
 
     // 찜하기
     @PostMapping("/{postId}/likes")
-    public RsData<Empty> likePost(@PathVariable UUID postId, @RequestParam UUID userId) {
-        postService.likePost(postId, userId);
+    public RsData<Empty> likePost(@PathVariable UUID postId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        postService.likePost(postId, userDetails.getId());
         return new RsData<>("200", "찜 완료되었습니다.");
     }
 
     // 찜 해제
     @DeleteMapping("/{postId}/likes")
-    public RsData<Empty> unlikePost(@PathVariable UUID postId, @RequestParam UUID userId) {
-        postService.unlikePost(postId, userId);
+    public RsData<Empty> unlikePost(@PathVariable UUID postId,  @AuthenticationPrincipal CustomUserDetails userDetails) {
+        postService.unlikePost(postId, userDetails.getId());
         return new RsData<>("200", "찜 해제되었습니다.");
     }
 }

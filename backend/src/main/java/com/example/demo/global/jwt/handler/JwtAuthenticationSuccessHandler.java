@@ -41,10 +41,10 @@ public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHan
         // refreshToken HttpOnly 쿠키로 세팅
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenResponse.getRefreshToken())
                 .httpOnly(true)
-                // .secure(true) // 운영에서 true
+                .secure(true) // 운영에서 true
                 .path("/")
                 .maxAge(Duration.ofMillis(tokenService.getRefreshExpirationInMillis()).getSeconds())
-                .sameSite("Lax")
+                .sameSite("None")
                 .build();
 
         // AccessToken은 Authorization 헤더로 전달

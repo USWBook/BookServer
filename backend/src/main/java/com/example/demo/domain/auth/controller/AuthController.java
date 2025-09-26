@@ -40,10 +40,10 @@ public class AuthController {
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokens.refreshToken())
                 .httpOnly(true)
-                //.secure(true)  // HTTPS 환경에서만 true, 로컬 개발시 false
+                .secure(true)  // HTTPS 환경에서만 true, 로컬 개발시 false
                 .path("/")
                 .maxAge(Duration.ofMillis(tokenService.getRefreshExpirationInMillis()))
-                .sameSite("Strict")
+                .sameSite("None")
                 .build();
 
         return ResponseEntity.ok()

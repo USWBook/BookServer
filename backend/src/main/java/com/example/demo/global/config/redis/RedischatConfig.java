@@ -21,7 +21,7 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
-@Profile("!test") // test 환경 제외
+//@Profile("!test") // test 환경 제외
 @RequiredArgsConstructor
 @EnableRedisRepositories(enableKeyspaceEvents = RedisKeyValueAdapter.EnableKeyspaceEvents.ON_STARTUP)
 public class RedischatConfig {

@@ -97,10 +97,10 @@ class PostServiceTest {
         );
 
         given(majorRepository.findById(major.getId())).willReturn(Optional.of(major));
-        given(userRepository.findAll()).willReturn(List.of(user)); // ✅ 추가
+        given(userRepository.findById(userId));
         given(postRepository.save(any(Post.class))).willReturn(post);
 
-        UUID result = postService.createPost(request);
+        UUID result = postService.createPost(userId,request);
 
         assertThat(result).isEqualTo(postId);
         then(postRepository).should().save(any(Post.class));

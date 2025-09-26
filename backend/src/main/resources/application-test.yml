@@ -1,16 +1,43 @@
+#spring:
+#  config:
+#    import: classpath:application-secret.yml
+#  datasource:
+#    url: jdbc:h2:mem:testdb
+#    driver-class-name: org.h2.Driver
+#    username: sa
+#    password:
+#  redis:
+#    host: localhost
+#    port: 6379
+#  jpa:
+#    hibernate:
+#      ddl-auto: create-drop
+# 테스트 환경 전용 설정
+# Test-specific configurations
 spring:
-  config:
-    import: classpath:application-secret.yml
+  # H2 In-Memory Database Configuration
   datasource:
-    url: jdbc:h2:mem:testdb
+    url: jdbc:h2:mem:testdb;MODE=MySQL # H2를 MySQL 호환 모드로 실행
     driver-class-name: org.h2.Driver
     username: sa
     password:
-  redis:
-    host: localhost
-    port: 6379
+
+  # JPA configuration for H2
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: create-drop # 테스트 시작 시 스키마 생성, 종료 시 삭제
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect # H2 방언 사용
+        show_sql: true # SQL 로그 출력
+        format_sql: true # SQL 로그 포맷팅
+
+# JWT configuration for the test environment
+# 이 키들은 JwtProvider 클래스의 @Value 어노테이션과 일치해야 함.
+jwt:
+  secret: VmpGYWIyUnBibWN6WkhKemFYTjBJRk5oY21SZlptRjFiSFI1Y0dVaA== # 테스트용 시크릿 키
+  access-expiration: 3600   # 1시간 (초)
+  refresh-expiration: 604800  # 7일 (초)
+
 
 
