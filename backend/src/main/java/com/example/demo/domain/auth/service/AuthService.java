@@ -49,7 +49,7 @@ public class AuthService {
             throw new EmailNotVerifiedException();
         }
 
-        Major major = majorRepository.findByName(request.majorName())
+        Major major = majorRepository.findById(request.majorId())
                 .orElseThrow(MajorNotFoundException::new);
 
         User user = User.builder()

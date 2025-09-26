@@ -1,9 +1,12 @@
 package com.example.demo.domain.auth.dto.request;
 
+import com.example.demo.domain.major.entity.Major;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+
+import java.util.UUID;
 
 public record SignUpRequest(
         @NotBlank(message = "이메일은 필수입니다.")
@@ -23,7 +26,7 @@ public record SignUpRequest(
         String studentId,
 
         @NotBlank(message = "전공은 필수입니다.")
-        String majorName,
+        UUID majorId,
 
         @NotNull(message = "학년은 필수입니다.")
         Integer grade,

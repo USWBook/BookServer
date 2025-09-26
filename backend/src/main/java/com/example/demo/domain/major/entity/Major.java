@@ -21,7 +21,7 @@ public class Major {
     @Column(name = "major_id", columnDefinition = "BINARY(16)")
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(nullable = false/*, unique = true*/)
     private String name;
 
     @CreationTimestamp
