@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -24,9 +25,9 @@ public class TokenService {
     private final UserRepository userRepository;
 
     @Transactional
-    public TokenResponse generateTokens(String email, Role role) {
-        String accessToken = jwtProvider.generateAccessToken(email, role);
-        String refreshToken = jwtProvider.generateRefreshToken(email, role);
+    public TokenResponse generateTokens(UUID id, String email, Role role) {
+        String accessToken = jwtProvider.generateAccessToken(id, email, role);
+        String refreshToken = jwtProvider.generateRefreshToken(id, email, role);
 
         redisTokenRepository.saveRefreshToken(email, refreshToken, jwtProvider.getRefreshTokenExpirationInMillis());
 
@@ -73,7 +74,7 @@ public class TokenService {
         deleteRefreshToken(email);
 
         // 새 토큰 발급
-        return generateTokens(email, user.getRole());
+        return generateTokens(user.getId(), email, user.getRole());
     }
 
     @Transactional
