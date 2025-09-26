@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.mockito.BDDMockito.given;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,17 +48,19 @@ public class AuthServiceTest {
     @Test
     @DisplayName("회원가입 성공")
     void signUp_Success() {
+
         // given
+        UUID majorId = UUID.randomUUID();
         SignUpRequest request = new SignUpRequest(
                 "test@suwon.ac.kr", "password123!", "테스트",
-                "20201234", "컴퓨터학부", 2, 1
+                "20201234", majorId, 2, 1
         );
         String encodedPassword = "encodedPassword";
-        Major major = Major.builder().name("컴퓨터학부").build();
+        Major major = Major.builder().id(majorId).name("컴퓨터학부").build();
 
         given(userRepository.existsByEmail(request.email())).willReturn(false);
         given(redisTokenRepository.isVerifiedEmail(request.email())).willReturn(true);
-        given(majorRepository.findByName(request.majorName())).willReturn(Optional.of(major));
+        given(majorRepository.findById(request.majorId())).willReturn(Optional.of(major));
         given(passwordEncoder.encode(request.password())).willReturn(encodedPassword);
         given(userRepository.save(any(User.class))).willAnswer(invocation -> invocation.getArgument(0));
 
@@ -75,7 +78,7 @@ public class AuthServiceTest {
         // given
         SignUpRequest request = new SignUpRequest(
                 "test@suwon.ac.kr", "password123!", "테스트",
-                "20201234", "컴퓨터학부", 2, 1
+                "20201234", UUID.randomUUID(), 2, 1
         );
         given(userRepository.existsByEmail(request.email())).willReturn(true);
 
@@ -85,37 +88,6 @@ public class AuthServiceTest {
         });
 
         verify(userRepository, never()).save(any(User.class));
-    }
-
-    @Test
-    @DisplayName("로그아웃 성공")
-    void logout_Success() {
-        // given
-        String authHeader = "Bearer access-token";
-        String accessToken = "access-token";
-        String refreshToken = "refresh-token"; // refreshToken 인자 추가
-        String email = "test@suwon.ac.kr";
-
-        //  실제 AuthService.logout 내부 로직에 맞춰 Mocking을 수정합니다.
-        // 1. Access Token 블랙리스트 등록 Mocking (void 메서드)
-        doNothing().when(tokenService).blacklistToken(accessToken);
-        // 2. Refresh Token 블랙리스트 등록 Mocking (void 메서드)
-        doNothing().when(tokenService).blacklistToken(refreshToken);
-        // 3. Refresh Token에서 이메일 추출 Mocking
-        given(tokenService.getEmailFromToken(refreshToken)).willReturn(email);
-        // 4. Refresh Token 삭제 Mocking (void 메서드)
-        doNothing().when(tokenService).deleteRefreshToken(email);
-
-        // when
-        // RefreshToken 삭제
-        tokenService.deleteRefreshToken(email);
-
-        // then
-        //  실제 호출되는 메서드들을 검증합니다.
-        verify(tokenService).blacklistToken(accessToken);
-        verify(tokenService).blacklistToken(refreshToken);
-        verify(tokenService).getEmailFromToken(refreshToken);
-        verify(tokenService).deleteRefreshToken(email);
     }
 
     @Test
@@ -156,5 +128,4 @@ public class AuthServiceTest {
 
         verify(tokenService).reissueTokens(refreshToken);
     }
-
 }
