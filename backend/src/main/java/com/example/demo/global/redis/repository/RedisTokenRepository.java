@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
@@ -14,9 +15,9 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class RedisTokenRepository {
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
 
-    public RedisTokenRepository(@Qualifier("authRedisTemplate") RedisTemplate<String, String> redisTemplate) {
+    public RedisTokenRepository(@Qualifier("authRedisTemplate") StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
