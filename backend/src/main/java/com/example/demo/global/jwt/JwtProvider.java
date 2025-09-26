@@ -11,6 +11,7 @@
     import javax.crypto.spec.SecretKeySpec;
     import java.nio.charset.StandardCharsets;
     import java.util.Date;
+    import java.util.UUID;
 
     import com.example.demo.domain.user.role.Role;
     import jakarta.annotation.PostConstruct;
@@ -66,26 +67,27 @@
              리프레시 토큰 만료 시간만큼 Redis에 자동으로 남아 있도록 설정하는 역할.
              토큰과 서버 저장소의 만료 시점을 맞추기 위해 필요
              */
-        public String generateToken(String email, Role role, String category, long expirationSeconds) {
+        public String generateToken(UUID id, String email, Role role, String category, long expirationSeconds) {
             Date now = new Date();
             Date expiry = new Date(now.getTime() + expirationSeconds * 1000);
 
             return Jwts.builder()
                     .subject(email)
+                    .claim("id", id.toString())
                     .claim("role", role.name())
-                    .claim("category", category) // Access / Refresh 구분
+                    .claim("category", category)
                     .issuedAt(now)
                     .expiration(expiry)
                     .signWith(key, Jwts.SIG.HS256)
                     .compact();
         }
 
-        public String generateAccessToken(String email, Role role) {
-            return generateToken(email, role, "access", accessExpirationInSeconds);
+        public String generateAccessToken(UUID id, String email, Role role) {
+            return generateToken(id, email, role, "access", accessExpirationInSeconds);
         }
 
-        public String generateRefreshToken(String email, Role role) {
-            return generateToken(email, role, "refresh", refreshExpirationInSeconds);
+        public String generateRefreshToken(UUID id, String email, Role role) {
+            return generateToken(id, email, role, "refresh", refreshExpirationInSeconds);
         }
 
         public Jws<Claims> parse(String token) {
@@ -188,4 +190,11 @@
                 return e.getClaims().getSubject();
             }
         }
+
+        public UUID extractId(String token) {
+            String idStr = parse(token).getPayload().get("id", String.class);
+            return UUID.fromString(idStr);
+        }
+
+
     }

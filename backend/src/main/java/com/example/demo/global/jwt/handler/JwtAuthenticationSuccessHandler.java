@@ -30,7 +30,7 @@ public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHan
         Role role = userPrincipal.getRole();
 
 
-        TokenResponse tokenResponse = tokenService.generateTokens(email, role);
+        TokenResponse tokenResponse = tokenService.generateTokens(userPrincipal.getId(),email, role);
 
         // String accessToken = jwtProvider.generateAccessToken(email, role);
         // String refreshToken = jwtProvider.generateRefreshToken(email, role);

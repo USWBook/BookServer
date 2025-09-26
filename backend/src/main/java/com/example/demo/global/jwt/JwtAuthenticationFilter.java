@@ -22,6 +22,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -62,6 +63,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // 블랙리스트 체크
             if (redisTokenRepository.isBlacklisted(token)) throw new BannedUserException();
 
+            UUID userId = jwtProvider.extractId(token);
             String email = jwtProvider.extractEmail(token);
             Role role = jwtProvider.extractRole(token);
 
@@ -70,7 +72,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 //                    .orElseThrow(JwtUserNotFoundException::new);
 
             // UserDetails 구현체 생성 (DB 조회 없이)
-            CustomUserDetails customUserDetails = new CustomUserDetails(email, role);
+            CustomUserDetails customUserDetails = new CustomUserDetails(userId,email, role);
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
 
