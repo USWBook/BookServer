@@ -11,11 +11,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @RequiredArgsConstructor
 public class CustomUserDetails implements UserDetails {
 
+    private final UUID id;
     private final String email;
     private final String password;
     private final Role role;
@@ -32,6 +34,7 @@ public class CustomUserDetails implements UserDetails {
     // [DaoAuthenticationProvider] 가 비밀번호 및 밴 여부 비교 후 인증 완료
     //인증 성공/실패 핸들러 실행
     public CustomUserDetails(User user) {
+        this.id = user.getId();
         this.email = user.getEmail();
         this.password = user.getPassword();
         this.role = user.getRole();
@@ -39,11 +42,12 @@ public class CustomUserDetails implements UserDetails {
     }
 
     // 2. (JWT 필터에서 사용) 토큰 정보만으로 생성하는 생성자
-    public CustomUserDetails(String email, Role role) {
+    public CustomUserDetails(UUID id, String email, Role role) {
+        this.id = id;
         this.email = email;
         this.password = null; // 토큰 기반 인증 시에는 비밀번호가 필요 없음
         this.role = role;
-        this.status = UserStatus.ACTIVE;
+        this.status = UserStatus.ACTIVE; // 토큰이 유효하다면 사용자는 활성 상태로 간주
     }
 
 
