@@ -25,7 +25,7 @@ public record SignUpRequest(
         @NotBlank(message = "학번은 필수입니다.")
         String studentId,
 
-        @NotBlank(message = "전공은 필수입니다.")
+        @NotNull(message = "전공은 필수입니다.")
         UUID majorId,
 
         @NotNull(message = "학년은 필수입니다.")
