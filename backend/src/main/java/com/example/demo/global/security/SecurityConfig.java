@@ -127,13 +127,13 @@ public class SecurityConfig {
                                 "/api/major/**",
                                 "/api/auth/login",
                                 "/api/auth/signup",
+                                "/api/auth/reissue",
                                 "/api/mail/**",
                                 "/api/posts/**"
                         ).permitAll()
 
-                        // 재발급/내정보/로그아웃 등은 인증 필요
+                        // 내정보/로그아웃 등은 인증 필요
                         .requestMatchers(
-                                "/api/auth/reissue",
                                 "/api/auth/logout",
                                 "/api/users/**"
                         ).authenticated()
