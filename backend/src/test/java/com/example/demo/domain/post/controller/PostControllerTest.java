@@ -55,7 +55,7 @@ class PostControllerTest {
         System.out.println("✅ 토큰 사용자 이메일: " + testUser.getEmail());
         System.out.println("✅ 토큰 사용자 ROLE: " + testUser.getRole());
 
-        accessToken = jwtProvider.generateAccessToken(testUser.getEmail(), testUser.getRole());
+        accessToken = jwtProvider.generateAccessToken(testUser.getId(),testUser.getEmail(), testUser.getRole());
     }
 
     @Test
