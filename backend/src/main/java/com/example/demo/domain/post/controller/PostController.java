@@ -21,7 +21,6 @@ import java.util.UUID;
 public class PostController {
 
     private final PostService postService;
-    private final UserService userService;
 
     // 게시글 생성
     @PostMapping
@@ -60,15 +59,15 @@ public class PostController {
 
     // 찜하기
     @PostMapping("/{postId}/likes")
-    public RsData<Empty> likePost(@PathVariable UUID postId, @RequestParam UUID userId) {
-        postService.likePost(postId, userId);
+    public RsData<Empty> likePost(@PathVariable UUID postId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        postService.likePost(postId, userDetails.getId());
         return new RsData<>("200", "찜 완료되었습니다.");
     }
 
     // 찜 해제
     @DeleteMapping("/{postId}/likes")
-    public RsData<Empty> unlikePost(@PathVariable UUID postId, @RequestParam UUID userId) {
-        postService.unlikePost(postId, userId);
+    public RsData<Empty> unlikePost(@PathVariable UUID postId,  @AuthenticationPrincipal CustomUserDetails userDetails) {
+        postService.unlikePost(postId, userDetails.getId());
         return new RsData<>("200", "찜 해제되었습니다.");
     }
 }
