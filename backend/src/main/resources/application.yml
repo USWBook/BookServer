@@ -35,7 +35,7 @@ server:
   port: 8080
 
 jwt:
-  access-expiration: 3600 # 1시간
+  access-expiration: 60 # 1분 실제 배포할땐 늘려야함
   refresh-expiration: 604800 # 7일
 
 logging:
