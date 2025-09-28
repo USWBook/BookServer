@@ -1,13 +1,16 @@
 package com.example.demo.domain.post.controller;
 
+import com.example.demo.domain.post.dto.request.CommentCreateRequest;
 import com.example.demo.domain.post.dto.request.PostCreateRequest;
 import com.example.demo.domain.post.dto.request.PostUpdateRequest;
 import com.example.demo.domain.post.dto.response.PostResponse;
+import com.example.demo.domain.post.entity.Post;
 import com.example.demo.domain.post.service.PostService;
 import com.example.demo.domain.user.dto.CustomUserDetails;
 import com.example.demo.domain.user.service.UserService;
 import com.example.demo.global.response.Empty;
 import com.example.demo.global.response.RsData;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -69,5 +72,36 @@ public class PostController {
     public RsData<Empty> unlikePost(@PathVariable UUID postId,  @AuthenticationPrincipal CustomUserDetails userDetails) {
         postService.unlikePost(postId, userDetails.getId());
         return new RsData<>("200", "찜 해제되었습니다.");
+    }
+
+    // 댓글 달기
+    @PostMapping("/{postId}/comment")
+    public RsData<PostResponse> postComment(@PathVariable UUID postId,
+                                     @AuthenticationPrincipal CustomUserDetails userDetails,
+                                     @RequestBody @Valid CommentCreateRequest request) {
+
+        PostResponse post = postService.createComment(postId,userDetails.getId(),request);
+        return new RsData<>("200", "게시글 상세 조회에 성공했습니다.", post);
+    }
+
+    // 댓글 수정
+    @PatchMapping("/{postId}/comment/{commentId}")
+    public RsData<PostResponse> updateComment(@PathVariable UUID postId,
+                                              @PathVariable UUID commentId,
+                                     @AuthenticationPrincipal CustomUserDetails userDetails,
+                                     @RequestBody @Valid CommentCreateRequest request) {
+
+        PostResponse post = postService.updateComment(postId,commentId,userDetails.getId(),request);
+        return new RsData<>("200", "게시글 상세 조회에 성공했습니다.", post);
+    }
+
+    // 댓글 삭제
+    @DeleteMapping("/{postId}/comment/{commentId}")
+    public RsData<PostResponse> deleteComment(@PathVariable UUID postId,
+                                              @PathVariable UUID commentId,
+                                              @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        PostResponse post = postService.deleteComment(postId,commentId,userDetails.getId());
+        return new RsData<>("200", "게시글 상세 조회에 성공했습니다.", post);
     }
 }

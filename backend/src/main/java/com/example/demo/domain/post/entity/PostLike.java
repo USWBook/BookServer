@@ -13,16 +13,15 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @Table(name = "post_likes", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"member_id", "post_id"})
+        @UniqueConstraint(columnNames = {"user_id", "post_id"})
 })
 public class PostLike {
 
     @Id
     @GeneratedValue
     private UUID id;
-    // 로그인 기능 구현 전: UUID로 임시 식별( 리팩토링 예정)
-    @Column(name = "member_id", nullable = false)
-    private UUID userId; // 임시로 UUID로 처리
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
