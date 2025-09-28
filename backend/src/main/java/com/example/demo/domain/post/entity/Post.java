@@ -57,7 +57,7 @@ public class Post {
     private Integer likeCount = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "seller_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false) // 이거 user_id로 조인해야하는거 아님?
     private User seller;
 
     @Enumerated(EnumType.STRING)

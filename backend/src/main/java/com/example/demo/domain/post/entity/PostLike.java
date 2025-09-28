@@ -21,7 +21,7 @@ public class PostLike {
     @GeneratedValue
     private UUID id;
     // 로그인 기능 구현 전: UUID로 임시 식별( 리팩토링 예정)
-    @Column(name = "member_id", nullable = false)
+    @Column(name = "user_id", nullable = false)// 이거 user_id로 조인해야하는거 아님?
     private UUID userId; // 임시로 UUID로 처리
 
     @ManyToOne(fetch = FetchType.LAZY)
