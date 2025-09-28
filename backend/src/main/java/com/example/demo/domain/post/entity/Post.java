@@ -10,6 +10,8 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -57,7 +59,7 @@ public class Post {
     private Integer likeCount = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false) // 이거 user_id로 조인해야하는거 아님?
+    @JoinColumn(name = "user_id", nullable = false)
     private User seller;
 
     @Enumerated(EnumType.STRING)
@@ -69,6 +71,13 @@ public class Post {
 
     @UpdateTimestamp
     private LocalDateTime modifiedAt;
+    //  하나의 게시글은 여러 댓글을 가질 수 있음. (주인이 아님)
+    // - cascade: 게시글이 삭제되면 댓글도 함께 삭제
+    // - orphanRemoval: 컬렉션에서 댓글이 제거되면 DB에서도 삭제
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<PostComment> comments = new ArrayList<>();
+
     // 게시글 수정
     public void updatePost(String title, String content, Integer postPrice) {
         this.title = title;
