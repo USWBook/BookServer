@@ -52,13 +52,13 @@ public class AuthController {
                 .body(new RsData<>("200", "토큰 재발행 완료되었습니다."));
     }
 
-    @PostMapping("change-password")
+    @PatchMapping("password")
     public RsData<?> changePassword(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody @Valid PasswordChangeRequest passwordChangeRequest){
         authService.changePassword(userDetails.getUsername(),passwordChangeRequest);
         return new RsData<>("200", "비밀번호 변경 완료되었습니다.");
     }
 
-    @PostMapping("reset-password")
+    @PostMapping("password")
     public RsData<?> resetPassword(@RequestBody @Valid ResetPasswordRequest resetPasswordRequest){
         authService.resetPassword(resetPasswordRequest);
         return new RsData<>("200", "비밀번호 초기화 완료되었습니다.");
