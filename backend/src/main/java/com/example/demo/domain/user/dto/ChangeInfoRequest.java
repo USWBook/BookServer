@@ -5,6 +5,8 @@ import java.util.UUID;
 
 public record ChangeInfoRequest(
 
+        String name,
+
     UUID majorId,
 
     Integer grade,
