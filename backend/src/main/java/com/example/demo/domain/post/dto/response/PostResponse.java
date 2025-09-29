@@ -14,6 +14,7 @@ public record PostResponse(
         String postImage,
         String content,
         LocalDateTime createdAt,
+        Integer likeCount,
         List<CommentResponse> comments
 ) {
     public static PostResponse from(Post post) {
@@ -29,6 +30,7 @@ public record PostResponse(
                 post.getPostImage(),
                 post.getContent(),
                 post.getCreatedAt(),
+                post.getLikeCount(),
                 commentResponses
         );
     }
