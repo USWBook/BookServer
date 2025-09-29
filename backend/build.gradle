@@ -12,6 +12,11 @@ java {
 		languageVersion = JavaLanguageVersion.of(21)
 	}
 }
+
+ext {
+	queryDslVersion = "5.1.0"
+}
+
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
@@ -21,13 +26,6 @@ configurations {
 repositories {
 	mavenCentral()
 }
-
-// chat 패키지 에러나서 제외하고 돌림
-//tasks.withType(JavaCompile) {
-//	exclude '**/chat/**'
-//	exclude '**/post/**'
-//
-//}
 
 dependencies {
 	// JWT 라이브러리 (JJWT)
@@ -41,7 +39,7 @@ dependencies {
 
 	// Web & API
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4'  // Swagger UI
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'  // 버전을 프로젝트에 맞게 확인해주세요.
 
 	// Security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -73,34 +71,48 @@ dependencies {
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
 	testImplementation 'org.testcontainers:mysql'
-	implementation 'org.springframework:spring-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
 	// Spring Boot Testing
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-	//websocket
+	// websocket
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	implementation 'org.webjars:sockjs-client:1.5.1'
 	implementation 'org.webjars:stomp-websocket:2.3.4'
-	//LocalDateTime 직렬화 오류 해결
+
+	// LocalDateTime 직렬화 오류 해결
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
-
-	// 이메일 전송을 위해 Spring Boot Starter Mail 의존성을 추가
-	implementation 'org.springframework.boot:spring-boot-starter-mail'
-
-	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.1'
 
 	// AWS Secrets Manager SDK
 	implementation 'software.amazon.awssdk:secretsmanager:2.25.45'
 
+	// QueryDSL 추가
+	implementation "com.querydsl:querydsl-jpa:${queryDslVersion}:jakarta"
+	annotationProcessor "com.querydsl:querydsl-apt:${queryDslVersion}:jakarta"
+	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+}
 
+// QueryDSL 설정 추가 (Q 클래스 생성 위치 지정)
+def querydslDir = "$buildDir/generated/querydsl"
+
+sourceSets {
+	main.java.srcDirs += [ querydslDir ]
+}
+
+tasks.withType(JavaCompile) {
+	options.getGeneratedSourceOutputDirectory().set(file(querydslDir))
+}
+
+clean.doLast {
+	file(querydslDir).deleteDir()
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
 bootJar {
 	archiveBaseName = 'subook'         // 이름 명확화
 	archiveVersion = ''                // 버전 생략

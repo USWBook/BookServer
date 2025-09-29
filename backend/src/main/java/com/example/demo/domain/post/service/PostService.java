@@ -5,6 +5,8 @@ import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.major.exception.MajorNotFoundException;
 import com.example.demo.domain.major.repository.MajorRepository;
 import com.example.demo.domain.post.dto.request.CommentCreateRequest;
+import com.example.demo.domain.post.dto.request.PostSearchCondition;
+import com.example.demo.domain.post.dto.response.PostListResponse;
 import com.example.demo.domain.post.entity.PostComment;
 import com.example.demo.domain.post.exception.CommentNotFoundException;
 import com.example.demo.domain.post.repository.PostCommentRepository;
@@ -20,12 +22,12 @@ import com.example.demo.domain.post.repository.PostRepository;
 import com.example.demo.domain.user.repository.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -51,13 +53,25 @@ public class PostService {
         return postRepository.save(post).getId();
     }
 
-    // 게시글 전체 조회
-    @Transactional(readOnly = true)
-    public List<PostResponse> getAllPosts() {
-        return postRepository.findAll().stream()
-                .map(PostResponse::from)
-                .collect(Collectors.toList());
+    // 게시글 조회(필터링이나 검색은 PostSearchCondition에 맞게 url에 파라미터로 넘겨주면 됨)
+    public Page<PostListResponse> searchPosts(PostSearchCondition condition, Pageable pageable) {
+        return postRepository.search(condition, pageable);
     }
+    // 아래 세개는 동적쿼리 안넣었을때 구현 해둔거임
+//    @Transactional(readOnly = true)
+//    public Page<PostListResponse> getAllPosts(Pageable pageable) {
+//        return postRepository.findAllWithCommentCount(pageable);
+//    }
+    //    public Page<PostListResponse> getBookPosts(Pageable pageable, String bookname) {
+//        return postRepository.findBookNameWithCommentCount(pageable,bookname);
+//    }
+//
+//    public Page<PostListResponse> getClassPosts(Pageable pageable, String classname) {
+//        return postRepository.findClassNameWithCommentCount(pageable,classname);
+//    }
+
+
+
 
     // 게시글 단건 조회
     @Transactional(readOnly = true)
@@ -88,7 +102,7 @@ public class PostService {
     // 찜하기
     @Transactional
     public void likePost(UUID postId, UUID userId) {
-        Post post = postRepository.findById(postId)
+        Post post = postRepository.findByIdWithPessimisticLock(postId)
                 .orElseThrow(PostNotFoundException::new);
 
         boolean alreadyLiked = postLikeRepository.findByUserIdAndPost(userId, post).isPresent();
@@ -105,7 +119,7 @@ public class PostService {
     // 찜 해제
     @Transactional
     public void unlikePost(UUID postId, UUID userId) {
-        Post post = postRepository.findById(postId)
+        Post post = postRepository.findByIdWithPessimisticLock(postId)
                 .orElseThrow(PostNotFoundException::new);
 
         postLikeRepository.findByUserIdAndPost(userId, post)
@@ -175,4 +189,5 @@ public class PostService {
 
         return PostResponse.from(updatedPost);
     }
+
 }
