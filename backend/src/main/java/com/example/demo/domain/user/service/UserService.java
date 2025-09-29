@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 
@@ -26,8 +27,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final MajorRepository majorRepository;
 
-    public UserInfoResponse getUserInfo(String email) {
-        User user = userRepository.findByEmail(email)
+    public UserInfoResponse getUserInfo(UUID userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
 
@@ -41,21 +42,24 @@ public class UserService {
     }
 
     @Transactional
-    public void changeInformation(String email,ChangeInfoRequest request) {
-        User currentUser = userRepository.findByEmail(email)
+    public UserInfoResponse changeInformation(UUID userId, ChangeInfoRequest request) {
+        User currentUser = userRepository.findById(userId)
                 .orElseThrow(MemberNotFoundException::new);
 
-        updateFieldIfNotNull(request.grade(), currentUser::setGrade);
-        updateFieldIfNotNull(request.semester(), currentUser::setSemester);
+        Major newMajor = findMajorOrNull(request.majorId());
+        
+        currentUser.updateProfile(request.name(), newMajor, request.grade(), request.semester());
 
-        if (request.majorId() != null) {
-            Major newMajor = majorRepository.findById(request.majorId())
-                    .orElseThrow(MajorNotFoundException::new);
-            currentUser.setMajor(newMajor);
+        return UserInfoResponse.from(currentUser);
+    }
+
+    private Major findMajorOrNull(UUID majorId) {
+        if (majorId == null) {
+            return null;
         }
+        return majorRepository.findById(majorId)
+                .orElseThrow(MajorNotFoundException::new);
     }
 
-    private <T> void updateFieldIfNotNull(T value, Consumer<T> updater) {
-        Optional.ofNullable(value).ifPresent(updater);
-    }
+
 }
