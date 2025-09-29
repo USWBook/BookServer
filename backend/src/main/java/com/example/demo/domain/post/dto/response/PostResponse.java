@@ -11,10 +11,13 @@ public record PostResponse(
         String title,
         String postName,
         Integer postPrice,
+        String courseName,
+        String professorName,
         String postImage,
         String content,
         LocalDateTime createdAt,
         Integer likeCount,
+        String majorName,
         List<CommentResponse> comments
 ) {
     public static PostResponse from(Post post) {
@@ -27,10 +30,13 @@ public record PostResponse(
                 post.getTitle(),
                 post.getPostName(),
                 post.getPostPrice(),
+                post.getCourseName(),
+                post.getProfessor(),
                 post.getPostImage(),
                 post.getContent(),
                 post.getCreatedAt(),
                 post.getLikeCount(),
+                post.getMajor().getName(),
                 commentResponses
         );
     }
