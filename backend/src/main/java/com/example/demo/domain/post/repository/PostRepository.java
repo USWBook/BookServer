@@ -2,9 +2,11 @@ package com.example.demo.domain.post.repository;
 // 게시글 저장소
 import com.example.demo.domain.post.dto.response.PostListResponse;
 import com.example.demo.domain.post.entity.Post;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -29,6 +31,13 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
             "p.id, p.title, p.postPrice, p.likeCount, COUNT(c.id), p.grade, p.semester, p.status, p.createdAt) " +
             "FROM Post p LEFT JOIN p.comments c GROUP BY p.id")
     Page<PostListResponse> findAllWithCommentCount(Pageable pageable);
+
+    // 비관적 쓰기 락(PESSIMISTIC_WRITE)을 사용하여 Post를 조회.
+    // 이 메서드가 호출되면, 트랜잭션이 끝날 때까지 해당 Post 레코드에 다른 트랜잭션이 접근할 수 없다.
+    // 동시에 수많은 사람들이 찜 하게 될경우 찜갯수 무결성때문에 추가
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Post p WHERE p.id = :id")
+    Optional<Post> findByIdWithPessimisticLock(@Param("id") UUID id);
 
 
 }

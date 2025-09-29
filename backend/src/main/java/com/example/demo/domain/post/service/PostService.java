@@ -88,7 +88,7 @@ public class PostService {
     // 찜하기
     @Transactional
     public void likePost(UUID postId, UUID userId) {
-        Post post = postRepository.findById(postId)
+        Post post = postRepository.findByIdWithPessimisticLock(postId)
                 .orElseThrow(PostNotFoundException::new);
 
         boolean alreadyLiked = postLikeRepository.findByUserIdAndPost(userId, post).isPresent();
@@ -105,7 +105,7 @@ public class PostService {
     // 찜 해제
     @Transactional
     public void unlikePost(UUID postId, UUID userId) {
-        Post post = postRepository.findById(postId)
+        Post post = postRepository.findByIdWithPessimisticLock(postId)
                 .orElseThrow(PostNotFoundException::new);
 
         postLikeRepository.findByUserIdAndPost(userId, post)
