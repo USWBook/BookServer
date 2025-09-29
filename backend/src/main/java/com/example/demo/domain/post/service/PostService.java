@@ -5,6 +5,7 @@ import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.major.exception.MajorNotFoundException;
 import com.example.demo.domain.major.repository.MajorRepository;
 import com.example.demo.domain.post.dto.request.CommentCreateRequest;
+import com.example.demo.domain.post.dto.request.PostSearchCondition;
 import com.example.demo.domain.post.dto.response.PostListResponse;
 import com.example.demo.domain.post.entity.PostComment;
 import com.example.demo.domain.post.exception.CommentNotFoundException;
@@ -52,11 +53,24 @@ public class PostService {
         return postRepository.save(post).getId();
     }
 
-    // 게시글 전체 조회
-    @Transactional(readOnly = true)
-    public Page<PostListResponse> getAllPosts(Pageable pageable) {
-        return postRepository.findAllWithCommentCount(pageable);
+    // 게시글 조회(필터링이나 검색은 PostSearchCondition에 맞게 url에 파라미터로 넘겨주면 됨)
+    public Page<PostListResponse> searchPosts(PostSearchCondition condition, Pageable pageable) {
+        return postRepository.search(condition, pageable);
     }
+    // 아래 세개는 동적쿼리 안넣었을때 구현 해둔거임
+//    @Transactional(readOnly = true)
+//    public Page<PostListResponse> getAllPosts(Pageable pageable) {
+//        return postRepository.findAllWithCommentCount(pageable);
+//    }
+    //    public Page<PostListResponse> getBookPosts(Pageable pageable, String bookname) {
+//        return postRepository.findBookNameWithCommentCount(pageable,bookname);
+//    }
+//
+//    public Page<PostListResponse> getClassPosts(Pageable pageable, String classname) {
+//        return postRepository.findClassNameWithCommentCount(pageable,classname);
+//    }
+
+
 
 
     // 게시글 단건 조회
@@ -175,4 +189,5 @@ public class PostService {
 
         return PostResponse.from(updatedPost);
     }
+
 }

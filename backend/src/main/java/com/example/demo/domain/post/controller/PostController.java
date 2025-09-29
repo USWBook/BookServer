@@ -2,6 +2,7 @@ package com.example.demo.domain.post.controller;
 
 import com.example.demo.domain.post.dto.request.CommentCreateRequest;
 import com.example.demo.domain.post.dto.request.PostCreateRequest;
+import com.example.demo.domain.post.dto.request.PostSearchCondition;
 import com.example.demo.domain.post.dto.request.PostUpdateRequest;
 import com.example.demo.domain.post.dto.response.PostListResponse;
 import com.example.demo.domain.post.dto.response.PostResponse;
@@ -55,13 +56,45 @@ public class PostController {
      GET /api/posts?page=0&size=15&sort=postPrice,asc
      */
     @GetMapping
-    public RsData<Page<PostListResponse>> getPosts(
+    public RsData<Page<PostListResponse>> searchPosts(
+            @ModelAttribute PostSearchCondition condition,
             @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        Page<PostListResponse> posts = postService.getAllPosts(pageable);
-
+        Page<PostListResponse> posts = postService.searchPosts(condition, pageable);
         return new RsData<>("200", "게시글 목록 조회에 성공했습니다.", posts);
     }
+    // 아래 세개는 동적쿼리 안넣었을때 구현 해둔거임
+//    @GetMapping
+//    public RsData<Page<PostListResponse>> getPosts(
+//            @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+//
+//        Page<PostListResponse> posts = postService.getAllPosts(pageable);
+//
+//        return new RsData<>("200", "게시글 목록 조회에 성공했습니다.", posts);
+//    }
+
+
+//    // 책이름 검색
+//    @GetMapping("/book/{bookname}")
+//    public RsData<Page<PostListResponse>> getBookNamePosts(
+//            @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+//            @PathVariable String bookname) {
+//
+//        Page<PostListResponse> posts = postService.getBookPosts(pageable,bookname);
+//
+//        return new RsData<>("200", "책이름 : " + bookname + " 게시글 목록 검색에 성공했습니다.", posts);
+//    }
+//
+//    // 강의명 검색
+//    @GetMapping("/class/{classname}")
+//    public RsData<Page<PostListResponse>> getClassNamePosts(
+//            @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+//            @PathVariable String classname) {
+//
+//        Page<PostListResponse> posts = postService.getClassPosts(pageable,classname);
+//
+//        return new RsData<>("200", "강의명 : " + classname + " 게시글 목록 검색에 성공했습니다.", posts);
+//    }
 
     // 게시글 단건 조회
     @GetMapping("/{id}")
