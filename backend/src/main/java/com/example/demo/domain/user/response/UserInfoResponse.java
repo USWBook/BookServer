@@ -1,17 +1,25 @@
 package com.example.demo.domain.user.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
-@Getter
-@AllArgsConstructor
-public class UserInfoResponse {
+import com.example.demo.domain.user.entity.User;
 
-    private String name;
-    private String majorName;
-    private String email;
-    private int grade;
-    private int semester;
+public record UserInfoResponse(
+        String name,
+        String majorName,
+        String email,
+        Integer grade,
+        Integer semester
+) {
 
+    public static UserInfoResponse from(User user) {
+        String majorName = (user.getMajor() != null) ? user.getMajor().getName() : null;
 
+        return new UserInfoResponse(
+                user.getName(),
+                majorName,
+                user.getEmail(),
+                user.getGrade(),
+                user.getSemester()
+        );
+    }
 }

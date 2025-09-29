@@ -18,13 +18,13 @@ public class UserController {
 
     @GetMapping("/infomation")
     public RsData<?> infomation(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        UserInfoResponse userInfoResponse = userService.getUserInfo(userDetails.getUsername());
+        UserInfoResponse userInfoResponse = userService.getUserInfo(userDetails.getId());
         return new RsData<>("200", "회원정보 조회 성공",userInfoResponse);
     }
 
-    @PostMapping("/change-infomation")
+    @PatchMapping("/infomation")
     public RsData<?> changeInfomation(@AuthenticationPrincipal CustomUserDetails userDetails,@RequestBody ChangeInfoRequest request) {
-        userService.changeInformation(userDetails.getUsername(),request);
-        return new RsData<>("200", "회원정보 수정 성공");
+        UserInfoResponse userInfoResponse = userService.changeInformation(userDetails.getId(),request);
+        return new RsData<>("200", "회원정보 수정 성공",userInfoResponse);
     }
 }
