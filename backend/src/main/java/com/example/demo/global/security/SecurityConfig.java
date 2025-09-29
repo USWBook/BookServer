@@ -118,6 +118,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/", "/ping", "/error", "/favicon.ico",
                                 "/actuator/**",
+                                "/swagger-ui.html",
                                 "/swagger-ui/**", "/v3/api-docs/**",
                                 "/css/**", "/js/**", "/images/**",
                                 "/h2-console/**").permitAll()

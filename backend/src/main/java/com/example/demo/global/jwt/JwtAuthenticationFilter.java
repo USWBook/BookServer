@@ -17,12 +17,15 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
+
 
 @Component
 @RequiredArgsConstructor
@@ -32,19 +35,41 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final RedisTokenRepository redisTokenRepository;
     private final AuthenticationEntryPoint authenticationEntryPoint;
+    private final AntPathMatcher antPathMatcher = new AntPathMatcher();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
+        log.error("!!!!!!!!!! JWT FILTER IS RUNNING! VERSION 2 !!!!!!!!!!");
+        String[] skipPaths = {
+                "/", "/ping", "/error", "/favicon.ico",
+                "/actuator/**",
+                "/swagger-ui.html",
+                "/swagger-ui/**",
+                "/v3/api-docs/**",
+                "/api/auth/**",
+                "/api/major/**",
+                "/api/mail/**"
+        };
 
-        // ① 액추에이터/헬스는 바로 통과 (의존성 안 타고 빠르게)
         String path = request.getRequestURI();
-        if (path.startsWith("/actuator/")) {
+
+        boolean shouldSkip = Arrays.stream(skipPaths)
+                .anyMatch(p -> antPathMatcher.match(p, path));
+
+        if (shouldSkip) {
+            log.info("⏩ JwtAuthenticationFilter SKIPPED for path: {}", path);
             chain.doFilter(request, response);
             return;
         }
-
+//        // ① 액추에이터/헬스는 바로 통과 (의존성 안 타고 빠르게)
+//        String path = request.getRequestURI();
+//        if (path.startsWith("/actuator/")) {
+//            chain.doFilter(request, response);
+//            return;
+//        }
+        log.info("🔍 JwtAuthenticationFilter ACTIVATED for path: {}", path);
         String token = resolveToken(request);
 
         if (token == null) {
