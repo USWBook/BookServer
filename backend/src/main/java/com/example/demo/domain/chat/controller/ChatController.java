@@ -165,40 +165,37 @@
 
             // 채팅 메시지 수신
             @GetMapping("/rooms/{roomId}/messages")
-            public RsData<List<SendMessageResponseDto.Data>> getMessages(@PathVariable UUID roomId, Authentication authentication) {
-                // 채팅방 조회
+            public RsData<ReceiveMessageResponseDto> getMessages(@PathVariable UUID roomId, Authentication authentication) {
                 ChatRoom room = chatRoomService.findByRoomId(roomId);
 
-                // 인증 정보에서 사용자 이메일 가져오기
                 String userEmail = authentication.getName();
-
-                // 이메일로 User 조회 후 UUID 획득
                 User user = userRepository.findByEmail(userEmail)
                         .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
                 UUID userId = user.getId();
 
-                // 권한 검사 (room.getSender(), room.getReceiver()가 User 객체일 경우)
                 if (!room.getSender().equals(userId) && !room.getReceiver().equals(userId)) {
                     return new RsData<>("403", "채팅방 입장 권한이 없습니다.", null);
                 }
 
-                // 채팅 메시지 목록 조회
                 List<ChatMessage> messages = chatService.getMessages(roomId);
 
-                // DTO 변환
-                List<SendMessageResponseDto.Data> dtos = messages.stream()
-                        .map(m -> new SendMessageResponseDto.Data(
+                List<ReceiveMessageResponseDto.Message> messageDtos = messages.stream()
+                        .map(m -> new ReceiveMessageResponseDto.Message(
                                 m.getId(),
                                 m.getChatRoomId(),
                                 m.getSender().getId(),
                                 m.getContent(),
+                                m.getImageUrl(),
+                                m.isRead(),
                                 m.getSentAt()
                         ))
                         .collect(Collectors.toList());
 
-                // 결과 반환
-                return new RsData<>("200", "채팅 메시지 목록 조회 성공", dtos);
+                ReceiveMessageResponseDto responseDto = new ReceiveMessageResponseDto(userId, messageDtos);
+
+                return new RsData<>("200", "채팅 메시지 목록 조회 성공", responseDto);
             }
+
 
 
             // 채팅 메시지 송신
