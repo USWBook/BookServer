@@ -1,267 +1,318 @@
 name: deploy-stg
 
 on:
-  push:
-    branches:
-      - develop
-    paths:
-      - '.github/workflows/**'
-      - 'backend/src/**'
-      - 'backend/build.gradle'
-      - 'backend/settings.gradle'
-      - 'backend/Dockerfile.stg'
-  workflow_dispatch: {}
+  push:
+    branches:
+      - develop
+    paths:
+      - '.github/workflows/'
+      - 'backend/src/'
+      - 'backend/build.gradle'
+      - 'backend/settings.gradle'
+      - 'backend/Dockerfile.stg'
+  workflow_dispatch: {}
 
 permissions:
-  contents: read
-  packages: write
+  contents: read
+  packages: write
 
 concurrency:
-  group: deploy-stg
-  cancel-in-progress: false
+  group: deploy-stg
+  cancel-in-progress: false
 
 jobs:
-  buildImageAndPush:
-    name: 도커 이미지 빌드 및 푸시
-    runs-on: ubuntu-latest
-    outputs:
-      owner_lc: ${{ steps.export_owner.outputs.owner_lc }}
-      image_name: ${{ steps.export_image.outputs.image_name }}
+  buildImageAndPush:
+    name: 도커 이미지 빌드 및 푸시
+    runs-on: ubuntu-latest
+    outputs:
+      owner_lc: ${{ steps.export_owner.outputs.owner_lc }}
+      image_name: ${{ steps.export_image.outputs.image_name }}
 
-    steps:
-      - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: .env 파일 생성
-        env:
-          ENV: ${{ secrets.ENV }}
-        shell: bash
-        run: |
-          mkdir -p backend
-          printf '%s' "$ENV" > backend/.env
+      - name: .env 파일 생성
+        env:
+          ENV: ${{ secrets.ENV }}
+        shell: bash
+        run: |
+          mkdir -p backend
+          printf '%s' "$ENV" > backend/.env
 
-      - name: application-secret.yml 생성 (안전)
-        env:
-          APPLICATION_SECRET: ${{ secrets.APPLICATION_SECRET }}
-        shell: bash
-        run: |
-          mkdir -p backend/src/main/resources
-          printf '%s' "$APPLICATION_SECRET" > backend/src/main/resources/application-secret.yml
+      - name: application-secret.yml 생성 (안전)
+        env:
+          APPLICATION_SECRET: ${{ secrets.APPLICATION_SECRET }}
+        shell: bash
+        run: |
+          mkdir -p backend/src/main/resources
+          printf '%s' "$APPLICATION_SECRET" > backend/src/main/resources/application-secret.yml
 
-      - name: Docker Buildx 설치
-        uses: docker/setup-buildx-action@v2
+      - name: Docker Buildx 설치
+        uses: docker/setup-buildx-action@v2
 
-      - name: 레지스트리 로그인 (빌드용)
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: 레지스트리 로그인 (빌드용)
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 소유자 설정
-        id: export_owner
-        shell: bash
-        run: |
-          OWNER_LC="${GITHUB_REPOSITORY_OWNER,,}"
-          echo "owner_lc=$OWNER_LC" >> "$GITHUB_OUTPUT"
+      - name: 소유자 설정
+        id: export_owner
+        shell: bash
+        run: |
+          OWNER_LC="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "owner_lc=$OWNER_LC" >> "$GITHUB_OUTPUT"
 
-      - name: 이미지 이름 설정
-        id: export_image
-        run: echo "image_name=subook_backend_stg" >> "$GITHUB_OUTPUT"
+      - name: 이미지 이름 설정
+        id: export_image
+        run: echo "image_name=subook_backend_stg" >> "$GITHUB_OUTPUT"
 
-      - name: 빌드 및 푸시 (Dockerfile.stg)
-        uses: docker/build-push-action@v3
-        with:
-          context: backend
-          file: backend/Dockerfile.stg
-          push: true
-          cache-from: type=registry,ref=ghcr.io/${{ steps.export_owner.outputs.owner_lc }}/${{ steps.export_image.outputs.image_name }}:cache
-          cache-to: type=registry,ref=ghcr.io/${{ steps.export_owner.outputs.owner_lc }}/${{ steps.export_image.outputs.image_name }}:cache,mode=max
-          tags: |
-            ghcr.io/${{ steps.export_owner.outputs.owner_lc }}/${{ steps.export_image.outputs.image_name }}:latest
+      - name: 빌드 및 푸시 (Dockerfile.stg)
+        uses: docker/build-push-action@v3
+        with:
+          context: backend
+          file: backend/Dockerfile.stg
+          push: true
+          cache-from: type=registry,ref=ghcr.io/steps.export 
+o
+​
+ wner.outputs.owner 
+l
+​
+ c/{{ steps.export_image.outputs.image_name }}:cache
+          cache-to: type=registry,ref=ghcr.io/steps.export 
+o
+​
+ wner.outputs.owner 
+l
+​
+ c/{{ steps.export_image.outputs.image_name }}:cache,mode=max
+          tags: |
+            ghcr.io/steps.export 
+o
+​
+ wner.outputs.owner 
+l
+​
+ c/{{ steps.export_image.outputs.image_name }}:latest
 
-  deploy:
-    name: AWS SSM 배포
-    needs: [buildImageAndPush]
-    runs-on: ubuntu-latest
+  deploy:
+    name: AWS SSM 배포
+    needs: [buildImageAndPush]
+    runs-on: ubuntu-latest
 
-    steps:
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ secrets.AWS_REGION }}
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_STG }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_STG }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_STG }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_STG }}
 
-      - name: EC2 인스턴스 ID 조회 (subook 전용)
-        id: get_instance_id
-        shell: bash
-        run: |
-          INSTANCE_ID=$(aws ec2 describe-instances --filters \
-            "Name=tag:Name,Values=subook-stg-ec2-main" \
-            "Name=instance-state-name,Values=running" \
-            --query "Reservations[].Instances[].InstanceId" --output text)
-          if [ -z "$INSTANCE_ID" ]; then
-            echo "❌ No running instance found for subook-stg-ec2-main"
-            exit 1
-          fi
-          echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
-          echo "Target INSTANCE_ID: $INSTANCE_ID"
+      - name: EC2 인스턴스 ID 조회 (subook 전용)
+        id: get_instance_id
+        shell: bash
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances --filters 
 
-      - name: AWS SSM Send-Command
-        uses: peterkimzz/aws-ssm-send-command@master
-        id: ssm
-        with:
-          aws-region: ${{ secrets.AWS_REGION }}
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_STG }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_STG }}
-          instance-ids: ${{ env.INSTANCE_ID }}
-          working-directory: /
-          comment: Deploy
-          command: |
-            set -euo pipefail
+            "Name=tag:Name,Values=subook-stg-ec2-main" 
 
-            IMAGE="ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest"
-            NETWORK="common"
-            HEALTH_LIVE="/actuator/health/liveness"
-            HEALTH_READY="/actuator/health/readiness"
-            TIMEOUT_LIVE=90
-            TIMEOUT_READY=300
+            "Name=instance-state-name,Values=running" 
 
-            echo "[0/7] Prepare docker network"
-            docker network create "$NETWORK" >/dev/null 2>&1 || true
+            --query "Reservations[].Instances[].InstanceId" --output text)
+          if [ -z "$INSTANCE_ID" ]; then
+            echo "❌ No running instance found for subook-stg-ec2-main"
+            exit 1
+          fi
+          echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
+          echo "Target INSTANCE_ID: $INSTANCE_ID"
 
-            echo "[1/7] GHCR login via SSM Parameter Store"
-            GHCR_USER=$(aws ssm get-parameter --region ${{ secrets.AWS_REGION }} --name "/subook/ghcr/user"  --query 'Parameter.Value' --output text)
-            GHCR_TOKEN=$(aws ssm get-parameter --region ${{ secrets.AWS_REGION }} --with-decryption --name "/subook/ghcr/token" --query 'Parameter.Value' --output text)
-            if [ -z "${GHCR_USER}" ] || [ -z "${GHCR_TOKEN}" ]; then
-              echo "❌ Missing GHCR credentials in SSM Parameter Store (/subook/ghcr/user, /subook/ghcr/token)"
-              exit 1
-            fi
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+      - name: AWS SSM Send-Command
+        uses: peterkimzz/aws-ssm-send-command@master
+        id: ssm
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_STG }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_STG }}
+          instance-ids: ${{ env.INSTANCE_ID }}
+          working-directory: /
+          comment: Deploy
+          command: |
+            set -euo pipefail
 
-            echo "[2/7] Pull image: $IMAGE"
-            docker pull "$IMAGE"
-            DIGEST=$(docker image inspect "$IMAGE" --format '{{index .RepoDigests 0}}')
-            echo "Pulled digest: $DIGEST"
+            IMAGE="ghcr.io/needs.buildImageAndPush.outputs.owner 
+l
+​
+ c/{{ needs.buildImageAndPush.outputs.image_name }}:latest"
+            NETWORK="common"
+            HEALTH_LIVE="/actuator/health/liveness"
+            HEALTH_READY="/actuator/health/readiness"
+            TIMEOUT_LIVE=90
+            TIMEOUT_READY=300
 
-            echo "[2.5/7] Decide CURRENT/NEXT by RUNNING containers"
-            HAS1=$(docker ps --format '{{.Names}}' | grep -Fx 'subookApp1_1' || true)
-            HAS2=$(docker ps --format '{{.Names}}' | grep -Fx 'subookApp1_2' || true)
+            echo "[0/7] Prepare docker network"
+            docker network create "$NETWORK" >/dev/null 2>&1 || true
 
-            if [ -n "$HAS1" ] && [ -z "$HAS2" ]; then
-              CURRENT="subookApp1_1"; CURRENT_PORT=8080
-              NEXT="subookApp1_2";   NEXT_PORT=8081
-            elif [ -n "$HAS2" ] && [ -z "$HAS1" ]; then
-              CURRENT="subookApp1_2"; CURRENT_PORT=8081
-              NEXT="subookApp1_1";   NEXT_PORT=8080
-            else
-              CURRENT=""; CURRENT_PORT=""
-              NEXT="subookApp1_1"; NEXT_PORT=8080
-            fi
-            echo "CURRENT=${CURRENT:-none}, NEXT=$NEXT (ports: CURRENT=${CURRENT_PORT:-na}, NEXT=$NEXT_PORT)"
+            echo "[1/7] GHCR login via SSM Parameter Store"
+            GHCR_USER=(aws ssm get-parameter --region ${{ secrets.AWS_REGION }} --name "/subook/ghcr/user"  --query 'Parameter.Value' --output text)             GHCR_TOKEN=$(aws ssm get-parameter --region ${{ secrets.AWS_REGION }} --with-decryption --name "/subook/ghcr/token" --query 'Parameter.Value' --output text)             if [ -z "${GHCR_USER}" ] || [ -z "{GHCR_TOKEN}" ]; then
+              echo "❌ Missing GHCR credentials in SSM Parameter Store (/subook/ghcr/user, /subook/ghcr/token)"
+              exit 1
+            fi
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
-            echo "[3/7] Clean old NEXT if exists (Exited or leftover)"
-            docker stop "$NEXT" 2>/dev/null || true
-            docker rm "$NEXT" 2>/dev/null || true
+            echo "[2/7] Pull image: $IMAGE"
+            docker pull "IMAGE"      DIGEST=(docker image inspect "$IMAGE" --format '{{index .RepoDigests 0}}')
+            echo "Pulled digest: $DIGEST"
 
-            echo "[4/7] Start NEXT: $NEXT on :$NEXT_PORT (digest 기반)"
-            docker run -d \
-              --name "$NEXT" \
-              --restart unless-stopped \
-              --network "$NETWORK" \
-              -p "$NEXT_PORT":8080 \
-              -e SPRING_PROFILES_ACTIVE=secret,stg \
-              -e TZ=Asia/Seoul \
-              "$DIGEST"
+            echo "[2.5/7] Decide CURRENT/NEXT by RUNNING containers"
+            HAS1=(dockerps−−format 
+′
+ .Names 
+′
+ ∣grep−Fx 
+′
+ subookApp1 
+1
+′
+​
+ ∣∣true)      HAS2=(docker ps --format '{{.Names}}' | grep -Fx 'subookApp1_2' || true)
 
-            wait_for () {
-              local port="$1" url="$2" timeout="$3"
-              local start elapsed
-              start=$(date +%s)
-              while true; do
-                if curl -fsS "http://localhost:${port}${url}" >/dev/null; then
-                  return 0
-                fi
-                elapsed=$(( $(date +%s) - start ))
-                if [ $elapsed -ge $timeout ]; then
-                  return 1
-                fi
-                echo "⏳ waiting ${url} on :${port} ... (${elapsed}s)"
-                sleep 3
-              done
-            }
+            if [ -n "$HAS1" ] && [ -z "$HAS2" ]; then
+              CURRENT="subookApp1_1"; CURRENT_PORT=8080
+              NEXT="subookApp1_2";   NEXT_PORT=8081
+            elif [ -n "$HAS2" ] && [ -z "HAS1"];then       CURRENT="subookApp1 
+2
+​
+ ";CURRENT 
+P
+​
+ ORT=8081       NEXT="subookApp1 
+1
+​
+ ";  NEXT 
+P
+​
+ ORT=8080      else       CURRENT="";CURRENT 
+P
+​
+ ORT=""       NEXT="subookApp1 
+1
+​
+ ";NEXT 
+P
+​
+ ORT=8080      fi      echo"CURRENT={CURRENT:-none}, NEXT=NEXT(ports:CURRENT={CURRENT_PORT:-na}, NEXT=$NEXT_PORT)"
 
-            echo "[5/7] Wait liveness"
-            if ! wait_for "$NEXT_PORT" "$HEALTH_LIVE" "$TIMEOUT_LIVE"; then
-              echo "❌ Liveness failed within ${TIMEOUT_LIVE}s. Logs:"
-              docker logs --tail=200 "$NEXT" || true
-              exit 1
-            fi
-            echo "✅ Liveness UP"
+            echo "[3/7] Clean old NEXT if exists (Exited or leftover)"
+            docker stop "$NEXT" 2>/dev/null || true
+            docker rm "$NEXT" 2>/dev/null || true
 
-            echo "[6/7] Wait readiness"
-            if ! wait_for "$NEXT_PORT" "$HEALTH_READY" "$TIMEOUT_READY"; then
-              echo "❌ Readiness failed within ${TIMEOUT_READY}s. Logs:"
-              docker logs --tail=200 "$NEXT" || true
-              exit 1
-            fi
-            echo "✅ Readiness UP"
+            echo "[4/7] Start NEXT: $NEXT on :$NEXT_PORT (digest 기반)"
+            docker run -d 
 
-            echo "[6.5/7] Ensure HAProxy config for api.stg.subook.shop"
-            mkdir -p /dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy
+              --name "$NEXT" 
 
-            cat >/dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy/haproxy.cfg <<'EOC'
-            global
-              log stdout format raw local0
+              --restart unless-stopped 
 
-            resolvers docker
-              nameserver dns1 127.0.0.11:53
-              resolve_retries 3
-              timeout retry 1s
-              hold valid 10s
+              --network "$NETWORK" 
 
-            defaults
-              mode http
-              option httplog
-              timeout connect 5s
-              timeout client  60s
-              timeout server  60s
-              timeout tunnel  1h   # WebSocket 안정화
+              -p "$NEXT_PORT":8080 
 
-            frontend http_front
-              bind *:80
-              acl host_api hdr(host) -i api.stg.subook.shop
-              acl ping_root path -i /
-              http-request return status 204 content-type text/plain string OK if host_api ping_root
-              http-request set-header X-Forwarded-Proto https
-              use_backend api_back if host_api
-              default_backend not_found
+              -e SPRING_PROFILES_ACTIVE=secret,stg 
 
-            backend api_back
-              balance roundrobin
-              option httpchk GET /actuator/health/readiness
-              default-server inter 4s rise 3 fall 3 init-addr last,libc,none resolvers docker
-              option redispatch
-              server subook_server_1 subookApp1_1:8080 check
-              server subook_server_2 subookApp1_2:8080 check
+              -e TZ=Asia/Seoul 
 
-            backend not_found
-              http-request deny deny_status 404
-            EOC
+              "$DIGEST"
 
-            docker rm -f ha_proxy_1 2>/dev/null || true
-            docker run -d \
-              --name ha_proxy_1 \
-              --restart unless-stopped \
-              --network common \
-              -p 8090:80 \
-              -v /dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy:/usr/local/etc/haproxy \
-              haproxy
+            wait_for () {
+              local port="1" url="$2" timeout="$3"               local start elapsed               start=$(date +%s)               while true; do                 if curl -fsS "http://localhost:${port}{url}" >/dev/null; then
+                  return 0
+                fi
+                elapsed=$(( $(date +%s) - start ))
+                if [ $elapsed -ge timeout ]; then                   return 1                 fi                 echo "⏳ waiting ${url} on :${port} ... ({elapsed}s)"
+                sleep 3
+              done
+            }
 
-            echo "[7/7] Switch: stop old CURRENT (if any)"
-            if [ -n "${CURRENT}" ]; then
-              docker stop "$CURRENT" 2>/dev/null || true
-              docker rm "$CURRENT" 2>/dev/null || true
-            fi
+            echo "[5/7] Wait liveness"
+            if ! wait_for "$NEXT_PORT" "$HEALTH_LIVE" "$TIMEOUT_LIVE"; then
+              echo "❌ Liveness failed within ${TIMEOUT_LIVE}s. Logs:"
+              docker logs --tail=200 "$NEXT" || true
+              exit 1
+            fi
+            echo "✅ Liveness UP"
 
-            docker rmi $(docker images -f "dangling=true" -q) 2>/dev/null || true
-            echo "✅ Deployment complete. Running container: $NEXT on port $NEXT_PORT"
+            echo "[6/7] Wait readiness"
+            if ! wait_for "$NEXT_PORT" "$HEALTH_READY" "$TIMEOUT_READY"; then
+              echo "❌ Readiness failed within ${TIMEOUT_READY}s. Logs:"
+              docker logs --tail=200 "$NEXT" || true
+              exit 1
+            fi
+            echo "✅ Readiness UP"
+
+            echo "[6.5/7] Ensure HAProxy config for api.stg.subook.shop"
+            mkdir -p /dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy
+
+            cat >/dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy/haproxy.cfg <<'EOC'
+            global
+              log stdout format raw local0
+
+            resolvers docker
+              nameserver dns1 127.0.0.11:53
+              resolve_retries 3
+              timeout retry 1s
+              hold valid 10s
+
+            defaults
+              mode http
+              option httplog
+              timeout connect 5s
+              timeout client  60s
+              timeout server  60s
+              timeout tunnel  1h   # WebSocket 안정화
+
+            frontend http_front
+              bind *:80
+              acl host_api hdr(host) -i api.stg.subook.shop
+              acl ping_root path -i /
+              # NPM 헬스 체크를 위한 수정: 200 OK를 반환하고, Host 헤더 조건은 제거하여 헬스 체크를 통과시킵니다.
+              http-request return status 200 content-type text/plain string OK if ping_root
+              http-request set-header X-Forwarded-Proto https
+              use_backend api_back if host_api
+              default_backend not_found
+
+            backend api_back
+              balance roundrobin
+              option httpchk GET /actuator/health/readiness
+              default-server inter 4s rise 3 fall 3 init-addr last,libc,none resolvers docker
+              option redispatch
+              server subook_server_1 subookApp1_1:8080 check
+              server subook_server_2 subookApp1_2:8080 check
+
+            backend not_found
+              http-request deny deny_status 404
+            EOC
+
+            docker rm -f ha_proxy_1 2>/dev/null || true
+            docker run -d 
+
+              --name ha_proxy_1 
+
+              --restart unless-stopped 
+
+              --network common 
+
+              -p 8090:80 
+
+              -v /dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy:/usr/local/etc/haproxy 
+
+              haproxy
+
+            echo "[7/7] Switch: stop old CURRENT (if any)"
+            if [ -n "${CURRENT}" ]; then
+              docker stop "$CURRENT" 2>/dev/null || true
+              docker rm "$CURRENT" 2>/dev/null || true
+            fi
+
+            docker rmi $(docker images -f "dangling=true" -q) 2>/dev/null || true
+            echo "✅ Deployment complete. Running container: $NEXT on port $NEXT_PORT"
