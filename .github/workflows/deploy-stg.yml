@@ -225,18 +225,20 @@ jobs:
               timeout connect 5s
               timeout client  60s
               timeout server  60s
-              timeout tunnel  1h   # WebSocket 안정화 (추가)
+              timeout tunnel  1h   # WebSocket 안정화
 
             frontend http_front
               bind *:80
               acl host_api hdr(host) -i api.stg.subook.shop
+              acl ping_root path -i /
+              http-request return status 204 content-type text/plain string OK if host_api ping_root
               http-request set-header X-Forwarded-Proto https
               use_backend api_back if host_api
               default_backend not_found
 
             backend api_back
               balance roundrobin
-              option httpchk GET /actuator/health/readiness   # 헬스체크 경로 변경
+              option httpchk GET /actuator/health/readiness
               default-server inter 4s rise 3 fall 3 init-addr last,libc,none resolvers docker
               option redispatch
               server subook_server_1 subookApp1_1:8080 check
