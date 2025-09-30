@@ -130,6 +130,17 @@ jobs:
             echo "[0/7] Prepare docker network"
             docker network create "$NETWORK" >/dev/null 2>&1 || true
 
+            # --- 추가: NPM을 공통 네트워크에 자동 연결 (존재/연결되어 있으면 무시) ---
+            echo "[0.5/7] Attach NPM to network '$NETWORK' if running"
+            NPM_NAME="${NPM_NAME:-npm_1}"
+            if docker ps --format '{{.Names}}' | grep -Fxq "$NPM_NAME"; then
+              docker network connect "$NETWORK" "$NPM_NAME" 2>/dev/null || true
+              echo " - connected $NPM_NAME to $NETWORK"
+            else
+              echo " - $NPM_NAME not running; skip"
+            fi
+            # ----------------------------------------------------------------------
+
             echo "[1/7] GHCR login via SSM Parameter Store"
             GHCR_USER=$(aws ssm get-parameter --region ${{ secrets.AWS_REGION }} --name "/subook/ghcr/user"  --query 'Parameter.Value' --output text)
             GHCR_TOKEN=$(aws ssm get-parameter --region ${{ secrets.AWS_REGION }} --with-decryption --name "/subook/ghcr/token" --query 'Parameter.Value' --output text)
