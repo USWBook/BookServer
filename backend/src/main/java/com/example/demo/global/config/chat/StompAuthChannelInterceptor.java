@@ -24,8 +24,6 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     private final JwtProvider jwtProvider;
     private final CustomUserDetailsService userDetailsService;
 
-
-
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
 
