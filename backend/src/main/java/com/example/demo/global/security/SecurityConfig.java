@@ -130,7 +130,8 @@ public class SecurityConfig {
                                 "/api/auth/signup",
                                 "/api/auth/reissue",
                                 "/api/mail/**",
-                                "/api/posts/**"
+                                "/api/posts/**",
+                                "/api/chat/**"
                         ).permitAll()
 
                         // 내정보/로그아웃 등은 인증 필요
