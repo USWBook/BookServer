@@ -15,6 +15,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -26,6 +27,20 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
     private final HttpServletRequest request;
+
+    /**
+     * @CookieValue 어노테이션에서 required=true로 설정된 쿠키가 없을 때 발생하는 예외를 처리합니다.
+     * 500 Internal Server Error 대신, 명확한 400 Bad Request를 응답합니다.
+     */
+    @ExceptionHandler(MissingRequestCookieException.class)
+    public ResponseEntity<RsData<Object>> handleMissingRequestCookieException(MissingRequestCookieException ex) {
+        String cookieName = ex.getCookieName();
+        String errorMessage = String.format("필수 쿠키 '%s'가 요청에 포함되지 않았습니다.", cookieName);
+
+        RsData<Object> response = new RsData<>("400", errorMessage);
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
 
     // Auth 예외
     @ExceptionHandler(AuthException.class)
