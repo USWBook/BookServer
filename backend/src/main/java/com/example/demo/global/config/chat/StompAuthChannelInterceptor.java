@@ -86,7 +86,6 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             throw new RuntimeException("STOMP Unexpected Error", e);
         }
 
-        // SecurityContextHolder는 @MessageMapping으로 전파되지 않으므로 필요 없습니다.
         // SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Principal 설정에 성공했거나 실패했더라도 메시지는 다음 체인으로 전달됩니다.
