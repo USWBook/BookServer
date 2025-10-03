@@ -29,10 +29,12 @@
         public Message<?> preSend(Message<?> message, MessageChannel channel) {
             StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
 
-            // CONNECT 명령이 아니면 인증 처리를 건너뜁니다.
-            if (!StompCommand.CONNECT.equals(accessor.getCommand())) {
-                return message;
-            }
+//            // CONNECT 명령이 아니면 인증 처리를 건너뜁니다.
+//            if (!StompCommand.CONNECT.equals(accessor.getCommand())) {
+//                if (accessor.getUser() != null) {
+//                    return message;
+//                }
+//            }
 
             // --- CONNECT 인증 로직 시작 ---
             try {
