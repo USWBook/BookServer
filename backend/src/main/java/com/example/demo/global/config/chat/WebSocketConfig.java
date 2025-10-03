@@ -24,8 +24,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         log.info("[WebSocket] STOMP 엔드포인트 등록: /ws-chat");
         registry.addEndpoint("/ws-chat")
-                .setAllowedOriginPatterns("*")
-                .setHandshakeHandler(new DefaultHandshakeHandler()); //추가
+                .setAllowedOriginPatterns("*");
+                //.setHandshakeHandler(new DefaultHandshakeHandler());
         //.withSockJS();  // SockJS 사용시 주석 해제
     }
 
