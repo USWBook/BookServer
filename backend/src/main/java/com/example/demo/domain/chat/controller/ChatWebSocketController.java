@@ -6,16 +6,16 @@ import com.example.demo.domain.chat.entity.ChatMessage;
 import com.example.demo.domain.chat.service.ChatService;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
+import com.example.demo.domain.user.dto.CustomUserDetails; // CustomUserDetails import
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.userdetails.UserDetails; // UserDetails import
-import org.springframework.security.core.annotation.AuthenticationPrincipal; // @AuthenticationPrincipal import
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.messaging.handler.annotation.Payload;
-// import java.security.Principal; // 더 이상 사용하지 않음
+import java.util.UUID; // UUID import 추가
 
 @Controller
 @RequiredArgsConstructor
@@ -23,27 +23,27 @@ public class ChatWebSocketController {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatService chatService;
-    private final UserRepository userRepository;
+
     private static final Logger log = LoggerFactory.getLogger(ChatWebSocketController.class);
 
     @MessageMapping("/chat.send")
-    // 🔽 [수정] Principal 대신 @AuthenticationPrincipal UserDetails 사용
-    public void sendMessage(@Payload SendMessageRequestDto messageDto, @AuthenticationPrincipal UserDetails userDetails) {
+    // @AuthenticationPrincipal CustomUserDetails 사용
+    public void sendMessage(@Payload SendMessageRequestDto messageDto, @AuthenticationPrincipal CustomUserDetails customUserDetails) {
 
-        if (userDetails == null) {
+        if (customUserDetails == null) {
             throw new RuntimeException("인증 정보가 없습니다.");
         }
 
-        // UserDetails에서 사용자 이메일(username) 추출
-        String email = userDetails.getUsername();
-        User senderUser = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("해당 이메일 사용자를 찾을 수 없습니다: " + email));
+        // 🚨 수정된 부분: customUserDetails의 getId()와 getEmail()을 바로 사용
+        UUID senderId = customUserDetails.getId();
+        String senderEmail = customUserDetails.getEmail();
 
-        log.info("메시지 수신: roomId={}, sender={}, message={}",
-                messageDto.roomId(), senderUser.getEmail(), messageDto.message());
+        log.info("메시지 수신: roomId={}, senderId={}, senderEmail={}, message={}",
+                messageDto.roomId(), senderId, senderEmail, messageDto.message());
 
-        // 메시지 저장
-        ChatMessage savedMessage = chatService.sendChatMessage(messageDto, senderUser.getId());
+        // 메시지 저장 시 ID만 사용 (DB 재조회 불필요)
+        // ChatService의 sendChatMessage 메서드가 User ID(UUID)를 받도록 설계되어 있어야 합니다.
+        ChatMessage savedMessage = chatService.sendChatMessage(messageDto, senderId); // ⬅️ ID 사용
 
         // 응답 DTO 생성
         SendMessageResponseDto.Data data = new SendMessageResponseDto.Data(
