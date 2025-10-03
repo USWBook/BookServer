@@ -14,7 +14,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.userdetails.UserDetails; // UserDetails import
 import org.springframework.security.core.annotation.AuthenticationPrincipal; // @AuthenticationPrincipal import
 import org.springframework.stereotype.Controller;
-
+import org.springframework.messaging.handler.annotation.Payload;
 // import java.security.Principal; // 더 이상 사용하지 않음
 
 @Controller
@@ -28,7 +28,7 @@ public class ChatWebSocketController {
 
     @MessageMapping("/chat.send")
     // 🔽 [수정] Principal 대신 @AuthenticationPrincipal UserDetails 사용
-    public void sendMessage(SendMessageRequestDto messageDto, @AuthenticationPrincipal UserDetails userDetails) {
+    public void sendMessage(@Payload SendMessageRequestDto messageDto, @AuthenticationPrincipal UserDetails userDetails) {
 
         if (userDetails == null) {
             throw new RuntimeException("인증 정보가 없습니다.");
