@@ -9,9 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+
+import java.security.Principal;
 
 @Controller
 public class ChatWebSocketController {
@@ -25,15 +25,13 @@ public class ChatWebSocketController {
     }
 
     @MessageMapping("/chat.send")
-    public void sendMessage(SendMessageRequestDto messageDto) {
+    public void sendMessage(SendMessageRequestDto messageDto, Principal principal) {
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated()) {
+        if (principal == null) {
             throw new RuntimeException("인증 정보가 없습니다.");
         }
 
-        User senderUser = chatService.getUserByEmail(authentication.getName());
+        User senderUser = chatService.getUserByEmail(principal.getName());
 
         log.info("메시지 송신: roomId={}, sender={}, message={}",
                 messageDto.roomId(), senderUser.getEmail(), messageDto.message());
