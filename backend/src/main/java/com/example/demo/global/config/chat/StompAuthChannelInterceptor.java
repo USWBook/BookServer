@@ -48,7 +48,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             
-            //SecurityContextHolder.getContext().setAuthentication(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
             accessor.setUser(authentication);
         }

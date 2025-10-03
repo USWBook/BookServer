@@ -131,9 +131,10 @@ public class SecurityConfig {
                                 "/api/auth/reissue",
                                 "/api/mail/**",
                                 "/api/posts/**",
-                                "/api/chat/**"
+                                "/api/chat/**",
+                                "/ws-chat/**"
                         ).permitAll()
-                        .requestMatchers("/ws-chat/**").authenticated()
+
                         // 내정보/로그아웃 등은 인증 필요
                         .requestMatchers(
                                 "/api/auth/logout",
