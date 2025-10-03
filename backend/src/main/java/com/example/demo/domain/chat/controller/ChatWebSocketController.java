@@ -24,7 +24,7 @@ public class ChatWebSocketController {
     private final UserRepository userRepository;
     private static final Logger log = LoggerFactory.getLogger(ChatWebSocketController.class);
 
-    @MessageMapping("/chat.send")
+    @MessageMapping("/pub/chat.send")
     public void sendMessage(SendMessageRequestDto messageDto, Principal principal) {
 
         if (principal == null) {
