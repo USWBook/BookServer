@@ -5,33 +5,34 @@ import com.example.demo.domain.chat.dto.response.SendMessageResponseDto;
 import com.example.demo.domain.chat.entity.ChatMessage;
 import com.example.demo.domain.chat.service.ChatService;
 import com.example.demo.domain.user.entity.User;
+import com.example.demo.domain.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 
-import java.security.Principal;
-
 @Controller
+@RequiredArgsConstructor
 public class ChatWebSocketController {
+
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatService chatService;
+    private final UserRepository userRepository;  // user 조회용
     private static final Logger log = LoggerFactory.getLogger(ChatWebSocketController.class);
 
-    public ChatWebSocketController(SimpMessagingTemplate messagingTemplate, ChatService chatService) {
-        this.messagingTemplate = messagingTemplate;
-        this.chatService = chatService;
-    }
-
     @MessageMapping("/chat.send")
-    public void sendMessage(SendMessageRequestDto messageDto, Principal principal) {
+    public void sendMessage(SendMessageRequestDto messageDto, Authentication authentication) {
 
-        if (principal == null) {
+        if (authentication == null || !authentication.isAuthenticated()) {
             throw new RuntimeException("인증 정보가 없습니다.");
         }
 
-        User senderUser = chatService.getUserByEmail(principal.getName());
+        String email = authentication.getName();
+        User senderUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("해당 이메일 사용자를 찾을 수 없습니다."));
 
         log.info("메시지 송신: roomId={}, sender={}, message={}",
                 messageDto.roomId(), senderUser.getEmail(), messageDto.message());
