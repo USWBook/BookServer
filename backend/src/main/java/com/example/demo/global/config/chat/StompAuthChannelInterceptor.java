@@ -27,7 +27,6 @@
 
         @Override
         public Message<?> preSend(Message<?> message, MessageChannel channel) {
-
             StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
 
             // CONNECT 명령이 아니면 인증 처리를 건너뜁니다.
