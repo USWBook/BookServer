@@ -74,12 +74,6 @@ public class AuthService {
 
 
     @Transactional
-    public TokenResponse reissue(@CookieValue("refreshToken") String refreshToken) {
-        return tokenService.reissueTokens(refreshToken);
-    }
-
-
-    @Transactional
     public void changePassword(String email ,PasswordChangeRequest request) {
 
         User user = userRepository.findByEmail(email)

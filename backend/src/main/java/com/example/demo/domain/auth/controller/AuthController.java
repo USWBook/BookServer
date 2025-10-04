@@ -55,15 +55,9 @@ public class AuthController implements AuthControllerDoc{
     public ResponseEntity<RsData<?>> reissue(
             @Parameter(hidden = true) @CookieValue("refreshToken") String refreshToken) {
 
-        TokenResponse tokens = authService.reissue(refreshToken);
+        TokenResponse tokens = tokenService.reissueTokens(refreshToken);
 
-        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokens.refreshToken())
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .maxAge(Duration.ofMillis(tokenService.getRefreshExpirationInMillis()))
-                .sameSite("None")
-                .build();
+        ResponseCookie refreshCookie = tokenService.setRefreshTokenToCookie(tokens.getRefreshToken());
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())

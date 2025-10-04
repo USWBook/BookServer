@@ -39,13 +39,7 @@ public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHan
         //redisTokenRepository.saveRefreshToken(email, refreshToken, jwtProvider.getRefreshTokenExpirationInMillis());
 
         // refreshToken HttpOnly 쿠키로 세팅
-        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenResponse.getRefreshToken())
-                .httpOnly(true)
-                .secure(true) // 운영에서 true
-                .path("/")
-                .maxAge(Duration.ofMillis(tokenService.getRefreshExpirationInMillis()).getSeconds())
-                .sameSite("None")
-                .build();
+        ResponseCookie refreshCookie = tokenService.setRefreshTokenToCookie(tokenResponse.getRefreshToken());
 
         // AccessToken은 Authorization 헤더로 전달
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
