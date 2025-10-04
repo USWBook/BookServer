@@ -8,6 +8,7 @@ import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.jwt.JwtProvider;
 import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
+import com.example.demo.global.jwt.exception.JwtTokenExpiredException;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseCookie;
@@ -60,20 +61,20 @@ public class TokenService {
         if (jwtProvider.isValid(refreshToken) ||
                 !Objects.equals(jwtProvider.getCategory(refreshToken), "refresh") ||
                 jwtProvider.isExpired(refreshToken)) {
-            throw new JwtInvalidSignatureException();
+            throw new JwtTokenExpiredException();
         }
 
         String email = jwtProvider.extractEmail(refreshToken);
 
         if (!redisTokenRepository.existsRefreshToken(email)) {
-            throw new JwtInvalidSignatureException();
+            throw new JwtTokenExpiredException();
         }
 
         redisTokenRepository.getRefreshToken(email)
                 .filter(saved -> saved.equals(refreshToken))
-                .orElseThrow(JwtInvalidSignatureException::new);
+                .orElseThrow(JwtTokenExpiredException::new);
 
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findById(jwtProvider.extractId(refreshToken))
                 .orElseThrow(MemberNotFoundException::new);
 
         // 기존 refreshToken 레디스에서 삭제 처리
