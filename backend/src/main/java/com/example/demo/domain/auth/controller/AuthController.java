@@ -65,8 +65,7 @@ public class AuthController implements AuthControllerDoc{
                 .body(new RsData<>("200", "토큰 재발행 완료되었습니다."));
     }
 
-    // 이전에 RESTful하게 수정한 경로를 유지하거나, 현재 경로를 사용하시면 됩니다.
-    // 여기서는 현재 코드의 경로를 기준으로 문서화합니다.
+
     @Operation(summary = "비밀번호 변경", description = "현재 로그인한 사용자의 비밀번호를 변경합니다.")
     @ApiResponse(responseCode = "200", description = "비밀번호 변경 성공")
     @ApiResponse(responseCode = "400", description = "현재 비밀번호 불일치 또는 유효성 검사 실패")

@@ -29,14 +29,7 @@ public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHan
         String email = userPrincipal.getUsername();
         Role role = userPrincipal.getRole();
 
-
         TokenResponse tokenResponse = tokenService.generateTokens(userPrincipal.getId(),email, role);
-
-        // String accessToken = jwtProvider.generateAccessToken(email, role);
-        // String refreshToken = jwtProvider.generateRefreshToken(email, role);
-
-        // Redis에 refresh 저장 (화이트리스트)
-        //redisTokenRepository.saveRefreshToken(email, refreshToken, jwtProvider.getRefreshTokenExpirationInMillis());
 
         // refreshToken HttpOnly 쿠키로 세팅
         ResponseCookie refreshCookie = tokenService.setRefreshTokenToCookie(tokenResponse.getRefreshToken());
