@@ -25,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.RequestHeader;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -102,5 +104,23 @@ public class AuthService {
                 .orElseThrow(UserNotFoundException::new);
 
         user.changePassword(passwordEncoder.encode(request.newPassword()));
+    }
+
+    /**
+     * 로그인 성공 후 처리: 필요 시 비밀번호 인코딩을 업그레이드.
+     * @param user 로그인한 사용자객체(준영속 상태)
+     * @param rawPassword 사용자가 입력한 원본 비밀번호
+     */
+    @Transactional
+    public void upgradePasswordIfNecessary(User user, String rawPassword) {
+
+        String encodedPassword = user.getPassword();
+
+        // 현재 비밀번호 인코딩이 최신 방식인지 확인
+        if (passwordEncoder.upgradeEncoding(encodedPassword)) {
+            // 최신 방식이 아니라면, 현재 입력된 비밀번호를 최신 방식으로 다시 인코딩하여 저장
+            user.changePassword(passwordEncoder.encode(rawPassword));
+            userRepository.save(user); // 준영속상태이기에 save로 영속 상태로 만들고, 변경 사항을 DB에 반영
+        }
     }
 }
