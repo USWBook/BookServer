@@ -62,6 +62,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
                 accessor.setUser(authentication); // ✅ 핵심: Principal 세팅
+                accessor.getSessionAttributes().put(SESSION_USER_KEY, authentication);
 
                 log.info("✅ STOMP 인증 성공: 이메일={}", email);
 
