@@ -4,6 +4,7 @@ import com.example.demo.domain.auth.exception.BannedUserException;
 import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.exception.CustomJwtException;
 import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
+import com.example.demo.global.jwt.service.TokenService;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
 import com.example.demo.domain.user.dto.CustomUserDetails;
 import jakarta.servlet.FilterChain;
@@ -33,9 +34,9 @@ import java.util.UUID;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
-    private final RedisTokenRepository redisTokenRepository;
     private final AuthenticationEntryPoint authenticationEntryPoint;
     private final AntPathMatcher antPathMatcher = new AntPathMatcher();
+    private final TokenService tokenService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -76,7 +77,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // access토큰이 아니면 401
             if(!Objects.equals(jwtProvider.getCategory(token), "access")) throw new JwtInvalidSignatureException();
             // 블랙리스트 체크
-            if (redisTokenRepository.isBlacklisted(token)) throw new BannedUserException();
+            if (tokenService.isBlacklisted(token)) throw new BannedUserException();
 
             UUID userId = jwtProvider.extractId(token);
             String email = jwtProvider.extractEmail(token);

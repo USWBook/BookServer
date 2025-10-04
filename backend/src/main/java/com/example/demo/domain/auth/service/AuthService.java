@@ -35,7 +35,6 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RedisTokenRepository redisTokenRepository;
-    private final TokenService tokenService;
     private final MajorRepository majorRepository;
 
     @Transactional

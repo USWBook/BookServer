@@ -38,7 +38,7 @@ public class TokenService {
         return new TokenResponse(accessToken, refreshToken);
     }
 
-    // 로그아웃 시 혹은 토큰 재발급 시 액세스토큰을 블랙리스트에 담음
+    // 로그아웃 시 혹은 토큰 재발급 시 유효기간이 남은 액세스토큰을 블랙리스트에 담음
     @Transactional
     public void blacklistToken(String token) {
         long expiration = jwtProvider.getTokenRemainingTime(token);
@@ -69,7 +69,6 @@ public class TokenService {
             throw new JwtInvalidSignatureException();
         }
 
-
         redisTokenRepository.getRefreshToken(email)
                 .filter(saved -> saved.equals(refreshToken))
                 .orElseThrow(JwtInvalidSignatureException::new);
@@ -87,7 +86,7 @@ public class TokenService {
     // 사용자 밴
     @Transactional
     public void banUser(String accessToken, String email) {
-        // 1. 블랙리스트 등록
+        // 1. 액세스 토큰은 블랙리스트 등록
         blacklistToken(accessToken);
 
         // 2. 리프레시 토큰 삭제
@@ -100,14 +99,10 @@ public class TokenService {
         user.ban();
     }
 
+    // 액세스 토큰 블랙리스트 여부 확인
     @Transactional
     public boolean isBlacklisted(String token) {
         return redisTokenRepository.isBlacklisted(token);
-    }
-
-    @Transactional
-    public String getEmailFromToken(String token) {
-        return jwtProvider.extractEmail(token);
     }
 
     // 리프레시토큰을 쿠키에 담아줌

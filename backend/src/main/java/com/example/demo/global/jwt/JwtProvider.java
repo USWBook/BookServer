@@ -57,7 +57,7 @@
             return this.key;
         }
 
-        /*
+             /**
              JWT에 만료시간이 있는데 굳이 expirationMillis를 따로 Redis에 넣는 이유
              Redis TTL(Time-To-Live) 설정 때문
              Redis에 저장된 리프레시 토큰은 수동으로 삭제하지 않으면 계속 남아 있기에
@@ -67,7 +67,8 @@
              리프레시 토큰 만료 시간만큼 Redis에 자동으로 남아 있도록 설정하는 역할.
              토큰과 서버 저장소의 만료 시점을 맞추기 위해 필요
              */
-        public String generateToken(UUID id, String email, Role role, String category, long expirationSeconds) {
+             // 토큰 만드는 메서드
+        private String generateToken(UUID id, String email, Role role, String category, long expirationSeconds) {
             Date now = new Date();
             Date expiry = new Date(now.getTime() + expirationSeconds * 1000);
 
@@ -90,6 +91,7 @@
             return generateToken(id, email, role, "refresh", refreshExpirationInSeconds);
         }
 
+        // 토큰 파싱하는 메서드
         public Jws<Claims> parse(String token) {
             try {
                 //  파서 빌더 생성(내부적으로는 DefaultJwtParserBuilder 객체를 반환)
@@ -119,6 +121,7 @@
             }
         }
 
+        // 단순히 토큰이 유요한지 검증하는 메서드
         public void validateToken(String token) {
             try {
                 Jwts.parser().verifyWith(getKey()).build().parseSignedClaims(token);
@@ -133,21 +136,34 @@
             }
         }
 
+        public UUID extractId(String token) {
+            String idStr = parse(token).getPayload().get("id", String.class);
+            return UUID.fromString(idStr);
+        }
+
+        // 토큰에서 이메일 추출
         public String extractEmail(String token) {
             return parse(token).getPayload().getSubject();
         }
 
+        // 토큰에서 권한 추출
         public Role extractRole(String token) {
-            // return parse(token).getPayload().get("role", String.class);
             String roleName = parse(token).getPayload().get("role", String.class);
             return Role.valueOf(roleName); // 문자열 → enum 변환
         }
 
+        // 토큰의 종류를 판별
+        public String getCategory(String token) {
+            return parse(token).getPayload().get("category", String.class);
+        }
 
+        // 리프레시 토큰이 가지는 유효기간 양
         public long getRefreshTokenExpirationInMillis() {
             return refreshExpirationInSeconds*1000;
         }
 
+        // 토큰의 유효기간이 얼마나 남았는지 계산
+        // 남은 유효기간동안 토큰을 블랙리스트에 넣기 위해 필요
         public long getTokenRemainingTime(String token) {
             Date exp = parse(token).getPayload().getExpiration();
             return (exp.getTime() - System.currentTimeMillis()) / 1000;
@@ -156,31 +172,20 @@
         // 토큰 형식 검사
         public boolean isValid(String token) {
             try {
-                parse(token);
+                validateToken(token);
                 return true;
             } catch (CustomJwtException e) {
                 return false;
             }
         }
 
-        public boolean isValidAccessToken(String token) {
-            try {
-                parse(token);
-                return true;
-            } catch (JwtException e) {
-               throw new JwtException(e.getMessage());
-            }
-        }
-
-
+        // 토큰의 유효기간이 안지났는지 검증
         public Boolean isExpired(String token) {
             return parse(token).getPayload().getExpiration().before(new Date());
         }
 
-        public String getCategory(String token) {
-            return parse(token).getPayload().get("category", String.class);
-        }
-
+        // 로그아웃 시 만약 만료되지 않은 토큰이라면 파싱하고
+        // 만료된 토큰이라면 이메일을 받아오기 위해 ExpiredJwtException를 무시하고 Claims를 꺼냄
         public String extractEmailFromExpiredToken(String token) {
             try {
                 // 일반적인 파싱 시도
@@ -190,11 +195,5 @@
                 return e.getClaims().getSubject();
             }
         }
-
-        public UUID extractId(String token) {
-            String idStr = parse(token).getPayload().get("id", String.class);
-            return UUID.fromString(idStr);
-        }
-
 
     }
