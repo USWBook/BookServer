@@ -41,7 +41,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
-        log.error("!!!!!!!!!! JWT FILTER IS RUNNING! VERSION 2 !!!!!!!!!!");
         String[] skipPaths = {
                 "/", "/ping", "/error", "/favicon.ico",
                 "/actuator/**",
@@ -59,24 +58,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 .anyMatch(p -> antPathMatcher.match(p, path));
 
         if (shouldSkip) {
-            log.info("⏩ JwtAuthenticationFilter SKIPPED for path: {}", path);
             chain.doFilter(request, response);
             return;
         }
-//        // ① 액추에이터/헬스는 바로 통과 (의존성 안 타고 빠르게)
-//        String path = request.getRequestURI();
-//        if (path.startsWith("/actuator/")) {
-//            chain.doFilter(request, response);
-//            return;
-//        }
-        log.info("🔍 JwtAuthenticationFilter ACTIVATED for path: {}", path);
         String token = resolveToken(request);
 
         if (token == null) {
             chain.doFilter(request, response);
             return;
         }
-
 
         try {
 
@@ -106,15 +96,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 
         } catch (CustomJwtException e) {
-            // (선택) 기존처럼 throw로 전파해도 되지만,
-            // 헬스체크/프록시와 궁합을 위해 401 응답으로 종료하는 걸 권장
             SecurityContextHolder.clearContext();
             authenticationEntryPoint.commence(request, response, new BadCredentialsException(e.getMessage(), e));
             return;
-//            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-//            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-//            response.getWriter().write("{\"code\":\"UNAUTHORIZED\",\"message\":\"" + e.getMessage() + "\"}");
-            // throw new JwtTokenExpiredException();
         }
         chain.doFilter(request, response);
     }

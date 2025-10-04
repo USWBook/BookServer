@@ -38,7 +38,9 @@ public class CustomLogoutHandler implements LogoutHandler {
             // Case 1: 토큰이 유효한 경우 (만료되지 않음, 서명 정상)
             jwtProvider.parse(token); // parse()는 내부적으로 모든 검증을 수행하고, 실패 시 예외를 던집니다.
 
+            // 액세스 토큰을 블랙리스트 처리함
             tokenService.blacklistToken(token);
+            // 리프레시토큰을 레디스에서 삭제함.
             String email = jwtProvider.extractEmail(token);
             tokenService.deleteRefreshToken(email);
 
