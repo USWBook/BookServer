@@ -14,6 +14,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import java.security.Principal;
+
 @Component
 @RequiredArgsConstructor
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
@@ -25,10 +27,11 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+        final String SESSION_USER_KEY = "simpUser";
 
-            if (accessor.getCommand() == null) {
+        if (accessor.getCommand() == null) {
                 return message;
-            }
+        }
 
         // ✅ CONNECT 프레임에서만 인증 수행
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
@@ -64,6 +67,16 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
 
             } catch (Exception e) {
                 log.error("🚨 STOMP 인증 오류: {}", e.getMessage(), e);
+            }
+        }
+
+        else if (accessor.getCommand() != null) {
+            // 세션에서 Principal을 가져옴
+            Object userPrincipal = accessor.getSessionAttributes().get(SESSION_USER_KEY);
+
+            if (userPrincipal instanceof Principal) {
+                // 가져온 Principal을 현재 메시지에 설정 (SecurityContextChannelInterceptor가 읽을 수 있도록)
+                accessor.setUser((Principal) userPrincipal);
             }
         }
 
