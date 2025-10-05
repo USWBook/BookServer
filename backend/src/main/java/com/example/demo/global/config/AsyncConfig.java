@@ -38,7 +38,7 @@ public class AsyncConfig implements AsyncConfigurer {
         executor.setQueueCapacity(500);   // 대기 큐 크기
         executor.setThreadNamePrefix("MailExecutor-"); // 스레드 이름 접두사
         executor.setWaitForTasksToCompleteOnShutdown(true); // 앱 종료 시 큐에 남은 작업 완료 대기
-        executor.setAwaitTerminationSeconds(60); // 최대 60초까지 대기
+        executor.setAwaitTerminationSeconds(110); // 최대 100초까지 대기
 
         executor.initialize();
         return executor;
