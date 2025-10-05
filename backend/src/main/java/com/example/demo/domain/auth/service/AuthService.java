@@ -3,7 +3,6 @@ package com.example.demo.domain.auth.service;
 import com.example.demo.domain.auth.dto.request.PasswordChangeRequest;
 import com.example.demo.domain.auth.dto.request.ResetPasswordRequest;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
-import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.auth.exception.*;
 import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.major.exception.MajorNotFoundException;
@@ -12,20 +11,16 @@ import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.entity.UserStatus;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
-import com.example.demo.global.exception.AuthException;
-import com.example.demo.global.jwt.service.TokenService;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.UUID;
+
 
 @Service
 @RequiredArgsConstructor
@@ -73,9 +68,9 @@ public class AuthService {
 
 
     @Transactional
-    public void changePassword(String email ,PasswordChangeRequest request) {
+    public void changePassword(UUID id ,@Valid PasswordChangeRequest request) {
 
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findById(id)
                 .orElseThrow(UserNotFoundException::new);
 
         if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
@@ -86,14 +81,14 @@ public class AuthService {
     }
 
     @Transactional
-    public void resetPassword(@Valid ResetPasswordRequest request) {
+    public void resetPassword(UUID id,@Valid ResetPasswordRequest request) {
 
         // 이메일 인증 여부 확인
         if (!redisTokenRepository.isVerifiedEmail(request.email())) {
             throw new EmailNotVerifiedException();
         }
 
-        User user = userRepository.findByEmail(request.email())
+        User user = userRepository.findById(id)
                 .orElseThrow(UserNotFoundException::new);
 
         user.changePassword(passwordEncoder.encode(request.newPassword()));

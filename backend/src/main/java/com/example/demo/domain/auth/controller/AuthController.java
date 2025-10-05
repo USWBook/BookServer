@@ -74,7 +74,7 @@ public class AuthController implements AuthControllerDoc{
     public RsData<?> changePassword(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid PasswordChangeRequest passwordChangeRequest){
-        authService.changePassword(userDetails.getUsername(), passwordChangeRequest);
+        authService.changePassword(userDetails.getId(), passwordChangeRequest);
         return new RsData<>("200", "비밀번호 변경 완료되었습니다.");
     }
 
@@ -83,8 +83,10 @@ public class AuthController implements AuthControllerDoc{
     @ApiResponse(responseCode = "400", description = "이메일 미인증 또는 유효성 검사 실패")
     @ApiResponse(responseCode = "401", description = "인증 실패: 로그인이 필요합니다.")
     @PostMapping("/password")
-    public RsData<?> resetPassword(@RequestBody @Valid ResetPasswordRequest resetPasswordRequest){
-        authService.resetPassword(resetPasswordRequest);
+    public RsData<?> resetPassword(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody @Valid ResetPasswordRequest resetPasswordRequest){
+        authService.resetPassword(userDetails.getId(),resetPasswordRequest);
         return new RsData<>("200", "비밀번호 초기화 완료되었습니다.");
     }
 
