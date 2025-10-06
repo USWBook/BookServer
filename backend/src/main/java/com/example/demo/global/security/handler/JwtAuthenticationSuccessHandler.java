@@ -1,4 +1,4 @@
-package com.example.demo.global.jwt.handler;
+package com.example.demo.global.security.handler;
 
 import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.user.role.Role;
@@ -14,7 +14,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 import java.io.IOException;
-import java.time.Duration;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
@@ -28,6 +27,8 @@ public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHan
         CustomUserDetails userPrincipal = (CustomUserDetails) authentication.getPrincipal();
         String email = userPrincipal.getUsername();
         Role role = userPrincipal.getRole();
+
+        tokenService.deleteRefreshToken(email);
 
         TokenResponse tokenResponse = tokenService.generateTokens(userPrincipal.getId(),email, role);
 
