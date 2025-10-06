@@ -51,6 +51,7 @@ public class TokenService {
     // 리프레시토큰을 삭제
     @Transactional
     public void deleteRefreshToken(String email) {
+        // if문이 없어도, Redis는 키가 존재할 때만 삭제하고 없으면 그냥 지나친다.
         redisTokenRepository.deleteRefreshToken(email);
     }
 
