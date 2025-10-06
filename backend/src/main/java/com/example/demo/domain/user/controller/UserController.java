@@ -3,7 +3,7 @@ package com.example.demo.domain.user.controller;
 import com.example.demo.domain.user.dto.ChangeInfoRequest;
 import com.example.demo.global.security.userdetails.CustomUserDetails;
 import com.example.demo.domain.user.response.UserInfoResponse;
-import com.example.demo.global.security.userdetails.UserService;
+import com.example.demo.domain.user.service.UserService;
 import com.example.demo.global.response.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
