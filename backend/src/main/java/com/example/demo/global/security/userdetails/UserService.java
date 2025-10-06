@@ -1,4 +1,4 @@
-package com.example.demo.domain.user.service;
+package com.example.demo.global.security.userdetails;
 
 import com.example.demo.domain.auth.exception.MemberNotFoundException;
 import com.example.demo.domain.auth.exception.UserNotFoundException;
@@ -9,15 +9,11 @@ import com.example.demo.domain.user.dto.ChangeInfoRequest;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.response.UserInfoResponse;
-import com.example.demo.global.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 
 @Service

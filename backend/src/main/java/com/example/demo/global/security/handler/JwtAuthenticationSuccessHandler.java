@@ -3,7 +3,7 @@ package com.example.demo.global.security.handler;
 import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.jwt.service.TokenService;
-import com.example.demo.domain.user.dto.CustomUserDetails;
+import com.example.demo.global.security.userdetails.CustomUserDetails;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

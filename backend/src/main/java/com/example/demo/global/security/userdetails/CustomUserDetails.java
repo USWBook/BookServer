@@ -1,4 +1,4 @@
-package com.example.demo.domain.user.dto;
+package com.example.demo.global.security.userdetails;
 
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.entity.UserStatus;

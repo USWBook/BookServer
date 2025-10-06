@@ -5,7 +5,7 @@ import com.example.demo.domain.auth.dto.request.ResetPasswordRequest;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
 import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.auth.service.AuthService;
-import com.example.demo.domain.user.dto.CustomUserDetails;
+import com.example.demo.global.security.userdetails.CustomUserDetails;
 import com.example.demo.global.jwt.service.TokenService;
 import com.example.demo.global.response.RsData;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,8 +21,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.Duration;
 
 @Tag(name = "Authentication", description = "인증/인가 API")
 @RestController
