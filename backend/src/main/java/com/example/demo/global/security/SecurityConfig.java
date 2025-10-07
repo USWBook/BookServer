@@ -53,11 +53,7 @@ public class SecurityConfig {
     private final CustomLogoutHandler customLogoutHandler;
     private final AuthService authService;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        // {bcrypt} 등의 접두어를 자동으로 붙여주는 DelegatingPasswordEncoder
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    }
+
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
