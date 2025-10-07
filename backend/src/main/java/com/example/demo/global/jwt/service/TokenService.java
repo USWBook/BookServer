@@ -59,21 +59,30 @@ public class TokenService {
     @Transactional
     public TokenResponse reissueTokens(@CookieValue("refreshToken")String refreshToken) {
 
-        if (jwtProvider.isValid(refreshToken) ||
-                !Objects.equals(jwtProvider.getCategory(refreshToken), "refresh") ||
-                jwtProvider.isExpired(refreshToken)) {
+        if (!jwtProvider.isValid(refreshToken)) {
+            System.out.println("1");
+            throw new JwtTokenExpiredException();
+        }
+        if(!Objects.equals(jwtProvider.getCategory(refreshToken), "refresh")) {
+            System.out.println("2");
+            throw new JwtTokenExpiredException();
+        }
+        if(jwtProvider.isExpired(refreshToken)) {
+            System.out.println("3");
             throw new JwtTokenExpiredException();
         }
 
         String email = jwtProvider.extractEmail(refreshToken);
 
         if (!redisTokenRepository.existsRefreshToken(email)) {
+
             throw new JwtTokenExpiredException();
         }
 
         redisTokenRepository.getRefreshToken(email)
                 .filter(saved -> saved.equals(refreshToken))
                 .orElseThrow(JwtTokenExpiredException::new);
+
 
         User user = userRepository.findById(jwtProvider.extractId(refreshToken))
                 .orElseThrow(MemberNotFoundException::new);
