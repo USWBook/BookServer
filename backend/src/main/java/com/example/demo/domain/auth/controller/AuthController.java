@@ -49,6 +49,7 @@ public class AuthController implements AuthControllerDoc{
             })
     @ApiResponse(responseCode = "400", description = "쿠키에 Refresh Token이 없음")
     @ApiResponse(responseCode = "401", description = "유효하지 않은 Refresh Token")
+    @ApiResponse(responseCode = "404", description = "요청준 사용자를 db에서 찾지 못함")
     @PostMapping("/reissue")
     public ResponseEntity<RsData<?>> reissue(
             @Parameter(hidden = true) @CookieValue("refreshToken") String refreshToken) {
