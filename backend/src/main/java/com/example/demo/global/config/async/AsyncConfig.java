@@ -1,4 +1,4 @@
-package com.example.demo.global.config;
+package com.example.demo.global.config.async;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
