@@ -12,6 +12,8 @@ import com.example.demo.domain.post.exception.PostNotFoundException;
 import com.example.demo.domain.post.repository.PostLikeRepository;
 import com.example.demo.domain.post.repository.PostRepository;
 
+import com.example.demo.domain.user.entity.Grade;
+import com.example.demo.domain.user.entity.Semester;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -79,8 +81,8 @@ class PostServiceTest {
                 .content("내용")
                 .professor("교수")
                 .courseName("강의")
-                .grade(1)
-                .semester(1)
+                .grade(Grade.GRADE_1)
+                .semester(Semester.SEMESTER_1)
                 .status(PostStatus.판매중)
                 .likeCount(0)
                 .seller(user)
@@ -91,9 +93,16 @@ class PostServiceTest {
     @Test
     void createPost_success() {
         PostCreateRequest request = new PostCreateRequest(
-                post.getTitle(), post.getPostName(), post.getPostPrice(),
-                post.getProfessor(), post.getCourseName(), post.getGrade(),
-                post.getSemester(), post.getPostImage(), post.getContent(), major.getId()
+                post.getTitle(),
+                post.getPostName(),
+                post.getPostPrice(),
+                post.getProfessor(),
+                post.getCourseName(),
+                post.getGrade().getValue(),
+                post.getSemester().getValue(),
+                post.getPostImage(),
+                post.getContent(),
+                major.getId()
         );
 
         given(majorRepository.findById(major.getId())).willReturn(Optional.of(major));

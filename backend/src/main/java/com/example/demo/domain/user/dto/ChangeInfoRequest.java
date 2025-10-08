@@ -1,6 +1,9 @@
 package com.example.demo.domain.user.dto;
 
 
+import com.example.demo.domain.user.entity.Grade;
+import com.example.demo.domain.user.entity.Semester;
+
 import java.util.UUID;
 
 public record ChangeInfoRequest(
@@ -9,8 +12,8 @@ public record ChangeInfoRequest(
 
     UUID majorId,
 
-    Integer grade,
+        Integer grade,
 
-    Integer semester
+        Integer semester
 ) {
 }

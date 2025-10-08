@@ -1,6 +1,8 @@
 package com.example.demo.domain.auth.dto.request;
 
 import com.example.demo.domain.major.entity.Major;
+import com.example.demo.domain.user.entity.Grade;
+import com.example.demo.domain.user.entity.Semester;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

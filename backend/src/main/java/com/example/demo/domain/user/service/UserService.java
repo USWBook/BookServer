@@ -6,6 +6,8 @@ import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.major.exception.MajorNotFoundException;
 import com.example.demo.domain.major.repository.MajorRepository;
 import com.example.demo.domain.user.dto.ChangeInfoRequest;
+import com.example.demo.domain.user.entity.Grade;
+import com.example.demo.domain.user.entity.Semester;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.response.UserInfoResponse;
@@ -32,8 +34,8 @@ public class UserService {
                 user.getName(),
                 user.getMajor().getName(),
                 user.getEmail(),
-                user.getGrade(),
-                user.getSemester()
+                user.getGrade().getValue(),
+                user.getSemester().getValue()
         );
     }
 
@@ -44,7 +46,7 @@ public class UserService {
 
         Major newMajor = findMajorOrNull(request.majorId());
         
-        currentUser.updateProfile(request.name(), newMajor, request.grade(), request.semester());
+        currentUser.updateProfile(request.name(), newMajor, Grade.fromValue(request.grade()), Semester.fromValue(request.semester()));
 
         return UserInfoResponse.from(currentUser);
     }

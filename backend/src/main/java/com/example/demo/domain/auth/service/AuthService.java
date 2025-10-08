@@ -7,6 +7,8 @@ import com.example.demo.domain.auth.exception.*;
 import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.major.exception.MajorNotFoundException;
 import com.example.demo.domain.major.repository.MajorRepository;
+import com.example.demo.domain.user.entity.Grade;
+import com.example.demo.domain.user.entity.Semester;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.entity.UserStatus;
 import com.example.demo.domain.user.repository.UserRepository;
@@ -54,8 +56,8 @@ public class AuthService {
                 .name(request.name())
                 .studentId(request.studentId())
                 .major(major)
-                .grade(request.grade())
-                .semester(request.semester())
+                .grade(Grade.fromValue(request.grade()))
+                .semester(Semester.fromValue(request.semester()))
                 .role(Role.USER)
                 .status(UserStatus.ACTIVE)
                 .build();
