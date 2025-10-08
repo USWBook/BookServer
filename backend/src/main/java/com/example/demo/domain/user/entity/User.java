@@ -32,11 +32,13 @@ public class User {
     @Column(unique = true)
     private String studentId;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Integer grade;
+    private Grade grade;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Integer semester;
+    private Semester semester;
 
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -62,7 +64,7 @@ public class User {
         this.password = newEncodedPassword;
     }
 
-    public void updateProfile(String name, Major major, Integer grade, Integer semester) {
+    public void updateProfile(String name, Major major, Grade grade, Semester semester) {
         if (name != null) this.name = name;
         if (major != null) this.major = major;
         if (grade != null) this.grade = grade;
