@@ -45,8 +45,11 @@ public class UserService {
                 .orElseThrow(MemberNotFoundException::new);
 
         Major newMajor = findMajorOrNull(request.majorId());
+
+        Grade newGrade = (request.grade() != null) ? Grade.fromValue(request.grade()) : null;
+        Semester newSemester = (request.semester() != null) ? Semester.fromValue(request.semester()) : null;
         
-        currentUser.updateProfile(request.name(), newMajor, Grade.fromValue(request.grade()), Semester.fromValue(request.semester()));
+        currentUser.updateProfile(request.name(), newMajor, newGrade, newSemester);
 
         return UserInfoResponse.from(currentUser);
     }
