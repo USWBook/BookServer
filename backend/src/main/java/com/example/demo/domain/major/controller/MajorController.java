@@ -21,10 +21,10 @@ public class MajorController {
 
     private final MajorService majorService;
 
-    @Operation(summary = "전공 리스트 보기", description = "모든 전공 이름들을 불러옵니다")
-    @ApiResponse(responseCode = "200", description = "전공리스트 불러오기 성공")
+    @Operation(summary = "전공 리스트 보기", description = "모든 전공 이름 및 식별값을 불러옵니다")
+    @ApiResponse(responseCode = "200", description = "전공 목록 조회 성공")
     @GetMapping("/list")
-    public RsData<?> getAllMajors() {
+    public RsData<List<MajorResponse>> getAllMajors() {
         List<MajorResponse> majors = majorService.getAllMajors();
         return new RsData<>("200", "전공 목록 조회 성공", majors);
     }
