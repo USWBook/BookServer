@@ -5,6 +5,8 @@ import com.example.demo.domain.major.repository.MajorRepository;
 import com.example.demo.domain.post.entity.Post;
 import com.example.demo.domain.post.enums.PostStatus;
 import com.example.demo.domain.post.repository.PostRepository;
+import com.example.demo.domain.user.entity.Grade;
+import com.example.demo.domain.user.entity.Semester;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.entity.UserStatus;
 import com.example.demo.domain.user.repository.UserRepository;
@@ -42,8 +44,8 @@ public class InitDataHelper {
                         .major(major)
                         .role(role)
                         .status(status)
-                        .grade(grade)
-                        .semester(semester)
+                        .grade(Grade.fromValue(grade))
+                        .semester(Semester.fromValue(semester))
                         .build()
         );
     }
@@ -82,8 +84,8 @@ public class InitDataHelper {
                         .postName(postName)
                         .courseName(courseName)
                         .professor(professor)
-                        .grade(grade)
-                        .semester(semester)
+                        .grade(Grade.fromValue(grade))
+                        .semester(Semester.fromValue(semester))
                         .postImage(postImage)
                         .content(content)
                         .postPrice(price)

@@ -3,6 +3,7 @@ package com.example.demo.domain.post.repository;
 import com.example.demo.domain.post.dto.request.PostSearchCondition;
 import com.example.demo.domain.post.dto.response.PostListResponse;
 import com.example.demo.domain.post.enums.PostStatus;
+import com.example.demo.domain.user.entity.Grade;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -68,7 +69,11 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     }
 
     private BooleanExpression gradeEq(Integer grade) {
-        return grade != null ? post.grade.eq(grade) : null;
+        if (grade == null) {
+            return null;
+        }
+        // Integer로 받은 값을 Grade enum으로 변환한 뒤, 쿼리 조건으로 사용합니다.
+        return post.grade.eq(Grade.fromValue(grade));
     }
 
     private BooleanExpression statusEq(PostStatus status) {

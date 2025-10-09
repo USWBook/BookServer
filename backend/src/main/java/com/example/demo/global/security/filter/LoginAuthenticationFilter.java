@@ -2,6 +2,8 @@ package com.example.demo.global.security.filter;
 
 import com.example.demo.domain.auth.dto.request.LoginRequest;
 import com.example.demo.domain.auth.exception.BannedUserException;
+import com.example.demo.domain.auth.service.AuthService;
+import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.entity.UserStatus;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,9 +14,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.stereotype.Component;
 
@@ -27,11 +31,7 @@ public class LoginAuthenticationFilter extends UsernamePasswordAuthenticationFil
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
-
-//    public LoginAuthenticationFilter(AuthenticationManager authenticationManager) {
-//        super.setAuthenticationManager(authenticationManager);
-//        // 기본 처리 URL은 SecurityConfig에서 setFilterProcessesUrl로 바꿔줘도 됨
-//    }
+    private final AuthService authService;
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
@@ -46,11 +46,12 @@ public class LoginAuthenticationFilter extends UsernamePasswordAuthenticationFil
             LoginRequest loginRequest = objectMapper.readValue(is, LoginRequest.class);
 
             String email = loginRequest.email();
-            userRepository.findByEmail(email).ifPresent(user -> {
-                if (user.getStatus() == UserStatus.BANNED) {
-                    throw new BannedUserException();
-                }
-            });
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new UsernameNotFoundException(email));
+
+            if (user.getStatus() == UserStatus.BANNED) {
+                throw new BannedUserException();
+            }
 
             /*
             UsernamePasswordAuthenticationToken은 Authentication 인터페이스의 구현체로,
@@ -80,7 +81,16 @@ public class LoginAuthenticationFilter extends UsernamePasswordAuthenticationFil
             인증 성공 시: 비밀번호가 일치하면, 새로운 UsernamePasswordAuthenticationToken 객체를 생성. 이 새로운 객체는 사용자 정보(UserDetails)와 권한(GrantedAuthority) 정보를 담고 있으며, 인증된 상태(authenticated)로 설정. 이 객체가 최종적으로 반환.
             인증 실패 시: 사용자 정보가 없거나 비밀번호가 틀리면 AuthenticationException (예: BadCredentialsException) 예외를 발생.
              */
-            return authenticationManager.authenticate(authRequest);
+            //  인증 시도
+            Authentication authentication = authenticationManager.authenticate(authRequest);
+
+            //  인증 성공 직후, 비밀번호 업그레이드 로직 호출
+            // 이때 user는 준영속 상태
+            if (authentication.isAuthenticated()) {
+                authService.upgradePasswordIfNecessary(user, loginRequest.password());
+            }
+
+            return authentication;
         } catch (IOException e) {
             throw new AuthenticationServiceException("인증 요청 본문을 처리하는 데 실패했습니다.", e);
         }

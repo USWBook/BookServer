@@ -4,6 +4,8 @@ package com.example.demo.domain.post.entity;
 //import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.post.enums.PostStatus;
+import com.example.demo.domain.user.entity.Grade;
+import com.example.demo.domain.user.entity.Semester;
 import com.example.demo.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -45,9 +47,11 @@ public class Post {
 
     private String courseName;
 
-    private Integer grade;
+    @Enumerated(EnumType.STRING)
+    private Grade grade;
 
-    private Integer semester;
+    @Enumerated(EnumType.STRING)
+    private Semester semester;
 
     private String postImage;
 

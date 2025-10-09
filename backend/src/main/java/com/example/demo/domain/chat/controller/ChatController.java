@@ -80,7 +80,7 @@
                     UUID postId = room.getPostId();
                     Optional<Post> postOptional = postRepository.findById(postId);
                     String title = postOptional.map(Post::getTitle).orElse("제목 없음");
-                    return new RsData<>("200", "채팅 요청 완료", CreateChatRoomResponseDto.from(room,title));
+                    return RsData.of("200", "채팅 요청 완료", CreateChatRoomResponseDto.from(room,title));
                 } catch(Exception ex) {
                     log.error("채팅방 생성 중 오류. postId={}, buyerId={}", dto.postId(), user.getId(), ex);
                     throw ex; // 필요하면 커스텀 에러로 변환
@@ -107,7 +107,7 @@
                 ChatRoom room = chatRoomService.findByRoomId(roomId);
 
                 if (!room.getSender().equals(userId) && !room.getReceiver().equals(userId)) {
-                    return new RsData<>("403", "채팅방 입장 권한이 없습니다.", null);
+                    return RsData.of("403", "채팅방 입장 권한이 없습니다.", null);
                 }
 
                 EnterChatRoomResponseDto.Data data = new EnterChatRoomResponseDto.Data(
@@ -118,7 +118,7 @@
                         room.getLastMessage(),
                         room.getLastTimestamp()
                 );
-                return new RsData<>("200", "채팅방 입장 성공", data);
+                return RsData.of("200", "채팅방 입장 성공", data);
             }
 
             // 내 채팅방 목록 조회
@@ -159,7 +159,7 @@
                     );
                 }).collect(Collectors.toList());
 
-                return new RsData<>("200", "나의 채팅방 목록 조회 성공", dtos);
+                return RsData.of("200", "나의 채팅방 목록 조회 성공", dtos);
             }
 
 
@@ -174,7 +174,7 @@
                 UUID userId = user.getId();
 
                 if (!room.getSender().equals(userId) && !room.getReceiver().equals(userId)) {
-                    return new RsData<>("403", "채팅방 입장 권한이 없습니다.", null);
+                    return RsData.of("403", "채팅방 입장 권한이 없습니다.", null);
                 }
 
                 List<ChatMessage> messages = chatService.getMessages(roomId);
@@ -193,7 +193,7 @@
 
                 ReceiveMessageResponseDto responseDto = new ReceiveMessageResponseDto(userId, messageDtos);
 
-                return new RsData<>("200", "채팅 메시지 목록 조회 성공", responseDto);
+                return RsData.of("200", "채팅 메시지 목록 조회 성공", responseDto);
             }
 
 
@@ -223,7 +223,7 @@
                         savedMessage.getSentAt()
                 );
 
-                return new RsData<>("200", "채팅 메시지 전송 완료", data);
+                return RsData.of("200", "채팅 메시지 전송 완료", data);
             }
 
             // 이미지 전송
@@ -247,7 +247,7 @@
                         imageMessage.getSentAt()
                 );
 
-                return new RsData<>("200", "이미지 메시지 전송 완료", data);
+                return RsData.of("200", "이미지 메시지 전송 완료", data);
             }
 
             //유저 신고
@@ -272,7 +272,7 @@
                         report.getReportedAt()
                 );
 
-                return new RsData<>("200", "신고 완료", responseDto);
+                return RsData.of("200", "신고 완료", responseDto);
             }
 
             // 채팅방 나가기 (논리 삭제)
@@ -290,7 +290,7 @@
                 int userCount = chatRoomService.getUserCount(request.roomId());
 
                 LeaveChatRoomResponseDto responseDto = new LeaveChatRoomResponseDto(userCount);
-                return new RsData<>("200", "채팅방 나가기 완료", responseDto);
+                return RsData.of("200", "채팅방 나가기 완료", responseDto);
 
             }
 
@@ -317,7 +317,7 @@
                     chatRoomService.deleteChatRoomFromRedis(request.roomId());
                 }
 
-                return new RsData<>("200", "채팅방 완전 삭제 처리 완료", null);
+                return RsData.of("200", "채팅방 완전 삭제 처리 완료", null);
             }
 
         }

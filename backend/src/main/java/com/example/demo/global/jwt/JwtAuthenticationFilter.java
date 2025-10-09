@@ -4,8 +4,8 @@ import com.example.demo.domain.auth.exception.BannedUserException;
 import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.exception.CustomJwtException;
 import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
-import com.example.demo.global.redis.repository.RedisTokenRepository;
-import com.example.demo.domain.user.dto.CustomUserDetails;
+import com.example.demo.global.jwt.service.TokenService;
+import com.example.demo.global.security.userdetails.CustomUserDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,15 +33,14 @@ import java.util.UUID;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
-    private final RedisTokenRepository redisTokenRepository;
     private final AuthenticationEntryPoint authenticationEntryPoint;
     private final AntPathMatcher antPathMatcher = new AntPathMatcher();
+    private final TokenService tokenService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
-        log.error("!!!!!!!!!! JWT FILTER IS RUNNING! VERSION 2 !!!!!!!!!!");
         String[] skipPaths = {
                 "/", "/ping", "/error", "/favicon.ico",
                 "/actuator/**",
@@ -59,24 +58,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 .anyMatch(p -> antPathMatcher.match(p, path));
 
         if (shouldSkip) {
-            log.info("⏩ JwtAuthenticationFilter SKIPPED for path: {}", path);
             chain.doFilter(request, response);
             return;
         }
-//        // ① 액추에이터/헬스는 바로 통과 (의존성 안 타고 빠르게)
-//        String path = request.getRequestURI();
-//        if (path.startsWith("/actuator/")) {
-//            chain.doFilter(request, response);
-//            return;
-//        }
-        log.info("🔍 JwtAuthenticationFilter ACTIVATED for path: {}", path);
         String token = resolveToken(request);
 
         if (token == null) {
             chain.doFilter(request, response);
             return;
         }
-
 
         try {
 
@@ -86,7 +76,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // access토큰이 아니면 401
             if(!Objects.equals(jwtProvider.getCategory(token), "access")) throw new JwtInvalidSignatureException();
             // 블랙리스트 체크
-            if (redisTokenRepository.isBlacklisted(token)) throw new BannedUserException();
+            if (tokenService.isBlacklisted(token)) throw new BannedUserException();
 
             UUID userId = jwtProvider.extractId(token);
             String email = jwtProvider.extractEmail(token);
@@ -106,15 +96,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 
         } catch (CustomJwtException e) {
-            // (선택) 기존처럼 throw로 전파해도 되지만,
-            // 헬스체크/프록시와 궁합을 위해 401 응답으로 종료하는 걸 권장
             SecurityContextHolder.clearContext();
             authenticationEntryPoint.commence(request, response, new BadCredentialsException(e.getMessage(), e));
             return;
-//            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-//            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-//            response.getWriter().write("{\"code\":\"UNAUTHORIZED\",\"message\":\"" + e.getMessage() + "\"}");
-            // throw new JwtTokenExpiredException();
         }
         chain.doFilter(request, response);
     }

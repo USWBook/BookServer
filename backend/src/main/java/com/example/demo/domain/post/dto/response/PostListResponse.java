@@ -1,6 +1,8 @@
 package com.example.demo.domain.post.dto.response;
 
 import com.example.demo.domain.post.enums.PostStatus;
+import com.example.demo.domain.user.entity.Grade;
+import com.example.demo.domain.user.entity.Semester;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -19,7 +21,17 @@ public record PostListResponse(
         LocalDateTime createdAt
 ) {
 
-    public PostListResponse(UUID id, String title, Integer postPrice, Integer likeCount, Long commentCount, Integer grade, Integer semester, PostStatus status, LocalDateTime createdAt) {
-        this(id, title, postPrice, likeCount, commentCount, grade, semester, status.name(), createdAt);
+    public PostListResponse(UUID id, String title, Integer postPrice, Integer likeCount, Long commentCount, Grade grade, Semester semester, PostStatus status, LocalDateTime createdAt) {
+        this(
+                id,
+                title,
+                postPrice,
+                likeCount,
+                commentCount,
+                grade != null ? grade.getValue() : null,      // Enum을 숫자로 변환
+                semester != null ? semester.getValue() : null, // Enum을 숫자로 변환
+                status != null ? status.name() : null,
+                createdAt
+        );
     }
 }

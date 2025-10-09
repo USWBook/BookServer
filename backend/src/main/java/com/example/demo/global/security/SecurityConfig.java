@@ -1,9 +1,10 @@
 package com.example.demo.global.security;
 
+import com.example.demo.domain.auth.service.AuthService;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.global.jwt.JwtAuthenticationFilter;
-import com.example.demo.global.jwt.handler.JwtAuthenticationFailureHandler;
-import com.example.demo.global.jwt.handler.JwtAuthenticationSuccessHandler;
+import com.example.demo.global.security.handler.JwtAuthenticationFailureHandler;
+import com.example.demo.global.security.handler.JwtAuthenticationSuccessHandler;
 import com.example.demo.global.jwt.service.TokenService;
 import com.example.demo.global.response.RsData;
 import com.example.demo.global.security.filter.LoginAuthenticationFilter;
@@ -50,12 +51,9 @@ public class SecurityConfig {
     private final TokenService tokenService;
     private final UserRepository userRepository;
     private final CustomLogoutHandler customLogoutHandler;
+    private final AuthService authService;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        // {bcrypt} 등의 접두어를 자동으로 붙여주는 DelegatingPasswordEncoder
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    }
+
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
@@ -68,7 +66,7 @@ public class SecurityConfig {
         AuthenticationManager authManager = authenticationManager(authenticationConfiguration);
 
         // 커스텀 로그인 필터
-        LoginAuthenticationFilter loginFilter = new LoginAuthenticationFilter(authManager, userRepository);
+        LoginAuthenticationFilter loginFilter = new LoginAuthenticationFilter(authManager, userRepository,authService);
         loginFilter.setFilterProcessesUrl("/api/auth/login"); // 로그인 URL
         loginFilter.setAuthenticationSuccessHandler(new JwtAuthenticationSuccessHandler(tokenService));
         loginFilter.setAuthenticationFailureHandler(new JwtAuthenticationFailureHandler());
@@ -105,7 +103,7 @@ public class SecurityConfig {
                             response.setContentType("application/json;charset=UTF-8");
 
                             // 4. 바디 반환
-                            RsData<?> rsData = new RsData<>("200", "로그아웃 완료되었습니다.");
+                            RsData<?> rsData = RsData.of("200", "로그아웃 완료되었습니다.");
                             String result = Ut.Json.toString(rsData);
                             response.getWriter().write(result);
                         })

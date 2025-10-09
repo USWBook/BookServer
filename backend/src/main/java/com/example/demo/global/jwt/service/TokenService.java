@@ -8,11 +8,15 @@ import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.jwt.JwtProvider;
 import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
+import com.example.demo.global.jwt.exception.JwtTokenExpiredException;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.CookieValue;
 
+import java.time.Duration;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -24,6 +28,7 @@ public class TokenService {
     private final RedisTokenRepository redisTokenRepository;
     private final UserRepository userRepository;
 
+    // accessToken,refreshToken 두 토큰을 만들어 반환 해줌
     @Transactional
     public TokenResponse generateTokens(UUID id, String email, Role role) {
         String accessToken = jwtProvider.generateAccessToken(id, email, role);
@@ -34,6 +39,7 @@ public class TokenService {
         return new TokenResponse(accessToken, refreshToken);
     }
 
+    // 로그아웃 시 혹은 토큰 재발급 시 유효기간이 남은 액세스토큰을 블랙리스트에 담음
     @Transactional
     public void blacklistToken(String token) {
         long expiration = jwtProvider.getTokenRemainingTime(token);
@@ -42,32 +48,43 @@ public class TokenService {
         }
     }
 
+    // 리프레시토큰을 삭제
     @Transactional
     public void deleteRefreshToken(String email) {
+        // if문이 없어도, Redis는 키가 존재할 때만 삭제하고 없으면 그냥 지나친다.
         redisTokenRepository.deleteRefreshToken(email);
     }
 
+    // 토큰 재발급
     @Transactional
-    public TokenResponse reissueTokens(String refreshToken) {
-        jwtProvider.validateToken(refreshToken);
-        if (redisTokenRepository.isBlacklisted(refreshToken) ||
-                !Objects.equals(jwtProvider.getCategory(refreshToken), "refresh") ||
-                jwtProvider.isExpired(refreshToken)) {
-            throw new JwtInvalidSignatureException();
+    public TokenResponse reissueTokens(@CookieValue("refreshToken")String refreshToken) {
+
+        if (!jwtProvider.isValid(refreshToken)) {
+            System.out.println("1");
+            throw new JwtTokenExpiredException();
+        }
+        if(!Objects.equals(jwtProvider.getCategory(refreshToken), "refresh")) {
+            System.out.println("2");
+            throw new JwtTokenExpiredException();
+        }
+        if(jwtProvider.isExpired(refreshToken)) {
+            System.out.println("3");
+            throw new JwtTokenExpiredException();
         }
 
         String email = jwtProvider.extractEmail(refreshToken);
 
         if (!redisTokenRepository.existsRefreshToken(email)) {
-            throw new JwtInvalidSignatureException();
-        }
 
+            throw new JwtTokenExpiredException();
+        }
 
         redisTokenRepository.getRefreshToken(email)
                 .filter(saved -> saved.equals(refreshToken))
-                .orElseThrow(JwtInvalidSignatureException::new);
+                .orElseThrow(JwtTokenExpiredException::new);
 
-        User user = userRepository.findByEmail(email)
+
+        User user = userRepository.findById(jwtProvider.extractId(refreshToken))
                 .orElseThrow(MemberNotFoundException::new);
 
         // 기존 refreshToken 레디스에서 삭제 처리
@@ -77,19 +94,10 @@ public class TokenService {
         return generateTokens(user.getId(), email, user.getRole());
     }
 
-    @Transactional
-    public boolean isBlacklisted(String token) {
-        return redisTokenRepository.isBlacklisted(token);
-    }
-
-    @Transactional
-    public String getEmailFromToken(String token) {
-        return jwtProvider.extractEmail(token);
-    }
-
+    // 사용자 밴
     @Transactional
     public void banUser(String accessToken, String email) {
-        // 1. 블랙리스트 등록
+        // 1. 액세스 토큰은 블랙리스트 등록
         blacklistToken(accessToken);
 
         // 2. 리프레시 토큰 삭제
@@ -102,10 +110,22 @@ public class TokenService {
         user.ban();
     }
 
-    public long getRefreshExpirationInMillis() {
-        return jwtProvider.getRefreshTokenExpirationInMillis();
+    // 액세스 토큰 블랙리스트 여부 확인
+    @Transactional
+    public boolean isBlacklisted(String token) {
+        return redisTokenRepository.isBlacklisted(token);
     }
 
+    // 리프레시토큰을 쿠키에 담아줌
+    public ResponseCookie setRefreshTokenToCookie(String refreshToken){
+        return ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(Duration.ofMillis(jwtProvider.getRefreshTokenExpirationInMillis()))
+                .sameSite("None")
+                .build();
+    }
 
     // reissue시 이미 만료된 access토큰도 받아서 두 토큰 이메일 값도 비교해볼까 고민중
     // 이러면 리프레쉬 토큰만 탈취한 해커가 리프레시토큰 단독으론 못뚫지 않나 생각하면서도

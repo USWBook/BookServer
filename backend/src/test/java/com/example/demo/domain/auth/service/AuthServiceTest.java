@@ -101,7 +101,7 @@ public class AuthServiceTest {
         given(tokenService.reissueTokens(refreshToken)).willReturn(expectedResponse);
 
         // when
-        TokenResponse actualResponse = authService.reissue(refreshToken);
+        TokenResponse actualResponse = tokenService.reissueTokens(refreshToken);
 
         // then
         assertThat(actualResponse).isNotNull();
@@ -123,7 +123,7 @@ public class AuthServiceTest {
         // when & then
         // AuthService가 TokenService로부터 받은 예외를 그대로 다시 던지는지 검증
         assertThrows(JwtInvalidSignatureException.class, () -> {
-            authService.reissue(refreshToken);
+            tokenService.reissueTokens(refreshToken);
         });
 
         verify(tokenService).reissueTokens(refreshToken);

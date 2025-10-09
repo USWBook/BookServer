@@ -1,9 +1,9 @@
-package com.example.demo.global.jwt.handler;
+package com.example.demo.global.security.handler;
 
 import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.jwt.service.TokenService;
-import com.example.demo.domain.user.dto.CustomUserDetails;
+import com.example.demo.global.security.userdetails.CustomUserDetails;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,7 +14,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 import java.io.IOException;
-import java.time.Duration;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
@@ -29,23 +28,12 @@ public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHan
         String email = userPrincipal.getUsername();
         Role role = userPrincipal.getRole();
 
+        tokenService.deleteRefreshToken(email);
 
         TokenResponse tokenResponse = tokenService.generateTokens(userPrincipal.getId(),email, role);
 
-        // String accessToken = jwtProvider.generateAccessToken(email, role);
-        // String refreshToken = jwtProvider.generateRefreshToken(email, role);
-
-        // Redis에 refresh 저장 (화이트리스트)
-        //redisTokenRepository.saveRefreshToken(email, refreshToken, jwtProvider.getRefreshTokenExpirationInMillis());
-
         // refreshToken HttpOnly 쿠키로 세팅
-        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenResponse.getRefreshToken())
-                .httpOnly(true)
-                .secure(true) // 운영에서 true
-                .path("/")
-                .maxAge(Duration.ofMillis(tokenService.getRefreshExpirationInMillis()).getSeconds())
-                .sameSite("None")
-                .build();
+        ResponseCookie refreshCookie = tokenService.setRefreshTokenToCookie(tokenResponse.getRefreshToken());
 
         // AccessToken은 Authorization 헤더로 전달
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());

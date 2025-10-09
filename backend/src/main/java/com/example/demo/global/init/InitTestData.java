@@ -71,10 +71,66 @@ public class InitTestData {
                 csMajor,
                 "자료구조 책 팝니다",
                 "자료구조와 알고리즘",
-                "자료구조",
+                "컴공 자료구조",
+                "홍교수",
+                1,
+                1,
+                "https://example.com/image.jpg",
+                "상태 좋습니다. 필기 거의 없음.",
+                12000
+        );
+
+        Post post2 = helper.createPost(
+                user,
+                csMajor,
+                "22정보보호 책 팝니다",
+                "정보보호와 알고리즘",
+                "보호 알고리즘",
                 "홍교수",
                 2,
                 1,
+                "https://example.com/image.jpg",
+                "상태 좋습니다. 필기 거의 없음.",
+                12000
+        );
+
+        Post post3 = helper.createPost(
+                user,
+                csMajor,
+                "33자료구조 책 팝니다",
+                "자료구조와 컴공",
+                "컴공 자료구조",
+                "홍교수",
+                3,
+                1,
+                "https://example.com/image.jpg",
+                "상태 좋습니다. 필기 거의 없음.",
+                12000
+        );
+
+        Post post4 = helper.createPost(
+                user,
+                csMajor,
+                "44정보보호 책 팝니다",
+                "자료구조와 정보보호",
+                "보호 자료구조",
+                "홍교수",
+                4,
+                1,
+                "https://example.com/image.jpg",
+                "상태 좋습니다. 필기 거의 없음.",
+                12000
+        );
+
+        Post post5 = helper.createPost(
+                user,
+                csMajor,
+                "55인공지능 책 팝니다",
+                "인공지능과 알고리즘",
+                "빅데이터이해",
+                "홍교수",
+                4,
+                2,
                 "https://example.com/image.jpg",
                 "상태 좋습니다. 필기 거의 없음.",
                 12000

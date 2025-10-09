@@ -15,7 +15,7 @@ public class EmailSendingService {
 
     private final JavaMailSender javaMailSender;
 
-    @Async
+    @Async("EmailThreadPoolTaskExecutor")
     // 인증 코드를 이메일로 발송
     public void sendAuthCodeEmail(String email, String authCode) throws Exception {
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
