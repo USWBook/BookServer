@@ -5,7 +5,9 @@ import com.example.demo.domain.auth.dto.request.ResetPasswordRequest;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
 import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.auth.service.AuthService;
+import com.example.demo.global.annotation.swagger.ApiErrorResponse;
 import com.example.demo.global.annotation.swagger.ApiForbiddenResponse;
+import com.example.demo.global.annotation.swagger.ApiSuccessResponse;
 import com.example.demo.global.annotation.swagger.ApiUnauthorizedResponse;
 import com.example.demo.global.security.userdetails.CustomUserDetails;
 import com.example.demo.global.jwt.service.TokenService;
@@ -34,9 +36,25 @@ public class AuthController implements AuthControllerDoc{
     private final TokenService tokenService;
 
     @Operation(summary = "회원가입", description = "새로운 사용자를 등록합니다.")
-    @ApiResponse(responseCode = "200", description = "회원가입 성공")
-    @ApiResponse(responseCode = "400", description = "유효성 검사 실패 또는 이미 존재하는 이메일")
-    @ApiResponse(responseCode = "400", description = "이메일인증 미실시")
+    @ApiSuccessResponse(description = "회원가입 성공")
+    @ApiErrorResponse(
+            responseCode = "409",
+            description = "이미 회원가입 되어 있는 이메일로 회원가입 시도",
+            exampleName = "ExistEmailSignUp",
+            exampleValue = "{\"code\": \"409\", \"message\": \"이미 회원가입 되어 있는 이메일 입니다.\", \"data\": null}"
+    )
+    @ApiErrorResponse(
+            responseCode = "403",
+            description = "이메일 인증을 완료 하십시오.",
+            exampleName = "EmailNotVerified",
+            exampleValue = "{\"code\": \"403\", \"message\": \"이메일 인증을 완료 하십시오\", \"data\": null}"
+    )
+    @ApiErrorResponse(
+            responseCode = "404",
+            description = "찾을 수 없는 전공",
+            exampleName = "MajorNotFound",
+            exampleValue = "{\"code\": \"404\", \"message\": \"존재하지 않는 전공입니다.\", \"data\": null}"
+    )
     @PostMapping("/signup")
     public RsData<?> signUp(@RequestBody @Valid SignUpRequest request) {
         authService.signUp(request);
@@ -49,9 +67,24 @@ public class AuthController implements AuthControllerDoc{
                     @io.swagger.v3.oas.annotations.headers.Header(name = "Authorization", description = "새로 발급된 Access Token", schema = @Schema(type = "string")),
                     @io.swagger.v3.oas.annotations.headers.Header(name = "Set-Cookie", description = "새로 발급된 Refresh Token (HttpOnly 쿠키)", schema = @Schema(type = "string"))
             })
-    @ApiResponse(responseCode = "400", description = "쿠키에 Refresh Token이 없음")
-    @ApiResponse(responseCode = "401", description = "유효하지 않은 Refresh Token")
-    @ApiResponse(responseCode = "404", description = "요청준 사용자를 db에서 찾지 못함")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "쿠키에 Refresh Token이 없음",
+            exampleName = "handleMissingRequestCookie",
+            exampleValue = "{\"code\": \"400\", \"message\": \"필수 쿠키 '%s'가 요청에 포함되지 않았습니다\", \"data\": null}"
+    )
+    @ApiErrorResponse(
+            responseCode = "401",
+            description = "모든 Refresh Token 이슈는 토큰이 만료되었다고 응답",
+            exampleName = "JwtTokenExpired",
+            exampleValue = "{\"code\": \"401\", \"message\": \"토큰이 만료되었습니다.\", \"data\": null}"
+    )
+    @ApiErrorResponse(
+            responseCode = "404",
+            description = "요청준 사용자를 db에서 찾지 못함.",
+            exampleName = "UserNotFound",
+            exampleValue = "{\"code\": \"404\", \"message\": \"존재하지 않는 사용자입니다..\", \"data\": null}"
+    )
     @PostMapping("/reissue")
     public ResponseEntity<RsData<?>> reissue(
             @Parameter(hidden = true) @CookieValue("refreshToken") String refreshToken) {
@@ -68,9 +101,14 @@ public class AuthController implements AuthControllerDoc{
 
 
     @Operation(summary = "비밀번호 변경", description = "현재 로그인한 사용자의 비밀번호를 변경합니다.")
-    @ApiResponse(responseCode = "200", description = "비밀번호 변경 성공")
-    @ApiResponse(responseCode = "400", description = "현재 비밀번호 불일치 또는 유효성 검사 실패")
-    @ApiResponse(responseCode = "401", description = "인증 실패: 로그인이 필요합니다.")
+    @ApiSuccessResponse(description = "비밀번호 변경 성공")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "현재 비밀번호 불일치 또는 유효성 검사 실패.",
+            exampleName = "InvalidPassword",
+            exampleValue = "{\"code\": \"403\", \"message\": \"비밀번호가 일치하지 않습니다.\", \"data\": null}"
+    )
+    @ApiUnauthorizedResponse
     @PatchMapping("/password")
     public RsData<?> changePassword(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -80,9 +118,21 @@ public class AuthController implements AuthControllerDoc{
     }
 
     @Operation(summary = "비밀번호 초기화", description = "이메일 인증 후 새 비밀번호로 재설정합니다.")
-    @ApiResponse(responseCode = "200", description = "비밀번호 초기화 성공")
-    @ApiResponse(responseCode = "400", description = "이메일 미인증 또는 유효성 검사 실패")
-    @ApiResponse(responseCode = "401", description = "인증 실패: 로그인이 필요합니다.")
+    @ApiSuccessResponse( description = "비밀번호 초기화 성공")
+    @ApiErrorResponse(
+            responseCode = "403",
+            description = "이메일 인증을 완료 하십시오.",
+            exampleName = "EmailNotVerified",
+            exampleValue = "{\"code\": \"403\", \"message\": \"이메일 인증을 완료 하십시오\", \"data\": null}"
+    )
+
+    @ApiErrorResponse(
+            responseCode = "404",
+            description = "존재하지 않는 사용자",
+            exampleName = "UserNotFound",
+            exampleValue = "{\"code\": \"404\", \"message\": \"존재하지 않는 사용자입니다.\", \"data\": null}"
+    )
+    @ApiUnauthorizedResponse
     @PostMapping("/password")
     public RsData<?> resetPassword(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -92,11 +142,9 @@ public class AuthController implements AuthControllerDoc{
     }
 
     @Operation(summary = "관리자 전용 API 테스트", description = "ADMIN 권한을 가진 사용자만 접근 가능한 테스트용 API입니다.")
-    @ApiResponse(responseCode = "200", description = "접근 성공")
-    @ApiResponse(responseCode = "403", description = "접근 권한 없음 (ADMIN이 아님)")
-    @ApiResponse(responseCode = "401", description = "인증 실패: 로그인이 필요합니다.")
-    @ApiUnauthorizedResponse // 👈 로그인 필요 명시
-    @ApiForbiddenResponse    // 👈 권한 필요 명시
+    @ApiResponse( description = " 관리자 권한으로 접근 성공")
+    @ApiUnauthorizedResponse //  로그인 필요 명시 401
+    @ApiForbiddenResponse    //  권한 필요 명시 403
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin")
     public String adminOnly() {

@@ -1,6 +1,7 @@
 package com.example.demo.domain.auth.controller;
 
 import com.example.demo.domain.auth.dto.request.LoginRequest;
+import com.example.demo.global.annotation.swagger.ApiErrorResponse;
 import com.example.demo.global.response.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -26,15 +27,30 @@ public interface AuthControllerDoc {
                     @io.swagger.v3.oas.annotations.headers.Header(name = "Set-Cookie", description = "발급된 Refresh Token (HttpOnly 쿠키 -> prefix: refresh=)", schema = @Schema(type = "string"))
             },
             content = @Content(schema = @Schema(implementation = RsData.class)))
-    @ApiResponse(responseCode = "400", description = "인증 실패 (비밀번호 불일치)")
-    @ApiResponse(responseCode = "404", description = "인증 실패 (존재하지 않는 이메일)")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "현재 비밀번호 불일치 또는 유효성 검사 실패.",
+            exampleName = "InvalidPassword",
+            exampleValue = "{\"code\": \"403\", \"message\": \"비밀번호가 일치하지 않습니다.\", \"data\": null}"
+    )
+    @ApiErrorResponse(
+            responseCode = "404",
+            description = "존재하지 않는 사용자",
+            exampleName = "UserNotFound",
+            exampleValue = "{\"code\": \"404\", \"message\": \"존재하지 않는 사용자입니다.\", \"data\": null}"
+    )
     @PostMapping("/login")
     ResponseEntity<RsData<?>> login();
 
 
     @Operation(summary = "로그아웃", description = "서버에서 Access Token과 Refresh Token을 만료 처리합니다. (Spring Security Filter에서 처리)")
     @ApiResponse(responseCode = "200", description = "로그아웃 성공", content = @Content(schema = @Schema(implementation = RsData.class)))
-    @ApiResponse(responseCode = "401", description = "인증 실패 (유효하지 않은 토큰)")
+    @ApiErrorResponse(
+            responseCode = "401",
+            description = "모든 Token 이슈는 토큰이 만료되었다고 응답\n" + "로그아웃시 access 생명주기가 남아있다면 블랙리스트 만료되었으면 그냥 넘기고\n" + "refresh는 레디스에서 삭제 하도록 하였는데",
+            exampleName = "JwtTokenExpired",
+            exampleValue = "{\"code\": \"401\", \"message\": \"토큰이 만료되었습니다.\", \"data\": null}"
+    )
     @PostMapping("/logout")
     ResponseEntity<RsData<?>> logout();
 }

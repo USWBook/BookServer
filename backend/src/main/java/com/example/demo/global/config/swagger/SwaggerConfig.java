@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.HandlerMethod;
 
 import java.util.Arrays;
+import java.util.Map;
 
 @Configuration
 public class SwaggerConfig {
@@ -82,18 +83,14 @@ public class SwaggerConfig {
 
     private void handleSuccessResponse(Operation operation, ApiSuccessResponse successInfo) {
         ApiResponses responses = operation.getResponses();
-        ApiResponse apiResponse = responses.computeIfAbsent("200", key -> new ApiResponse());
-        apiResponse.setDescription(successInfo.description());
+        if (responses == null) return;
 
-        if (successInfo.dataType() != Void.class) {
-            Schema<?> schema = new Schema<>();
-            schema.addProperty("code", new Schema<String>().type("string").example("200"));
-            schema.addProperty("message", new Schema<String>().type("string").example(successInfo.description()));
-            Schema<?> dataSchema = new Schema<>().$ref("#/components/schemas/" + successInfo.dataType().getSimpleName());
-            schema.addProperty("data", dataSchema);
-            apiResponse.setContent(new Content().addMediaType("application/json", new MediaType().schema(schema)));
-        }
+        // springdoc이 자동 생성한 200 응답을 찾아서 description만 수정.
+        responses.computeIfPresent("200", (key, apiResponse) ->
+                apiResponse.description(successInfo.description())
+        );
     }
+
 
     private void handleErrorResponse(Operation operation, ApiErrorResponse error) {
         ApiResponses responses = operation.getResponses();
