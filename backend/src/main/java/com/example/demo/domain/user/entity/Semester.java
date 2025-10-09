@@ -1,5 +1,6 @@
 package com.example.demo.domain.user.entity;
 
+import com.example.demo.domain.user.exception.InvalidSemesterException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
@@ -21,7 +22,7 @@ public enum Semester {
         return Stream.of(Semester.values())
                 .filter(g -> g.getValue() == value)
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(value + "는 유효하지 않은 학기입니다."));
+                .orElseThrow(() -> new InvalidSemesterException(value + "는 유효하지 않은 학기입니다."));
     }
 
     // Enum을 JSON으로 변환할 때 숫자 값으로 나가도록 설정

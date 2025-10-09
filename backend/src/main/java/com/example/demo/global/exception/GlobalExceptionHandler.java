@@ -17,6 +17,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -88,6 +89,13 @@ public class GlobalExceptionHandler {
         }
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(RsData.of("403", "접근이 제한되었습니다."));
+    }
+
+    @ExceptionHandler(EnumException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public RsData<?> handleInvalidSemesterException(EnumException e) {
+        log.warn("잘못된 이넘 값 요청: {}", e.getMessage());
+        return RsData.of("400", e.getMessage());
     }
 
     // JPA 엔티티 조회 실패 (fallback)
