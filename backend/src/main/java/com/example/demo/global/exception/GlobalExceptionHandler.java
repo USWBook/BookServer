@@ -18,6 +18,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -94,6 +95,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<RsData<Void>> handleEntityNotFoundException(EntityNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new RsData<>("404", "해당 데이터를 찾을 수 없습니다."));
+    }
+
+    // NoResourceFoundException을 잡아서 404 응답을 반환
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<RsData<Void>> handleNoResourceFoundException(NoResourceFoundException e) {
+        //  log.warn("Static resource not found: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new RsData<>("404", "요청하신 리소스를 찾을 수 없습니다."));
     }
 
     // 서버 내부 오류
