@@ -38,7 +38,7 @@ public class AuthController implements AuthControllerDoc{
     @PostMapping("/signup")
     public RsData<?> signUp(@RequestBody @Valid SignUpRequest request) {
         authService.signUp(request);
-        return new RsData<>("200", "회원가입 성공");
+        return RsData.of("200", "회원가입 성공");
     }
 
     @Operation(summary = "토큰 재발급", description = "HttpOnly 쿠키에 담긴 Refresh Token을 사용하여 Access Token과 Refresh Token을 재발급합니다.")
@@ -61,7 +61,7 @@ public class AuthController implements AuthControllerDoc{
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken())
-                .body(new RsData<>("200", "토큰 재발행 완료되었습니다."));
+                .body(RsData.of("200", "토큰 재발행 완료되었습니다."));
     }
 
 
@@ -74,7 +74,7 @@ public class AuthController implements AuthControllerDoc{
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid PasswordChangeRequest passwordChangeRequest){
         authService.changePassword(userDetails.getId(), passwordChangeRequest);
-        return new RsData<>("200", "비밀번호 변경 완료되었습니다.");
+        return RsData.of("200", "비밀번호 변경 완료되었습니다.");
     }
 
     @Operation(summary = "비밀번호 초기화", description = "이메일 인증 후 새 비밀번호로 재설정합니다.")
@@ -86,7 +86,7 @@ public class AuthController implements AuthControllerDoc{
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid ResetPasswordRequest resetPasswordRequest){
         authService.resetPassword(userDetails.getId(),resetPasswordRequest);
-        return new RsData<>("200", "비밀번호 초기화 완료되었습니다.");
+        return RsData.of("200", "비밀번호 초기화 완료되었습니다.");
     }
 
     @Operation(summary = "관리자 전용 API 테스트", description = "ADMIN 권한을 가진 사용자만 접근 가능한 테스트용 API입니다.")

@@ -29,7 +29,7 @@ public class UserController {
     @GetMapping("/infomation")
     public RsData<UserInfoResponse> infomation(@AuthenticationPrincipal CustomUserDetails userDetails) {
         UserInfoResponse userInfoResponse = userService.getUserInfo(userDetails.getId());
-        return new RsData<>("200", "회원정보 조회 성공",userInfoResponse);
+        return RsData.of("200", "회원정보 조회 성공",userInfoResponse);
     }
 
     @Operation(summary = "내 정보 수정", description = "현재 로그인한 사용자의 이름, 학년, 학기, 전공을 수정합니다.")
@@ -40,6 +40,6 @@ public class UserController {
     @PatchMapping("/infomation")
     public RsData<UserInfoResponse> changeInfomation(@AuthenticationPrincipal CustomUserDetails userDetails,@RequestBody ChangeInfoRequest request) {
         UserInfoResponse userInfoResponse = userService.changeInformation(userDetails.getId(),request);
-        return new RsData<>("200", "회원정보 수정 성공",userInfoResponse);
+        return RsData.of("200", "회원정보 수정 성공",userInfoResponse);
     }
 }

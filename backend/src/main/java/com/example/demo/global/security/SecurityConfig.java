@@ -103,7 +103,7 @@ public class SecurityConfig {
                             response.setContentType("application/json;charset=UTF-8");
 
                             // 4. 바디 반환
-                            RsData<?> rsData = new RsData<>("200", "로그아웃 완료되었습니다.");
+                            RsData<?> rsData = RsData.of("200", "로그아웃 완료되었습니다.");
                             String result = Ut.Json.toString(rsData);
                             response.getWriter().write(result);
                         })

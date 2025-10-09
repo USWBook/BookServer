@@ -38,7 +38,7 @@ public class GlobalExceptionHandler {
         String cookieName = ex.getCookieName();
         String errorMessage = String.format("필수 쿠키 '%s'가 요청에 포함되지 않았습니다.", cookieName);
 
-        RsData<Object> response = new RsData<>("400", errorMessage);
+        RsData<Object> response = RsData.of("400", errorMessage);
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
@@ -49,20 +49,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 //.status(HttpStatus.CONFLICT)
                 .status(e.getStatusCode())
-                .body(new RsData<>(e.getCode(), e.getMessage()));
+                .body(RsData.of(e.getCode(), e.getMessage()));
     }
 
     @ExceptionHandler(CustomJwtException.class)
     public ResponseEntity<RsData<Void>> handleJwtException(CustomJwtException e) {
         return ResponseEntity.status(e.getStatusCode())
-                .body(new RsData<>(e.getCode(), e.getMessage()));
+                .body(RsData.of(e.getCode(), e.getMessage()));
     }
 
     // 도메인 커스텀 예외
     @ExceptionHandler(BookException.class)
     public ResponseEntity<RsData<Void>> handleBookException(BookException e) {
         return ResponseEntity.status(e.getStatusCode())
-                .body(new RsData<>(e.getCode(), e.getMessage()));
+                .body(RsData.of(e.getCode(), e.getMessage()));
     }
 
     // @Valid 검증 예외
@@ -72,7 +72,7 @@ public class GlobalExceptionHandler {
                 .map(FieldError::getDefaultMessage)
                 .collect(Collectors.joining(", "));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new RsData<>("400", message.isBlank() ? "잘못된 요청입니다." : message));
+                .body(RsData.of("400", message.isBlank() ? "잘못된 요청입니다." : message));
     }
 
     // 인증 / 인가 예외
@@ -80,21 +80,21 @@ public class GlobalExceptionHandler {
     public ResponseEntity<RsData<Void>> handleAuthorizationExceptions(Exception e) {
         if (e instanceof AuthenticationException) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new RsData<>("401", "로그인이 필요합니다."));
+                    .body(RsData.of("401", "로그인이 필요합니다."));
         }
         if (e instanceof AccessDeniedException) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new RsData<>("403", "권한이 없습니다."));
+                    .body(RsData.of("403", "권한이 없습니다."));
         }
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(new RsData<>("403", "접근이 제한되었습니다."));
+                .body(RsData.of("403", "접근이 제한되었습니다."));
     }
 
     // JPA 엔티티 조회 실패 (fallback)
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<RsData<Void>> handleEntityNotFoundException(EntityNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new RsData<>("404", "해당 데이터를 찾을 수 없습니다."));
+                .body(RsData.of("404", "해당 데이터를 찾을 수 없습니다."));
     }
 
     // NoResourceFoundException을 잡아서 404 응답을 반환
@@ -102,7 +102,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<RsData<Void>> handleNoResourceFoundException(NoResourceFoundException e) {
         //  log.warn("Static resource not found: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new RsData<>("404", "요청하신 리소스를 찾을 수 없습니다."));
+                .body(RsData.of("404", "요청하신 리소스를 찾을 수 없습니다."));
     }
 
     // 서버 내부 오류
@@ -114,7 +114,7 @@ public class GlobalExceptionHandler {
         String paramJson = extractParams(request);
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new RsData<>("500", "서버 오류가 발생했습니다."));
+                .body(RsData.of("500", "서버 오류가 발생했습니다."));
     }
 
     private String extractParams(HttpServletRequest req) {

@@ -44,7 +44,7 @@ public class PostController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid PostCreateRequest request) {
         UUID postId = postService.createPost(userDetails.getId(), request);
-        return new RsData<>("201", "게시글이 성공적으로 등록되었습니다.", postId);
+        return RsData.of("201", "게시글이 성공적으로 등록되었습니다.", postId);
     }
 
     // 게시글 전체 조회
@@ -86,7 +86,7 @@ public class PostController {
             @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Page<PostListResponse> posts = postService.searchPosts(condition, pageable);
-        return new RsData<>("200", "게시글 목록 조회에 성공했습니다.", posts);
+        return RsData.of("200", "게시글 목록 조회에 성공했습니다.", posts);
     }
 
 
@@ -97,7 +97,7 @@ public class PostController {
     @GetMapping("/{id}")
     public RsData<PostResponse> getPost(@PathVariable UUID id) {
         PostResponse post = postService.getPostById(id);
-        return new RsData<>("200", "게시글 상세 조회에 성공했습니다.", post);
+        return RsData.of("200", "게시글 상세 조회에 성공했습니다.", post);
     }
 
     @Operation(summary = "게시글 삭제", description = "ID로 특정 게시글을 삭제합니다. (본인 또는 관리자만 가능)")
@@ -107,7 +107,7 @@ public class PostController {
     @DeleteMapping("/{id}")
     public RsData<Empty> deletePost(@PathVariable UUID id) {
         postService.deletePost(id);
-        return new RsData<>("200", "게시글이 성공적으로 삭제되었습니다.");
+        return RsData.of("200", "게시글이 성공적으로 삭제되었습니다.");
     }
 
     @Operation(summary = "게시글 수정", description = "ID로 특정 게시글의 정보를 수정합니다. (본인만 가능)")
@@ -117,7 +117,7 @@ public class PostController {
     @PatchMapping("/{id}")
     public RsData<Empty> updatePost(@PathVariable UUID id, @RequestBody @Valid PostUpdateRequest request) {
         postService.updatePost(id, request);
-        return new RsData<>("200", "게시글이 성공적으로 수정되었습니다.");
+        return RsData.of("200", "게시글이 성공적으로 수정되었습니다.");
     }
 
     // 찜에선 로킹 해야함
@@ -129,7 +129,7 @@ public class PostController {
             @PathVariable UUID postId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         postService.likePost(postId, userDetails.getId());
-        return new RsData<>("200", "찜 완료되었습니다.");
+        return RsData.of("200", "찜 완료되었습니다.");
     }
 
     @Operation(summary = "게시글 찜 해제", description = "특정 게시글을 찜 목록에서 제거합니다.")
@@ -140,7 +140,7 @@ public class PostController {
             @PathVariable UUID postId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         postService.unlikePost(postId, userDetails.getId());
-        return new RsData<>("200", "찜 해제되었습니다.");
+        return RsData.of("200", "찜 해제되었습니다.");
     }
 
     @Operation(summary = "댓글 작성")
@@ -154,7 +154,7 @@ public class PostController {
             @RequestBody @Valid CommentCreateRequest request) {
 
         PostResponse post = postService.createComment(postId, userDetails.getId(), request);
-        return new RsData<>("201", "댓글달기 성공했습니다.", post);
+        return RsData.of("201", "댓글달기 성공했습니다.", post);
     }
 
     @Operation(summary = "댓글 수정")
@@ -168,7 +168,7 @@ public class PostController {
             @RequestBody @Valid CommentCreateRequest request) {
 
         PostResponse post = postService.updateComment(postId, commentId, userDetails.getId(), request);
-        return new RsData<>("200", "댓글 수정 성공했습니다.", post);
+        return RsData.of("200", "댓글 수정 성공했습니다.", post);
     }
 
     @Operation(summary = "댓글 삭제")
@@ -181,7 +181,7 @@ public class PostController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         PostResponse post = postService.deleteComment(postId, commentId, userDetails.getId());
-        return new RsData<>("200", "댓글 삭제 성공했습니다.", post);
+        return RsData.of("200", "댓글 삭제 성공했습니다.", post);
     }
 
     // 아래 세개는 동적쿼리 안넣었을때 구현 해둔거임
@@ -191,7 +191,7 @@ public class PostController {
 //
 //        Page<PostListResponse> posts = postService.getAllPosts(pageable);
 //
-//        return new RsData<>("200", "게시글 목록 조회에 성공했습니다.", posts);
+//        return RsData.of("200", "게시글 목록 조회에 성공했습니다.", posts);
 //    }
 
 
@@ -203,7 +203,7 @@ public class PostController {
 //
 //        Page<PostListResponse> posts = postService.getBookPosts(pageable,bookname);
 //
-//        return new RsData<>("200", "책이름 : " + bookname + " 게시글 목록 검색에 성공했습니다.", posts);
+//        return RsData.of("200", "책이름 : " + bookname + " 게시글 목록 검색에 성공했습니다.", posts);
 //    }
 //
 //    // 강의명 검색
@@ -214,7 +214,7 @@ public class PostController {
 //
 //        Page<PostListResponse> posts = postService.getClassPosts(pageable,classname);
 //
-//        return new RsData<>("200", "강의명 : " + classname + " 게시글 목록 검색에 성공했습니다.", posts);
+//        return RsData.of("200", "강의명 : " + classname + " 게시글 목록 검색에 성공했습니다.", posts);
 //    }
 }
 

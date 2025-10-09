@@ -1,7 +1,10 @@
 package com.example.demo.domain.major.controller;
 
+import com.example.demo.domain.major.response.MajorListResponse;
 import com.example.demo.domain.major.response.MajorResponse;
 import com.example.demo.domain.major.service.MajorService;
+import com.example.demo.global.annotation.swagger.ApiErrorResponse;
+import com.example.demo.global.annotation.swagger.ApiSuccessResponse;
 import com.example.demo.global.response.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -22,10 +25,11 @@ public class MajorController {
     private final MajorService majorService;
 
     @Operation(summary = "전공 리스트 보기", description = "모든 전공 이름 및 식별값을 불러옵니다")
-    @ApiResponse(responseCode = "200", description = "전공 목록 조회 성공")
+    @ApiSuccessResponse(description = "전공 목록 조회 성공")
     @GetMapping("/list")
-    public RsData<List<MajorResponse>> getAllMajors() {
+    public MajorListResponse getAllMajors() {
         List<MajorResponse> majors = majorService.getAllMajors();
-        return new RsData<>("200", "전공 목록 조회 성공", majors);
+
+        return MajorListResponse.of("200", "전공 목록 조회 성공", majors);
     }
 }
