@@ -1,6 +1,6 @@
 //    package com.example.demo.global.config.chat;
 //
-//    import com.example.demo.domain.user.service.CustomUserDetailsService;
+//    import com.example.demo.global.security.userdetails.CustomUserDetailsService;
 //    import com.example.demo.global.jwt.JwtProvider;
 //    import jakarta.servlet.http.HttpServletRequest;
 //    import jakarta.servlet.http.HttpServletResponse;

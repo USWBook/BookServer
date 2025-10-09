@@ -4,7 +4,7 @@ import com.example.demo.domain.chat.dto.request.SendMessageRequestDto;
 import com.example.demo.domain.chat.dto.response.SendMessageResponseDto;
 import com.example.demo.domain.chat.entity.ChatMessage;
 import com.example.demo.domain.chat.service.ChatService;
-import com.example.demo.domain.user.dto.CustomUserDetails;
+import com.example.demo.global.security.userdetails.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
