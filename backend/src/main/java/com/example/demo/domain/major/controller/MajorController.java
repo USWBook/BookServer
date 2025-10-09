@@ -25,7 +25,11 @@ public class MajorController {
     private final MajorService majorService;
 
     @Operation(summary = "전공 리스트 보기", description = "모든 전공 이름 및 식별값을 불러옵니다")
-    @ApiSuccessResponse(description = "전공 목록 조회 성공")
+    @ApiSuccessResponse(
+            description = "전공 목록 조회 성공",
+            message = "전공 목록 조회 성공",
+            dataType = MajorListResponse.class
+    )
     @GetMapping("/list")
     public MajorListResponse getAllMajors() {
         List<MajorResponse> majors = majorService.getAllMajors();

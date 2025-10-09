@@ -4,9 +4,13 @@ import com.example.demo.domain.post.dto.request.CommentCreateRequest;
 import com.example.demo.domain.post.dto.request.PostCreateRequest;
 import com.example.demo.domain.post.dto.request.PostSearchCondition;
 import com.example.demo.domain.post.dto.request.PostUpdateRequest;
+import com.example.demo.domain.post.dto.response.PostDetailResponse;
 import com.example.demo.domain.post.dto.response.PostListResponse;
 import com.example.demo.domain.post.dto.response.PostResponse;
 import com.example.demo.domain.post.service.PostService;
+import com.example.demo.global.annotation.swagger.ApiErrorResponse;
+import com.example.demo.global.annotation.swagger.ApiSuccessResponse;
+import com.example.demo.global.annotation.swagger.ApiUnauthorizedResponse;
 import com.example.demo.global.security.userdetails.CustomUserDetails;
 import com.example.demo.global.response.Empty;
 import com.example.demo.global.response.RsData;
@@ -36,13 +40,19 @@ public class PostController {
     private final PostService postService;
 
     @Operation(summary = "게시글 생성")
-    @ApiResponse(responseCode = "201", description = "게시글 생성 성공")
-    @ApiResponse(responseCode = "401", description = "인증 실패: 로그인이 필요합니다.")
+    @ApiSuccessResponse(
+            responseCode = "201",
+            description = "게시글 생성 성공",
+            message = "게시글이 성공적으로 생성되었습니다.",
+            dataType = UUID.class
+    )
+    @ApiUnauthorizedResponse
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public RsData<?> createPost(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid PostCreateRequest request) {
+
         UUID postId = postService.createPost(userDetails.getId(), request);
         return RsData.of("201", "게시글이 성공적으로 등록되었습니다.", postId);
     }
@@ -79,7 +89,7 @@ public class PostController {
     })
 //    @ApiResponse(responseCode = "200", description = "조회 성공",
 //            content = @Content(schema = @Schema(implementation = PostListResponse.class)))
-    @ApiResponse(responseCode = "401", description = "인증 실패: 로그인이 필요합니다.")
+    @ApiUnauthorizedResponse
     @GetMapping
     public RsData<Page<PostListResponse>> searchPosts(
             @ModelAttribute PostSearchCondition condition,
@@ -91,19 +101,27 @@ public class PostController {
 
 
     @Operation(summary = "게시글 단건 조회", description = "ID로 특정 게시글의 상세 정보를 조회합니다.")
-    @ApiResponse(responseCode = "200", description = "조회 성공")
-    @ApiResponse(responseCode = "404", description = "존재하지 않는 게시글")
-    @ApiResponse(responseCode = "401", description = "인증 실패: 로그인이 필요합니다.")
+    @ApiSuccessResponse(
+            description = "조회 성공",
+            message = "게시글 상세 조회에 성공했습니다.",
+            dataType = PostResponse.class
+    )
+    @ApiErrorResponse(
+            responseCode = "404",
+            description = "존재하지 않는 게시글",
+            exampleName = "PostNotFound",
+            exampleValue = "{\"code\": \"404\", \"message\": \"해당 게시글을 찾을 수 없습니다.\", \"data\": null}"
+    )
+    @ApiUnauthorizedResponse
     @GetMapping("/{id}")
-    public RsData<PostResponse> getPost(@PathVariable UUID id) {
+    public PostDetailResponse getPost(@PathVariable UUID id) {
         PostResponse post = postService.getPostById(id);
-        return RsData.of("200", "게시글 상세 조회에 성공했습니다.", post);
+        return PostDetailResponse.of("200", "게시글 상세 조회에 성공했습니다.", post);
     }
 
     @Operation(summary = "게시글 삭제", description = "ID로 특정 게시글을 삭제합니다. (본인 또는 관리자만 가능)")
-    @ApiResponse(responseCode = "200", description = "삭제 성공")
-    @ApiResponse(responseCode = "403", description = "삭제 권한 없음")
-    @ApiResponse(responseCode = "401", description = "인증 실패: 로그인이 필요합니다.")
+    @ApiSuccessResponse(description = "삭제 성공")
+    @ApiUnauthorizedResponse
     @DeleteMapping("/{id}")
     public RsData<Empty> deletePost(@PathVariable UUID id) {
         postService.deletePost(id);
@@ -111,9 +129,8 @@ public class PostController {
     }
 
     @Operation(summary = "게시글 수정", description = "ID로 특정 게시글의 정보를 수정합니다. (본인만 가능)")
-    @ApiResponse(responseCode = "200", description = "수정 성공")
-    @ApiResponse(responseCode = "403", description = "수정 권한 없음")
-    @ApiResponse(responseCode = "401", description = "인증 실패: 로그인이 필요합니다.")
+    @ApiSuccessResponse( description = "수정 성공")
+    @ApiUnauthorizedResponse
     @PatchMapping("/{id}")
     public RsData<Empty> updatePost(@PathVariable UUID id, @RequestBody @Valid PostUpdateRequest request) {
         postService.updatePost(id, request);
@@ -122,8 +139,8 @@ public class PostController {
 
     // 찜에선 로킹 해야함
     @Operation(summary = "게시글 찜하기", description = "특정 게시글을 찜 목록에 추가합니다.")
-    @ApiResponse(responseCode = "200", description = "찜하기 성공")
-    @ApiResponse(responseCode = "401", description = "인증 실패: 로그인이 필요합니다.")
+    @ApiSuccessResponse(description = "찜하기 성공")
+    @ApiUnauthorizedResponse
     @PostMapping("/{postId}/likes")
     public RsData<Empty> likePost(
             @PathVariable UUID postId,
@@ -133,8 +150,8 @@ public class PostController {
     }
 
     @Operation(summary = "게시글 찜 해제", description = "특정 게시글을 찜 목록에서 제거합니다.")
-    @ApiResponse(responseCode = "200", description = "찜 해제 성공")
-    @ApiResponse(responseCode = "401", description = "인증 실패: 로그인이 필요합니다.")
+    @ApiSuccessResponse(description = "찜 해제 성공")
+    @ApiUnauthorizedResponse
     @DeleteMapping("/{postId}/likes")
     public RsData<Empty> unlikePost(
             @PathVariable UUID postId,
@@ -144,22 +161,27 @@ public class PostController {
     }
 
     @Operation(summary = "댓글 작성")
-    @ApiResponse(responseCode = "201", description = "댓글 작성 성공")
-    @ApiResponse(responseCode = "401", description = "인증 실패: 로그인이 필요합니다.")
+    @ApiSuccessResponse(
+            responseCode = "201",
+            description = "댓글 작성 성공",
+            message = "댓글달기 성공했습니다.",
+            dataType = PostResponse.class
+    )
+    @ApiUnauthorizedResponse
     @PostMapping("/{postId}/comment")
     @ResponseStatus(HttpStatus.CREATED)
-    public RsData<PostResponse> postComment(
+    public PostDetailResponse postComment(
             @PathVariable UUID postId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid CommentCreateRequest request) {
 
         PostResponse post = postService.createComment(postId, userDetails.getId(), request);
-        return RsData.of("201", "댓글달기 성공했습니다.", post);
+        return PostDetailResponse.of("201", "댓글달기 성공했습니다.", post);
     }
 
     @Operation(summary = "댓글 수정")
-    @ApiResponse(responseCode = "200", description = "댓글 수정 성공")
-    @ApiResponse(responseCode = "401", description = "인증 실패: 로그인이 필요합니다.")
+    @ApiSuccessResponse(description = "댓글 수정 성공")
+    @ApiUnauthorizedResponse
     @PatchMapping("/{postId}/comment/{commentId}")
     public RsData<PostResponse> updateComment(
             @PathVariable UUID postId,
@@ -172,8 +194,8 @@ public class PostController {
     }
 
     @Operation(summary = "댓글 삭제")
-    @ApiResponse(responseCode = "200", description = "댓글 삭제 성공")
-    @ApiResponse(responseCode = "401", description = "인증 실패: 로그인이 필요합니다.")
+    @ApiSuccessResponse( description = "댓글 삭제 성공")
+    @ApiUnauthorizedResponse
     @DeleteMapping("/{postId}/comment/{commentId}")
     public RsData<PostResponse> deleteComment(
             @PathVariable UUID postId,

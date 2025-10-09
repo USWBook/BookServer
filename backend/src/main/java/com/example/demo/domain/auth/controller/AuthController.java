@@ -14,6 +14,7 @@ import com.example.demo.global.jwt.service.TokenService;
 import com.example.demo.global.response.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -87,7 +88,13 @@ public class AuthController implements AuthControllerDoc{
     )
     @PostMapping("/reissue")
     public ResponseEntity<RsData<?>> reissue(
-            @Parameter(hidden = true) @CookieValue("refreshToken") String refreshToken) {
+            @Parameter(
+                    name = "refreshToken",
+                    description = "액세스 및 리프레시 토큰 재발급을 위한 리프레시 토큰 값",
+                    in = ParameterIn.COOKIE, // 파라미터의 위치를 '쿠키'로 지정
+                    required = true,
+                    schema = @Schema(type = "string")
+            ) @CookieValue("refreshToken") String refreshToken) {
 
         TokenResponse tokens = tokenService.reissueTokens(refreshToken);
 
@@ -142,7 +149,7 @@ public class AuthController implements AuthControllerDoc{
     }
 
     @Operation(summary = "관리자 전용 API 테스트", description = "ADMIN 권한을 가진 사용자만 접근 가능한 테스트용 API입니다.")
-    @ApiResponse( description = " 관리자 권한으로 접근 성공")
+    @ApiSuccessResponse( description = " 관리자 권한으로 접근 성공")
     @ApiUnauthorizedResponse //  로그인 필요 명시 401
     @ApiForbiddenResponse    //  권한 필요 명시 403
     @PreAuthorize("hasRole('ADMIN')")

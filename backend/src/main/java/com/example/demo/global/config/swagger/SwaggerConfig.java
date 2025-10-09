@@ -24,6 +24,7 @@ import org.springframework.web.method.HandlerMethod;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.UUID;
 
 @Configuration
 public class SwaggerConfig {
@@ -82,13 +83,31 @@ public class SwaggerConfig {
     }
 
     private void handleSuccessResponse(Operation operation, ApiSuccessResponse successInfo) {
+        String responseCode = successInfo.responseCode();
         ApiResponses responses = operation.getResponses();
-        if (responses == null) return;
+        ApiResponse apiResponse = responses.computeIfAbsent(responseCode, key -> new ApiResponse());
+        apiResponse.setDescription(successInfo.description());
 
-        // springdoc이 자동 생성한 200 응답을 찾아서 description만 수정.
-        responses.computeIfPresent("200", (key, apiResponse) ->
-                apiResponse.description(successInfo.description())
-        );
+        // 새로운 스키마를 처음부터 직접 생성합니다.
+        Schema<?> newSchema = new Schema<>();
+        newSchema.addProperty("code", new Schema<String>().type("string").example(responseCode));
+        newSchema.addProperty("message", new Schema<String>().type("string").example(successInfo.message()));
+
+        Class<?> dataType = successInfo.dataType();
+        if (dataType != Void.class) {
+            Schema<?> dataSchema;
+
+                // UUID 같은 기본 타입인지 확인
+                if (dataType == UUID.class) {
+                    dataSchema = new Schema<>().type("string").format("uuid");
+                } else {
+                    dataSchema = new Schema<>().$ref("#/components/schemas/" + dataType.getSimpleName());
+                }
+
+            newSchema.addProperty("data", dataSchema);
+        }
+
+        apiResponse.setContent(new Content().addMediaType("application/json", new MediaType().schema(newSchema)));
     }
 
 
