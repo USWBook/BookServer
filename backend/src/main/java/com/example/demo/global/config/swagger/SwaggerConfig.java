@@ -8,6 +8,24 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.example.demo.global.annotation.swagger.ApiErrorResponse;
+import com.example.demo.global.annotation.swagger.ApiErrorResponses;
+import com.example.demo.global.annotation.swagger.ApiSuccessResponse;
+import com.example.demo.global.response.RsData;
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.examples.Example;
+import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.MediaType;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.models.responses.ApiResponses;
+import org.springdoc.core.customizers.OperationCustomizer;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.method.HandlerMethod;
+
+import java.util.Arrays;
+
 @Configuration
 public class SwaggerConfig {
 
@@ -34,5 +52,52 @@ public class SwaggerConfig {
                 .info(info)
                 .addSecurityItem(securityRequirement)
                 .components(components);
+    }
+
+    // 스웨거 어노테이션 커스텀
+    @Bean
+    public OperationCustomizer customize() {
+        return (operation, handlerMethod) -> {
+            ApiSuccessResponse successResponse = handlerMethod.getMethodAnnotation(ApiSuccessResponse.class);
+            ApiErrorResponses errorResponses = handlerMethod.getMethodAnnotation(ApiErrorResponses.class);
+
+            if (successResponse != null) {
+                handleSuccessResponse(operation, successResponse);
+            }
+            if (errorResponses != null) {
+                Arrays.stream(errorResponses.value())
+                        .forEach(error -> handleErrorResponse(operation, error));
+            }
+            return operation;
+        };
+    }
+
+    private void handleSuccessResponse(Operation operation, ApiSuccessResponse successInfo) {
+        ApiResponses responses = operation.getResponses();
+        ApiResponse apiResponse = responses.computeIfAbsent("200", key -> new ApiResponse());
+        apiResponse.setDescription(successInfo.description());
+
+        if (successInfo.dataType() != Void.class) {
+            Schema<?> schema = new Schema<>();
+            schema.addProperty("code", new Schema<String>().type("string").example("200"));
+            schema.addProperty("message", new Schema<String>().type("string").example(successInfo.description()));
+            Schema<?> dataSchema = new Schema<>().$ref("#/components/schemas/" + successInfo.dataType().getSimpleName());
+            schema.addProperty("data", dataSchema);
+            apiResponse.setContent(new Content().addMediaType("application/json", new MediaType().schema(schema)));
+        }
+    }
+
+    private void handleErrorResponse(Operation operation, ApiErrorResponse error) {
+        ApiResponses responses = operation.getResponses();
+        String responseCode = error.responseCode();
+
+        Example example = new Example().value(error.exampleValue());
+        MediaType mediaType = new MediaType()
+                .schema(new Schema<>().$ref("#/components/schemas/RsData"))
+                .addExamples(error.exampleName(), example);
+
+        ApiResponse apiResponse = responses.computeIfAbsent(responseCode, key -> new ApiResponse());
+        apiResponse.setDescription((apiResponse.getDescription() == null ? "" : apiResponse.getDescription() + "<br>") + error.description());
+        apiResponse.setContent(new Content().addMediaType("application/json", mediaType));
     }
 }
