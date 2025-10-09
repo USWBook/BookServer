@@ -18,11 +18,11 @@ public class RsData<T> {
   private T data;
 
   public static <T> RsData<T> of(String code, String message) {
-    return RsData.of(code, message, null);
+    return new RsData<>(code, message, null);
   }
 
   public static <T> RsData<T> of(String code, String message, T data) {
-    return RsData.of(code, message, data);
+    return new RsData<>(code, message, data);
   }
 
   @JsonIgnore
