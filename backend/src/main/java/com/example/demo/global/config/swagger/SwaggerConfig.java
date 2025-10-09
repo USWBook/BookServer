@@ -1,5 +1,6 @@
 package com.example.demo.global.config.swagger;
 
+import com.example.demo.global.annotation.swagger.*;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -8,9 +9,6 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.example.demo.global.annotation.swagger.ApiErrorResponse;
-import com.example.demo.global.annotation.swagger.ApiErrorResponses;
-import com.example.demo.global.annotation.swagger.ApiSuccessResponse;
 import com.example.demo.global.response.RsData;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.examples.Example;
@@ -68,6 +66,16 @@ public class SwaggerConfig {
                 Arrays.stream(errorResponses.value())
                         .forEach(error -> handleErrorResponse(operation, error));
             }
+
+            ApiUnauthorizedResponse unauthorized = handlerMethod.getMethodAnnotation(ApiUnauthorizedResponse.class);
+            ApiForbiddenResponse forbidden = handlerMethod.getMethodAnnotation(ApiForbiddenResponse.class);
+
+            if (unauthorized != null) {
+                handleUnauthorizedResponse(operation);
+            }
+            if (forbidden != null) {
+                handleForbiddenResponse(operation);
+            }
             return operation;
         };
     }
@@ -99,5 +107,33 @@ public class SwaggerConfig {
         ApiResponse apiResponse = responses.computeIfAbsent(responseCode, key -> new ApiResponse());
         apiResponse.setDescription((apiResponse.getDescription() == null ? "" : apiResponse.getDescription() + "<br>") + error.description());
         apiResponse.setContent(new Content().addMediaType("application/json", mediaType));
+    }
+
+    private void handleUnauthorizedResponse(Operation operation) {
+        ApiResponses responses = operation.getResponses();
+
+        ApiResponse apiResponse = new ApiResponse()
+                .description("인증 실패 (로그인 필요)")
+                .content(new Content().addMediaType("application/json",
+                        new MediaType()
+                                .schema(new Schema<>().$ref("#/components/schemas/RsData"))
+                                .example("{\"code\": \"401\", \"message\": \"로그인 해야합니다.\", \"data\": null}")
+                ));
+
+        responses.addApiResponse("401", apiResponse);
+    }
+
+    private void handleForbiddenResponse(Operation operation) {
+        ApiResponses responses = operation.getResponses();
+
+        ApiResponse apiResponse = new ApiResponse()
+                .description("접근 권한 없음")
+                .content(new Content().addMediaType("application/json",
+                        new MediaType()
+                                .schema(new Schema<>().$ref("#/components/schemas/RsData"))
+                                .example("{\"code\": \"403\", \"message\": \"접근 권한이 없습니다.\", \"data\": null}")
+                ));
+
+        responses.addApiResponse("403", apiResponse);
     }
 }

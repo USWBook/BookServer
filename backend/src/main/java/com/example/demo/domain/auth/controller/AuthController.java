@@ -5,6 +5,8 @@ import com.example.demo.domain.auth.dto.request.ResetPasswordRequest;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
 import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.auth.service.AuthService;
+import com.example.demo.global.annotation.swagger.ApiForbiddenResponse;
+import com.example.demo.global.annotation.swagger.ApiUnauthorizedResponse;
 import com.example.demo.global.security.userdetails.CustomUserDetails;
 import com.example.demo.global.jwt.service.TokenService;
 import com.example.demo.global.response.RsData;
@@ -93,6 +95,8 @@ public class AuthController implements AuthControllerDoc{
     @ApiResponse(responseCode = "200", description = "접근 성공")
     @ApiResponse(responseCode = "403", description = "접근 권한 없음 (ADMIN이 아님)")
     @ApiResponse(responseCode = "401", description = "인증 실패: 로그인이 필요합니다.")
+    @ApiUnauthorizedResponse // 👈 로그인 필요 명시
+    @ApiForbiddenResponse    // 👈 권한 필요 명시
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin")
     public String adminOnly() {
