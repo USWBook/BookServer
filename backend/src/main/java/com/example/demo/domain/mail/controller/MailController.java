@@ -19,6 +19,14 @@ public class MailController {
 
     @Operation(summary = "인증코드 이메일 발송", description = "회원가입 또는 비밀번호 재설정을 위해 이메일로 인증 코드를 발송합니다.")
     @ApiSuccessResponse(description = "인증 코드가 성공적으로 발송되었습니다.")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "gmail api 쪽  실패",
+            exampleName = "APIFailure",
+            exampleValue = "{\"code\": \"400\", " +
+                    "\"message\": \"비동기 처리해서 요청이 들어오면 외부 api를 호출할 스레드를 할당한뒤 프론트에 바로 응답을 보내기에 외부 api에서 터진 예외를 프론트에 보낼 방법이 없으나 스웨거에 자꾸 400에러가 뜨는 이슈가 있어서 임시로 박아둠. 원래는 못잡는 예외임\"" +
+                    ", \"data\": null}"
+    )
     @PostMapping("/email-verifications")
     public RsData<?> sendVerificationCode(@RequestParam("email") String email) {
         mailService.sendVerificationCode(email);
