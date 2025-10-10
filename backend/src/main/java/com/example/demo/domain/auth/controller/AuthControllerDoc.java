@@ -28,7 +28,12 @@ public interface AuthControllerDoc {
             },
             content = @Content(schema = @Schema(implementation = RsData.class)))
     @ApiErrorResponse(
-            responseCode = "400",
+            description = "유효성 검사 실패",
+            exampleName = "ValidationFailure",
+            exampleValue = "{\"code\": \"400\", \"message\": \"비밀번호는 8자 이상, 16자 이하로 입력해주세요.\", \"data\": null}"
+    )
+    @ApiErrorResponse(
+            responseCode = "403",
             description = "현재 비밀번호 불일치 또는 유효성 검사 실패.",
             exampleName = "InvalidPassword",
             exampleValue = "{\"code\": \"403\", \"message\": \"비밀번호가 일치하지 않습니다.\", \"data\": null}"
@@ -50,6 +55,11 @@ public interface AuthControllerDoc {
             description = "모든 Token 이슈는 토큰이 만료되었다고 응답\n" + "로그아웃시 access 생명주기가 남아있다면 블랙리스트 만료되었으면 그냥 넘기고\n" + "refresh는 레디스에서 삭제 하도록 하였는데",
             exampleName = "JwtTokenExpired",
             exampleValue = "{\"code\": \"401\", \"message\": \"토큰이 만료되었습니다.\", \"data\": null}"
+    )
+    @ApiErrorResponse(
+            description = "유효성 검사 실패",
+            exampleName = "ValidationFailure",
+            exampleValue = "{\"code\": \"400\", \"message\": \"비밀번호는 8자 이상, 16자 이하로 입력해주세요.\", \"data\": null}"
     )
     @PostMapping("/logout")
     ResponseEntity<RsData<?>> logout();

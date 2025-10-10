@@ -43,8 +43,14 @@ public class PostController {
     @ApiSuccessResponse(
             responseCode = "201",
             description = "게시글 생성 성공",
-            message = "게시글이 성공적으로 생성되었습니다.",
-            dataType = UUID.class
+            message = "게시글이 성공적으로 생성되었습니다."
+            //dataType = UUID.class
+    )
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "예기치 못한 예외",
+            exampleName = "UnknownFound",
+            exampleValue = "{\"code\": \"400\", \"message\": \"예기치 못한 예외. 개발자 문의 바람\", \"data\": null}"
     )
     @ApiUnauthorizedResponse
     @PostMapping
@@ -89,6 +95,12 @@ public class PostController {
     })
 //    @ApiResponse(responseCode = "200", description = "조회 성공",
 //            content = @Content(schema = @Schema(implementation = PostListResponse.class)))
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "예기치 못한 예외",
+            exampleName = "UnknownFound",
+            exampleValue = "{\"code\": \"400\", \"message\": \"예기치 못한 예외. 개발자 문의 바람\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse
     @GetMapping
     public RsData<Page<PostListResponse>> searchPosts(
@@ -112,6 +124,12 @@ public class PostController {
             exampleName = "PostNotFound",
             exampleValue = "{\"code\": \"404\", \"message\": \"해당 게시글을 찾을 수 없습니다.\", \"data\": null}"
     )
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "예기치 못한 예외",
+            exampleName = "UnknownFound",
+            exampleValue = "{\"code\": \"400\", \"message\": \"예기치 못한 예외. 개발자 문의 바람\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse
     @GetMapping("/{id}")
     public PostDetailResponse getPost(@PathVariable UUID id) {
@@ -121,6 +139,12 @@ public class PostController {
 
     @Operation(summary = "게시글 삭제", description = "ID로 특정 게시글을 삭제합니다. (본인 또는 관리자만 가능)")
     @ApiSuccessResponse(description = "삭제 성공")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "예기치 못한 예외",
+            exampleName = "UnknownFound",
+            exampleValue = "{\"code\": \"400\", \"message\": \"예기치 못한 예외. 개발자 문의 바람\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse
     @DeleteMapping("/{id}")
     public RsData<Empty> deletePost(@PathVariable UUID id) {
@@ -130,6 +154,12 @@ public class PostController {
 
     @Operation(summary = "게시글 수정", description = "ID로 특정 게시글의 정보를 수정합니다. (본인만 가능)")
     @ApiSuccessResponse( description = "수정 성공")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "예기치 못한 예외",
+            exampleName = "UnknownFound",
+            exampleValue = "{\"code\": \"400\", \"message\": \"예기치 못한 예외. 개발자 문의 바람\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse
     @PatchMapping("/{id}")
     public RsData<Empty> updatePost(@PathVariable UUID id, @RequestBody @Valid PostUpdateRequest request) {
@@ -140,6 +170,12 @@ public class PostController {
     // 찜에선 로킹 해야함
     @Operation(summary = "게시글 찜하기", description = "특정 게시글을 찜 목록에 추가합니다.")
     @ApiSuccessResponse(description = "찜하기 성공")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "예기치 못한 예외",
+            exampleName = "UnknownFound",
+            exampleValue = "{\"code\": \"400\", \"message\": \"예기치 못한 예외. 개발자 문의 바람\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse
     @PostMapping("/{postId}/likes")
     public RsData<Empty> likePost(
@@ -151,6 +187,12 @@ public class PostController {
 
     @Operation(summary = "게시글 찜 해제", description = "특정 게시글을 찜 목록에서 제거합니다.")
     @ApiSuccessResponse(description = "찜 해제 성공")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "예기치 못한 예외",
+            exampleName = "UnknownFound",
+            exampleValue = "{\"code\": \"400\", \"message\": \"예기치 못한 예외. 개발자 문의 바람\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse
     @DeleteMapping("/{postId}/likes")
     public RsData<Empty> unlikePost(
@@ -167,6 +209,12 @@ public class PostController {
             message = "댓글달기 성공했습니다.",
             dataType = PostResponse.class
     )
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "예기치 못한 예외",
+            exampleName = "UnknownFound",
+            exampleValue = "{\"code\": \"400\", \"message\": \"예기치 못한 예외. 개발자 문의 바람\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse
     @PostMapping("/{postId}/comment")
     @ResponseStatus(HttpStatus.CREATED)
@@ -181,6 +229,12 @@ public class PostController {
 
     @Operation(summary = "댓글 수정")
     @ApiSuccessResponse(description = "댓글 수정 성공")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "예기치 못한 예외",
+            exampleName = "UnknownFound",
+            exampleValue = "{\"code\": \"400\", \"message\": \"예기치 못한 예외. 개발자 문의 바람\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse
     @PatchMapping("/{postId}/comment/{commentId}")
     public RsData<PostResponse> updateComment(
@@ -195,6 +249,12 @@ public class PostController {
 
     @Operation(summary = "댓글 삭제")
     @ApiSuccessResponse( description = "댓글 삭제 성공")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "예기치 못한 예외",
+            exampleName = "UnknownFound",
+            exampleValue = "{\"code\": \"400\", \"message\": \"예기치 못한 예외. 개발자 문의 바람\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse
     @DeleteMapping("/{postId}/comment/{commentId}")
     public RsData<PostResponse> deleteComment(

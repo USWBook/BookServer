@@ -28,6 +28,18 @@ public class UserController {
     @Operation(summary = "내 정보 조회", description = "현재 로그인한 사용자의 정보를 조회합니다.")
     @ApiSuccessResponse(description = "회원정보 조회 성공")
     @ApiErrorResponse(
+            responseCode = "400",
+            description = "예기치 못한 예외",
+            exampleName = "UnknownFound",
+            exampleValue = "{\"code\": \"400\", \"message\": \"예기치 못한 예외. 개발자 문의 바람\", \"data\": null}"
+    )
+    @ApiErrorResponse(
+            responseCode = "404",
+            description = "사용자를 차을 수 없음",
+            exampleName = "UserNotFound",
+            exampleValue = "{\"code\": \"404\", \"message\": \"사용자를 찾을 수 없습니다\", \"data\": null}"
+    )
+    @ApiErrorResponse(
             responseCode = "401",
             description = "인증 실패 (모든 토큰 이슈)",
             exampleName = "TokenExpired",
@@ -42,6 +54,11 @@ public class UserController {
 
     @Operation(summary = "내 정보 수정", description = "현재 로그인한 사용자의 이름, 학년, 학기, 전공을 수정합니다.")
     @ApiSuccessResponse(description = "회원정보 수정 성공")
+    @ApiErrorResponse(
+            description = "유효성 검사 실패",
+            exampleName = "ValidationFailure",
+            exampleValue = "{\"code\": \"400\", \"message\": \"학기 혹은 학년이 잘못 입력 되었습니다\", \"data\": null}"
+    )
     @ApiErrorResponse(
             responseCode = "401",
             description = "인증 실패 (모든 토큰 이슈)",
