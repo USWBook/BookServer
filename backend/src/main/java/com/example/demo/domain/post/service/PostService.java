@@ -9,6 +9,7 @@ import com.example.demo.domain.post.dto.request.PostSearchCondition;
 import com.example.demo.domain.post.dto.response.PostListResponse;
 import com.example.demo.domain.post.entity.PostComment;
 import com.example.demo.domain.post.exception.CommentNotFoundException;
+import com.example.demo.domain.post.exception.CommentNotInPostException;
 import com.example.demo.domain.post.repository.PostCommentRepository;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.post.dto.request.PostCreateRequest;
@@ -24,9 +25,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -82,21 +85,25 @@ public class PostService {
     }
 
     // 게시글 삭제
+    @PreAuthorize("isAuthenticated() and @postAuthorizer.hasAuthority(#postId, principal.id)")
     @Transactional
-    public void deletePost(UUID id) {
-        if (!postRepository.existsById(id)) {
+    public void deletePost(UUID postId) {
+        if (!postRepository.existsById(postId)) {
             throw new PostNotFoundException();
         }
-        postRepository.deleteById(id);
+        postRepository.deleteById(postId);
     }
 
     // 게시글 수정
+    @PreAuthorize("isAuthenticated() and @postAuthorizer.hasAuthority(#postId, principal.id)")
     @Transactional
-    public void updatePost(UUID postId, PostUpdateRequest request) {
+    public PostResponse updatePost(UUID postId, PostUpdateRequest request) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(PostNotFoundException::new);
 
         post.updatePost(request.title(), request.content(), request.postPrice());
+
+        return PostResponse.from(post);
     }
 
     // 찜하기
@@ -149,45 +156,60 @@ public class PostService {
         return PostResponse.from(updatedPost);
     }
 
-
      // 댓글 수정
+     @PreAuthorize("isAuthenticated() and @commentAuthorizer.hasAuthority(#commentId, principal.id)")
      @Transactional
-    public PostResponse updateComment(UUID postId, UUID commentId, UUID userId, CommentCreateRequest request) {
-        PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(CommentNotFoundException::new);
+    public PostResponse updateComment(UUID postId, UUID commentId, CommentCreateRequest request) {
+         PostComment comment = postCommentRepository.findByIdWithPost(commentId)
+                 .orElseThrow(CommentNotFoundException::new);
 
-        // 댓글 작성자 본인 또는 관리자만 수정 가능인데 어차피 프론트에서 막아둘거같아서 예외는 안만들어둠
-        if (!comment.getUser().getId().equals(userId)) {
-            //  throw new AccessDeniedException("댓글을 수정할 권한이 없습니다.");
-        }
+         if (!comment.getPost().getId().equals(postId)) {
+                throw new CommentNotInPostException();
+         }
 
-        comment.updateContent(request.content());
+         comment.updateContent(request.content());
 
-        // 댓글이 수정된 최신 Post 객체를 다시 조회 (Fetch Join 사용)
-        Post updatedPost = postRepository.findByIdWithCommentsAndUsers(postId)
-                .orElseThrow(PostNotFoundException::new);
-
-        return PostResponse.from(updatedPost);
+         return PostResponse.from(comment.getPost());
     }
 
     // 댓글 삭제
+    @PreAuthorize("isAuthenticated() and @commentAuthorizer.hasAuthority(#commentId, principal.id)")
     @Transactional
     public PostResponse deleteComment(UUID postId, UUID commentId, UUID userId) {
-        PostComment comment = postCommentRepository.findById(commentId)
+        PostComment comment = postCommentRepository.findByIdWithPost(commentId)
                 .orElseThrow(CommentNotFoundException::new);
 
-        // 댓글 작성자 본인 또는 관리자만 삭제 가능인데 어차피 프론트에서 막아둘거같아서 예외는 안만들어둠
-        if (!comment.getUser().getId().equals(userId)) {
-            // throw new AccessDeniedException("댓글을 삭제할 권한이 없습니다.");
+        if (!comment.getPost().getId().equals(postId)) {
+            throw new CommentNotInPostException();
         }
 
         postCommentRepository.delete(comment);
 
-        // 댓글이 삭제된 최신 Post 객체를 다시 조회 (Fetch Join 사용)
-        Post updatedPost = postRepository.findByIdWithCommentsAndUsers(postId)
+        return PostResponse.from(comment.getPost());
+    }
+
+    // 판매중으로 변경
+    @PreAuthorize("isAuthenticated() and @postAuthorizer.hasAuthority(#postId, principal.id)")
+    @Transactional
+    public void sellPost(UUID postId) {
+        Post post = postRepository.findById(postId)
                 .orElseThrow(PostNotFoundException::new);
 
-        return PostResponse.from(updatedPost);
+        post.markAsSell();
+
+        return;
+    }
+
+    // 판매완료로 변경
+    @PreAuthorize("isAuthenticated() and @postAuthorizer.hasAuthority(#postId, principal.id)")
+    @Transactional
+    public void soldPost(UUID postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(PostNotFoundException::new);
+
+        post.markAsSold();
+
+        return;
     }
 
 }

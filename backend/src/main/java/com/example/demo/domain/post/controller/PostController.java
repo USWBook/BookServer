@@ -89,6 +89,12 @@ public class PostController {
     })
 //    @ApiResponse(responseCode = "200", description = "조회 성공",
 //            content = @Content(schema = @Schema(implementation = PostListResponse.class)))
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "파라미터 타입이 잘못됨",
+            exampleName = "MethodArgumentTypeMismatch",
+            exampleValue = "{\"code\": \"400\", \"message\": \"id' 파라미터의 형식이 잘못되었습니다. 올바른 형식은 'UUID' 입니다.\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse
     @GetMapping
     public RsData<Page<PostListResponse>> searchPosts(
@@ -107,6 +113,12 @@ public class PostController {
             dataType = PostResponse.class
     )
     @ApiErrorResponse(
+            responseCode = "400",
+            description = "파라미터 타입이 잘못됨",
+            exampleName = "MethodArgumentTypeMismatch",
+            exampleValue = "{\"code\": \"400\", \"message\": \"id' 파라미터의 형식이 잘못되었습니다. 올바른 형식은 'UUID' 입니다.\", \"data\": null}"
+    )
+    @ApiErrorResponse(
             responseCode = "404",
             description = "존재하지 않는 게시글",
             exampleName = "PostNotFound",
@@ -121,6 +133,12 @@ public class PostController {
 
     @Operation(summary = "게시글 삭제", description = "ID로 특정 게시글을 삭제합니다. (본인 또는 관리자만 가능)")
     @ApiSuccessResponse(description = "삭제 성공")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "파라미터 타입이 잘못됨",
+            exampleName = "MethodArgumentTypeMismatch",
+            exampleValue = "{\"code\": \"400\", \"message\": \"id' 파라미터의 형식이 잘못되었습니다. 올바른 형식은 'UUID' 입니다.\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse
     @DeleteMapping("/{id}")
     public RsData<Empty> deletePost(@PathVariable UUID id) {
@@ -128,18 +146,31 @@ public class PostController {
         return RsData.of("200", "게시글이 성공적으로 삭제되었습니다.");
     }
 
+
     @Operation(summary = "게시글 수정", description = "ID로 특정 게시글의 정보를 수정합니다. (본인만 가능)")
     @ApiSuccessResponse( description = "수정 성공")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "파라미터 타입이 잘못됨",
+            exampleName = "MethodArgumentTypeMismatch",
+            exampleValue = "{\"code\": \"400\", \"message\": \"id' 파라미터의 형식이 잘못되었습니다. 올바른 형식은 'UUID' 입니다.\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse
     @PatchMapping("/{id}")
-    public RsData<Empty> updatePost(@PathVariable UUID id, @RequestBody @Valid PostUpdateRequest request) {
-        postService.updatePost(id, request);
-        return RsData.of("200", "게시글이 성공적으로 수정되었습니다.");
+    public PostDetailResponse updatePost(@PathVariable UUID id, @RequestBody @Valid PostUpdateRequest request) {
+        PostResponse post = postService.updatePost(id, request);
+        return PostDetailResponse.of("200", "게시글이 성공적으로 수정되었습니다.",post);
     }
 
-    // 찜에선 로킹 해야함
+    // 찜하기 로직 건들여봐야함
     @Operation(summary = "게시글 찜하기", description = "특정 게시글을 찜 목록에 추가합니다.")
     @ApiSuccessResponse(description = "찜하기 성공")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "파라미터 타입이 잘못됨",
+            exampleName = "MethodArgumentTypeMismatch",
+            exampleValue = "{\"code\": \"400\", \"message\": \"id' 파라미터의 형식이 잘못되었습니다. 올바른 형식은 'UUID' 입니다.\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse
     @PostMapping("/{postId}/likes")
     public RsData<Empty> likePost(
@@ -151,6 +182,12 @@ public class PostController {
 
     @Operation(summary = "게시글 찜 해제", description = "특정 게시글을 찜 목록에서 제거합니다.")
     @ApiSuccessResponse(description = "찜 해제 성공")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "파라미터 타입이 잘못됨",
+            exampleName = "MethodArgumentTypeMismatch",
+            exampleValue = "{\"code\": \"400\", \"message\": \"id' 파라미터의 형식이 잘못되었습니다. 올바른 형식은 'UUID' 입니다.\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse
     @DeleteMapping("/{postId}/likes")
     public RsData<Empty> unlikePost(
@@ -167,6 +204,12 @@ public class PostController {
             message = "댓글달기 성공했습니다.",
             dataType = PostResponse.class
     )
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "파라미터 타입이 잘못됨",
+            exampleName = "MethodArgumentTypeMismatch",
+            exampleValue = "{\"code\": \"400\", \"message\": \"id' 파라미터의 형식이 잘못되었습니다. 올바른 형식은 'UUID' 입니다.\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse
     @PostMapping("/{postId}/comment")
     @ResponseStatus(HttpStatus.CREATED)
@@ -181,20 +224,43 @@ public class PostController {
 
     @Operation(summary = "댓글 수정")
     @ApiSuccessResponse(description = "댓글 수정 성공")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "파라미터 타입이 잘못됨",
+            exampleName = "MethodArgumentTypeMismatch",
+            exampleValue = "{\"code\": \"400\", \"message\": \"id' 파라미터의 형식이 잘못되었습니다. 올바른 형식은 'UUID' 입니다.\", \"data\": null}"
+    )
+    @ApiErrorResponse(
+            responseCode = "409",
+            description = "댓글이 달려있는 게시물의 id가 아님",
+            exampleName = "CommentNotInPost",
+            exampleValue = "{\"code\": \"409\", \"message\": \"댓글이 해당 게시물에 없습니다.\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse
     @PatchMapping("/{postId}/comment/{commentId}")
     public RsData<PostResponse> updateComment(
             @PathVariable UUID postId,
             @PathVariable UUID commentId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid CommentCreateRequest request) {
 
-        PostResponse post = postService.updateComment(postId, commentId, userDetails.getId(), request);
+        PostResponse post = postService.updateComment(postId, commentId, request);
         return RsData.of("200", "댓글 수정 성공했습니다.", post);
     }
 
     @Operation(summary = "댓글 삭제")
     @ApiSuccessResponse( description = "댓글 삭제 성공")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "파라미터 타입이 잘못됨",
+            exampleName = "MethodArgumentTypeMismatch",
+            exampleValue = "{\"code\": \"400\", \"message\": \"id' 파라미터의 형식이 잘못되었습니다. 올바른 형식은 'UUID' 입니다.\", \"data\": null}"
+    )
+    @ApiErrorResponse(
+            responseCode = "409",
+            description = "댓글이 달려있는 게시물의 id가 아님",
+            exampleName = "CommentNotInPost",
+            exampleValue = "{\"code\": \"409\", \"message\": \"댓글이 해당 게시물에 없습니다.\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse
     @DeleteMapping("/{postId}/comment/{commentId}")
     public RsData<PostResponse> deleteComment(
@@ -204,6 +270,53 @@ public class PostController {
 
         PostResponse post = postService.deleteComment(postId, commentId, userDetails.getId());
         return RsData.of("200", "댓글 삭제 성공했습니다.", post);
+    }
+
+    // 판매상태 변경(판매중으로)
+    @Operation(summary = "판매상태 변경")
+    @ApiSuccessResponse( description = "판매중으로 변경")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "파라미터 타입이 잘못됨",
+            exampleName = "MethodArgumentTypeMismatch",
+            exampleValue = "{\"code\": \"400\", \"message\": \"id' 파라미터의 형식이 잘못되었습니다. 올바른 형식은 'UUID' 입니다.\", \"data\": null}"
+    )
+    @ApiErrorResponse(
+            responseCode = "404",
+            description = "존재하지 않는 게시글",
+            exampleName = "PostNotFound",
+            exampleValue = "{\"code\": \"404\", \"message\": \"해당 게시글을 찾을 수 없습니다.\", \"data\": null}"
+    )
+    @ApiUnauthorizedResponse
+    @PatchMapping("/{postId}/sell")
+    public RsData<?> sellPost(@PathVariable UUID postId){
+
+        postService.sellPost(postId);
+        return RsData.of("200", "판매중으로 변경했습니다.");
+    }
+
+    // 판매상태 변경(판매완료로)
+    @Operation(summary = "판매상태 변경")
+    @ApiSuccessResponse( description = "판매완료로 변경")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "파라미터 타입이 잘못됨",
+            exampleName = "MethodArgumentTypeMismatch",
+            exampleValue = "{\"code\": \"400\", \"message\": \"id' 파라미터의 형식이 잘못되었습니다. 올바른 형식은 'UUID' 입니다.\", \"data\": null}"
+    )
+    @ApiErrorResponse(
+            responseCode = "404",
+            description = "존재하지 않는 게시글",
+            exampleName = "PostNotFound",
+            exampleValue = "{\"code\": \"404\", \"message\": \"해당 게시글을 찾을 수 없습니다.\", \"data\": null}"
+    )
+    @ApiUnauthorizedResponse
+    @PatchMapping("/{postId}/sold")
+    public RsData<?> soldPost(@PathVariable UUID postId,
+                              @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails){
+
+        postService.soldPost(postId);
+        return RsData.of("200", "판매완료로 변경했습니다.");
     }
 
     // 아래 세개는 동적쿼리 안넣었을때 구현 해둔거임
