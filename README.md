@@ -8,7 +8,7 @@
 | :-----------------------------------------: | :-----------------------------------------: | :-----------------------------------------: | :-----------------------------------------: | 
 | <img src="https://github.com/sojunsik.png" width="200"> | <img src="https://github.com/hoehoeabi.png" width="200"> | <img src="https://github.com/loTOCol.png" width="200"> |  <img src="https://github.com/bbalabuya.png" width="200"> |
 |                 **PO**                 |                     **BE-L**                     |                     **BE**                     |                   **BE**                    |
-|   [GitHub](https://github.com/sojunsik)    |   [GitHub](https://github.com/okjunghyeon)    |   [GitHub](https://github.com/jsc5023)    |   [GitHub](https://github.com/thegreatkang)    |  
+|   [GitHub](https://github.com/sojunsik)    |   [GitHub](https://github.com/orgs/USWBook/people/hoehoeabi)    |   [GitHub](https://github.com/orgs/USWBook/people/loTOCol)    |   [GitHub](https://github.com/bbalabuya)    |  
 
 
 ---
