@@ -73,6 +73,12 @@
 - [API 명세서 바로가기](https://www.notion.so/2221c1ff21c681c3ab27ccf71e8dd41f?v=2221c1ff21c681559aba000c607e1704&p=2221c1ff21c68195973dfd4fb3b2f79d&pm=s)
 
 ### 플로우 차트
+<details>
+<summary>📊 클릭해서 플로우 차트 보기</summary>
+
+<img width="884" height="719" alt="image" src="https://github.com/user-attachments/assets/52a8fd05-9d27-458d-981a-c6ae208a3111" />
+
+</details>
 
 
 
