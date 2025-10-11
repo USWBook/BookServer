@@ -64,12 +64,7 @@
 ## 📄 추가 문서
 
 ### 🔗 ERD
-<details>
-  <summary>ERD 보기</summary>
-  
-![unihub](https://github.com/user-attachments/assets/632b7962-3dba-4d7a-b76b-76b3720f1c58)
 
-</details>
 
 ### 📜 프로젝트 기획서
 - [프로젝트 기획서 바로가기](https://www.notion.so/2221c1ff21c681c3ab27ccf71e8dd41f?v=2221c1ff21c681559aba000c607e1704&p=2221c1ff21c68132b8c9f2cc4f00957a&pm=s)
