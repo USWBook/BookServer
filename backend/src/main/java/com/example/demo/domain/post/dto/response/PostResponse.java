@@ -31,6 +31,8 @@ public record PostResponse(
         Integer likeCount,
         @Schema(description = "전공명", example = "컴퓨터 공학과")
         String majorName,
+        @Schema(description = "판매상태", example = "판매중")
+        String PostStatus,
         @Schema(description = "댓글들")
         List<CommentResponse> comments
 ) {
@@ -51,6 +53,7 @@ public record PostResponse(
                 post.getCreatedAt(),
                 post.getLikeCount(),
                 post.getMajor().getName(),
+                post.getStatus().getValue(),
                 commentResponses
         );
     }
