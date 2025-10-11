@@ -19,9 +19,11 @@ import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -29,6 +31,23 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
     private final HttpServletRequest request;
+
+    /**
+     * @PathVariable 값의 타입이 일치하지 않을 경우 발생하는 예외를 처리합니다.
+     * ex) /api/posts/{postId} 에서 postId가 UUID 형식이 아닐 경우
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST) // 400 에러로 응답 상태 코드 설정
+    public ResponseEntity<ErrorResponse> handleTypeMismatchException(MethodArgumentTypeMismatchException ex) {
+        String message = String.format("'%s' 파라미터의 형식이 잘못되었습니다. 올바른 형식은 '%s' 입니다.",
+                ex.getName(), Objects.requireNonNull(ex.getRequiredType()).getSimpleName());
+
+        ErrorResponse errorResponse = new ErrorResponse("400", message);
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    // 간단한 에러 응답 DTO
+    public record ErrorResponse(String code, String message) {}
 
     /**
      * @CookieValue 어노테이션에서 required=true로 설정된 쿠키가 없을 때 발생하는 예외를 처리합니다.
