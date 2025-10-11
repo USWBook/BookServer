@@ -30,7 +30,7 @@ public record PostListResponse(
                 commentCount,
                 grade != null ? grade.getValue() : null,      // Enum을 숫자로 변환
                 semester != null ? semester.getValue() : null, // Enum을 숫자로 변환
-                status != null ? status.name() : null,
+                status != null ? status.getValue() : null,
                 createdAt
         );
     }

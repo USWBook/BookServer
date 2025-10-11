@@ -83,7 +83,7 @@ class PostServiceTest {
                 .courseName("강의")
                 .grade(Grade.GRADE_1)
                 .semester(Semester.SEMESTER_1)
-                .status(PostStatus.판매중)
+                .status(PostStatus.PostStatus_1)
                 .likeCount(0)
                 .seller(user)
                 .major(major)
