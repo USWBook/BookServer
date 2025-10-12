@@ -105,4 +105,9 @@ public class Post {
     public void decreaseLike() {
         this.likeCount = Math.max(0, this.likeCount - 1);
     }
+
+    public void addComment(PostComment comment) {
+        this.comments.add(comment);
+    }
+
 }
