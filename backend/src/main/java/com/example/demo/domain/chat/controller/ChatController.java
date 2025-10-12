@@ -14,8 +14,12 @@
         import com.example.demo.domain.report.repository.UserReportRepository;
         import com.example.demo.domain.user.entity.User;
         import com.example.demo.domain.user.repository.UserRepository;
+        import com.example.demo.global.annotation.swagger.ApiErrorResponse;
+        import com.example.demo.global.annotation.swagger.ApiSuccessResponse;
         import com.example.demo.global.response.RsData;
         import com.example.demo.global.response.Empty;
+        import io.swagger.v3.oas.annotations.Operation;
+        import io.swagger.v3.oas.annotations.tags.Tag;
         import jakarta.validation.Valid;
         import org.springframework.security.core.Authentication;
         import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,7 +29,6 @@
         import org.springframework.web.bind.annotation.*;
         import org.springframework.web.multipart.MultipartFile;
         import com.example.demo.domain.chat.dto.response.LeaveChatRoomResponseDto;
-        import com.example.demo.domain.chat.dto.response.DeleteChatRoomResponseDto;
 
         import lombok.RequiredArgsConstructor;
         import org.springframework.web.bind.annotation.*;
@@ -41,6 +44,7 @@
         import org.slf4j.Logger;
         import org.slf4j.LoggerFactory;
 
+        @Tag(name = "Chat", description = "채팅 관련 API")
         @RestController
         @RequiredArgsConstructor
         @CrossOrigin(origins="*")
@@ -55,6 +59,11 @@
 
 
             //채팅방 생성
+            @Operation(summary = "채팅방 생성", description = "새로운 채팅방 생성 또는 기존 채팅방을 반환합니다.")
+            @ApiSuccessResponse(description = "채팅방 생성 성공",
+                                message = "채팅 요청 완료",
+                                dataType = CreateChatRoomResponseDto.class
+            )
             @PostMapping("/room")
             public RsData<CreateChatRoomResponseDto> requestChatRoom(@RequestBody CreateChatRoomRequestDto dto) {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -88,6 +97,17 @@
             }
 
             // 채팅방 입장(권한 체크)
+            @Operation(summary = "채팅방 입장", description = "권한 체크 후 채팅방 정보를 조회합니다.")
+            @ApiSuccessResponse(description = "채팅방 입장 성공",
+                                message = "채팅방 입장 성공",
+                                dataType = EnterChatRoomResponseDto.Data.class
+            )
+            @ApiErrorResponse(
+                    responseCode = "403",
+                    description = "채팅방 입장 권한 없음",
+                    exampleName = "ForbiddenAccess",
+                    exampleValue = "{\"code\": \"403\", \"message\": \"채팅방 입장 권한이 없습니다.\", \"data\": null}"
+            )
             @GetMapping("/room/{roomId}")
             public RsData<EnterChatRoomResponseDto.Data> enterChatRoom(
                     @PathVariable UUID roomId,
@@ -122,6 +142,11 @@
             }
 
             // 내 채팅방 목록 조회
+            @Operation(summary = "내 채팅방 목록 조회", description = "내가 참여중인 채팅방들의 목록을 조회합니다.")
+            @ApiSuccessResponse(description = "채팅방 목록 조회 성공",
+                                message = "나의 채팅방 목록 조회 성공",
+                                dataType = List.class
+            )
             @GetMapping("/rooms")
             public RsData<List<ListChatRoomsResponseDto.ChatRoomDto>> listRooms(Authentication authentication) {
                 if (authentication == null || authentication.getName() == null) {
@@ -164,6 +189,14 @@
 
 
             // 채팅 메시지 수신
+            @Operation(summary = "채팅 메시지 수신", description = "특정 채팅방의 메시지를 조회합니다.")
+            @ApiSuccessResponse(description = "채팅 메시지 목록 조회 성공",
+                                message = "채팅 메시지 목록 조회 성공", dataType =
+                                ReceiveMessageResponseDto.class)
+            @ApiErrorResponse(responseCode = "403",
+                              description = "채팅방 입장 권한 없음",
+                              exampleName = "ForbiddenAccess",
+                              exampleValue = "{\"code\":\"403\",\"message\":\"채팅방 입장 권한이 없습니다.\",\"data\":null}")
             @GetMapping("/rooms/{roomId}/messages")
             public RsData<ReceiveMessageResponseDto> getMessages(@PathVariable UUID roomId, Authentication authentication) {
                 ChatRoom room = chatRoomService.findByRoomId(roomId);
@@ -199,16 +232,20 @@
 
 
             // 채팅 메시지 송신
-                @PostMapping("/rooms/messages")
-                public RsData<SendMessageResponseDto.Data> sendChatMessage(
-                        @RequestBody SendMessageRequestDto request,
-                        Authentication authentication) {
+            @Operation(summary = "채팅 메시지 전송", description = "채팅 메시지를 전송합니다.")
+            @ApiSuccessResponse(description = "채팅 메시지 전송 완료",
+                                message = "채팅 메시지 전송 완료",
+                                dataType = SendMessageResponseDto.Data.class
+            )
+            @PostMapping("/rooms/messages")
+            public RsData<SendMessageResponseDto.Data> sendChatMessage(
+                    @RequestBody SendMessageRequestDto request,
+                    Authentication authentication) {
 
                     // 기존 UUID 변환 코드 대신 이메일로 사용자 조회 후 UUID 추출
-                    String userEmail = authentication.getName();
+                String userEmail = authentication.getName();
 
-                    User senderUser = userRepository.findByEmail(userEmail)
-                        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+                User senderUser = userRepository.findByEmail(userEmail).orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
                 UUID senderId = senderUser.getId();
 
@@ -227,6 +264,11 @@
             }
 
             // 이미지 전송
+            @Operation(summary = "이미지 메시지 전송", description = "이미지 파일을 전송합니다.")
+            @ApiSuccessResponse(description = "이미지 메시지 전송 완료",
+                                message = "이미지 메시지 전송 완료",
+                                dataType = SendImageResponseDto.Data.class
+            )
             @PostMapping("/rooms/images")
             public RsData<SendImageResponseDto.Data> sendImageMessage(
                     @ModelAttribute SendImageRequestDto request,
@@ -251,6 +293,11 @@
             }
 
             //유저 신고
+            @Operation(summary = "유저 신고", description = "특정 채팅방 내 유저를 신고합니다.")
+            @ApiSuccessResponse(description = "신고 완료",
+                                message = "신고 완료",
+                                dataType = ReportUserResponseDto.class
+            )
             @PostMapping("/{roomId}/report")
             public RsData<ReportUserResponseDto> reportUser(
                     @PathVariable UUID roomId,
@@ -276,6 +323,11 @@
             }
 
             // 채팅방 나가기 (논리 삭제)
+            @Operation(summary = "채팅방 나가기", description = "채팅방에서 나가고, 남은 인원수를 반환합니다.")
+            @ApiSuccessResponse(description = "채팅방 나가기 완료",
+                                message = "채팅방 나가기 완료",
+                                dataType = LeaveChatRoomResponseDto.class
+            )
             @PostMapping("/rooms/leave")
             public RsData<LeaveChatRoomResponseDto> leaveChatRoom(
                     @RequestBody LeaveChatRoomRequestDto request,
@@ -295,6 +347,11 @@
             }
 
             // 채팅방 삭제
+            @Operation(summary = "채팅방 삭제", description = "채팅방을 완전 삭제 처리합니다.")
+            @ApiSuccessResponse(description = "채팅방 완전 삭제 처리 완료",
+                                message = "채팅방 완전 삭제 처리 완료",
+                                dataType = Empty.class
+            )
             @DeleteMapping("/rooms/remove")
             public RsData<Empty> removeChatRoom(
                     @RequestBody LeaveChatRoomRequestDto request,

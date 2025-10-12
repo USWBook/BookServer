@@ -39,6 +39,11 @@ public class AuthController implements AuthControllerDoc{
     @Operation(summary = "회원가입", description = "새로운 사용자를 등록합니다.")
     @ApiSuccessResponse(description = "회원가입 성공")
     @ApiErrorResponse(
+            description = "유효성 검사 실패",
+            exampleName = "ValidationFailure",
+            exampleValue = "{\"code\": \"400\", \"message\": \"비밀번호는 8자 이상, 16자 이하로 입력해주세요.\", \"data\": null}"
+    )
+    @ApiErrorResponse(
             responseCode = "409",
             description = "이미 회원가입 되어 있는 이메일로 회원가입 시도",
             exampleName = "ExistEmailSignUp",
@@ -110,7 +115,12 @@ public class AuthController implements AuthControllerDoc{
     @Operation(summary = "비밀번호 변경", description = "현재 로그인한 사용자의 비밀번호를 변경합니다.")
     @ApiSuccessResponse(description = "비밀번호 변경 성공")
     @ApiErrorResponse(
-            responseCode = "400",
+            description = "유효성 검사 실패",
+            exampleName = "ValidationFailure",
+            exampleValue = "{\"code\": \"400\", \"message\": \"비밀번호는 8자 이상, 16자 이하로 입력해주세요.\", \"data\": null}"
+    )
+    @ApiErrorResponse(
+            responseCode = "403",
             description = "현재 비밀번호 불일치 또는 유효성 검사 실패.",
             exampleName = "InvalidPassword",
             exampleValue = "{\"code\": \"403\", \"message\": \"비밀번호가 일치하지 않습니다.\", \"data\": null}"
@@ -126,6 +136,11 @@ public class AuthController implements AuthControllerDoc{
 
     @Operation(summary = "비밀번호 초기화", description = "이메일 인증 후 새 비밀번호로 재설정합니다.")
     @ApiSuccessResponse( description = "비밀번호 초기화 성공")
+    @ApiErrorResponse(
+            description = "유효성 검사 실패",
+            exampleName = "ValidationFailure",
+            exampleValue = "{\"code\": \"400\", \"message\": \"비밀번호는 8자 이상, 16자 이하로 입력해주세요.\", \"data\": null}"
+    )
     @ApiErrorResponse(
             responseCode = "403",
             description = "이메일 인증을 완료 하십시오.",
@@ -150,6 +165,12 @@ public class AuthController implements AuthControllerDoc{
 
     @Operation(summary = "관리자 전용 API 테스트", description = "ADMIN 권한을 가진 사용자만 접근 가능한 테스트용 API입니다.")
     @ApiSuccessResponse( description = " 관리자 권한으로 접근 성공")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "예기치 못한 예외",
+            exampleName = "UnknownFound",
+            exampleValue = "{\"code\": \"400\", \"message\": \"예기치 못한 예외. 개발자 문의 바람\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse //  로그인 필요 명시 401
     @ApiForbiddenResponse    //  권한 필요 명시 403
     @PreAuthorize("hasRole('ADMIN')")
