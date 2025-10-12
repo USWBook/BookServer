@@ -265,10 +265,9 @@ public class PostController {
     @DeleteMapping("/{postId}/comment/{commentId}")
     public RsData<PostResponse> deleteComment(
             @PathVariable UUID postId,
-            @PathVariable UUID commentId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @PathVariable UUID commentId) {
 
-        PostResponse post = postService.deleteComment(postId, commentId, userDetails.getId());
+        PostResponse post = postService.deleteComment(postId, commentId);
         return RsData.of("200", "댓글 삭제 성공했습니다.", post);
     }
 
