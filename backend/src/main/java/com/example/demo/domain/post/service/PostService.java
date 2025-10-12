@@ -147,13 +147,10 @@ public class PostService {
 
         PostComment comment = new PostComment(post,user,request.content());
 
+        post.addComment(comment);
         postCommentRepository.save(comment);
 
-        Post updatedPost = postRepository.findByIdWithCommentsAndUsers(postId)
-                .orElseThrow(PostNotFoundException::new);
-
-
-        return PostResponse.from(updatedPost);
+        return PostResponse.from(post);
     }
 
      // 댓글 수정
@@ -175,7 +172,7 @@ public class PostService {
     // 댓글 삭제
     @PreAuthorize("isAuthenticated() and @commentAuthorizer.hasAuthority(#commentId, principal.id)")
     @Transactional
-    public PostResponse deleteComment(UUID postId, UUID commentId, UUID userId) {
+    public PostResponse deleteComment(UUID postId, UUID commentId) {
         PostComment comment = postCommentRepository.findByIdWithPost(commentId)
                 .orElseThrow(CommentNotFoundException::new);
 
