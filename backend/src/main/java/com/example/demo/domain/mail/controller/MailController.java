@@ -1,5 +1,7 @@
 package com.example.demo.domain.mail.controller;
 
+import com.example.demo.domain.mail.dto.MailStatusResponse;
+import com.example.demo.domain.mail.entity.MailStatus;
 import com.example.demo.domain.mail.service.MailService;
 import com.example.demo.global.annotation.swagger.ApiErrorResponse;
 import com.example.demo.global.annotation.swagger.ApiSuccessResponse;
@@ -29,8 +31,40 @@ public class MailController {
     )
     @PostMapping("/email-verifications")
     public RsData<?> sendVerificationCode(@RequestParam("email") String email) {
-        mailService.sendVerificationCode(email);
-        return RsData.of("202", "인증 코드 발송요청 성공했습니다.");
+        try {
+            mailService.sendVerificationCode(email);
+            return RsData.of("202", "인증 코드 발송요청 성공했습니다.");
+        } catch (Exception e) {
+            // MailService에서 동기적으로 발생할 수 있는 예외 처리
+            // (예: Redis 연결 실패 등)
+            return RsData.of("500", "인증 코드 발송 요청에 실패했습니다: " + e.getMessage());
+        }
+    }
+
+    @Operation(summary = "인증코드 이메일 발송 상태 확인", description = "이메일 전송은 비동기 스레드에서 처리하기에 상태추적하기위함")
+    @ApiSuccessResponse(description = "메일 발송 상태 조회. 전송요청 후 202 응답 받았으면 \n2초뒤 한번 1초뒤 한번 1초뒤 한번 이렇게 네번정도 요청하면 될듯\n" +
+            " PENDING:처리 중,\n" +
+            "    SUCCESS:성공\n," +
+            "    FAILED:실패"
+            ,message = "메일 발송 상태 조회 성공.", dataType = MailStatusResponse.class)
+    @ApiErrorResponse(
+            responseCode = "404",
+            description = "인증요청 한적 없음",
+            exampleName = "NotSendEmail",
+            exampleValue = "{\"code\": \"404\", " +
+                    "\"message\": \"인증 요청 기록을 찾을 수 없습니다.\"" +
+                    ", \"data\": null}"
+    )
+    @GetMapping("/status")
+    public RsData<MailStatusResponse> getMailStatus(@RequestParam String email) {
+        MailStatus status = mailService.getMailStatus(email);
+
+        if (status == null) {
+            // 아직 요청 기록이 없거나 만료된 경우
+            return RsData.of("404", "인증 요청 기록을 찾을 수 없습니다.");
+        }
+
+        return RsData.of("200", "메일 발송 상태 조회 성공", new MailStatusResponse(status.name()));
     }
 
     @Operation(summary = "인증코드 확인", description = "발송된 인증 코드를 사용하여 이메일 주소의 소유권을 확인합니다.")

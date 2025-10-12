@@ -1,5 +1,6 @@
 package com.example.demo.global.redis.repository;
 
+import com.example.demo.domain.mail.entity.MailStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -25,6 +26,7 @@ public class RedisTokenRepository {
     private static final String BLACKLIST_PREFIX = "blacklist:";
     private static final String EMAIL_AUTH_PREFIX = "auth:code:";
     private static final String VERIFIED_EMAIL_PREFIX = "verified:";
+    private static final String EMAIL_STATUS_PREFIX = "mail_status:";
 
     // 리프레시 토큰 저장
     public void saveRefreshToken(String email, String refreshToken, long expirationInMillis) {
@@ -102,5 +104,18 @@ public class RedisTokenRepository {
     // 레디스에 토큰이 존재하는지 검증
     public boolean existsRefreshToken(String email) {
         return Boolean.TRUE.equals(redisTemplate.hasKey(REFRESH_PREFIX + email));
+    }
+
+    // 메일 발송 상태 저장 (20분 유효시간)
+    public void saveMailStatus(String email, MailStatus status) {
+        String key = EMAIL_STATUS_PREFIX + email;
+        redisTemplate.opsForValue().set(key, status.name(), Duration.ofMinutes(20));
+    }
+
+    // 메일 발송 상태 조회
+    public MailStatus getMailStatus(String email) {
+        String key = EMAIL_STATUS_PREFIX + email;
+        String status = (String) redisTemplate.opsForValue().get(key);
+        return status != null ? MailStatus.valueOf(status) : null;
     }
 }

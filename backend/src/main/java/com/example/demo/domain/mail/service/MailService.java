@@ -1,5 +1,6 @@
 package com.example.demo.domain.mail.service;
 
+import com.example.demo.domain.mail.entity.MailStatus;
 import com.example.demo.domain.mail.exception.InvalidOrExpiredVerificationCodeException;
 import com.example.demo.domain.mail.exception.MessagingFailException;
 import com.example.demo.domain.mail.exception.VerificationCodeNotRequestedException;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.util.concurrent.CompletableFuture;
 
 
 @Service
@@ -21,14 +23,32 @@ public class MailService {
     private static final long AUTH_CODE_EXPIRATION_MILLIS = 1800000L; // 30분
 
     @Transactional
-    public void sendVerificationCode(String email) {
+    public void sendVerificationCode(String email) throws Exception {
         String code = createAuthCode();
         redisTokenRepository.saveVerificationCode(email, code, AUTH_CODE_EXPIRATION_MILLIS);
-        try {
-            emailSendingService.sendAuthCodeEmail(email, code);
-        } catch (Exception e) {
-            throw new MessagingFailException(e.getMessage());
-        }
+
+        // 1. 비동기 작업 호출 직후, 상태를 PENDING으로 저장
+        redisTokenRepository.saveMailStatus(email, MailStatus.PENDING);
+
+        CompletableFuture<Void> emailResult = emailSendingService.sendAuthCodeEmail(email, code);
+
+        emailResult.thenAccept(voidResult -> {
+            // 작업 성공 시, 상태를 SUCCESS로 업데이트
+            redisTokenRepository.saveMailStatus(email, MailStatus.SUCCESS);
+            System.out.println(email + " 주소로 메일 발송 성공!");
+        });
+
+        emailResult.exceptionally(ex -> {
+            //  작업 실패 시, 상태를 FAILED로 업데이트
+            redisTokenRepository.saveMailStatus(email, MailStatus.FAILED);
+            System.err.println(email + " 주소로 메일 발송 실패: " + ex.getMessage());
+            return null;
+        });
+    }
+
+    //  상태 조회를 위한  메서드
+    public MailStatus getMailStatus(String email) {
+        return redisTokenRepository.getMailStatus(email);
     }
 
     @Transactional
