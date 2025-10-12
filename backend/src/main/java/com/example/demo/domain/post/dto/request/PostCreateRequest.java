@@ -47,7 +47,7 @@ public record PostCreateRequest(
                 .postImage(request.postImage())
                 .content(request.content())
                 .seller(seller)
-                .status(PostStatus.판매중)
+                .status(PostStatus.PostStatus_1)
                 .major(major)
                 .build();
     }

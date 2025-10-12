@@ -52,6 +52,6 @@ public class PostComment {
 
     // 댓글 내용 수정 메서드
     public void updateContent(String content) {
-        this.content = content;
+        if(content != null) this.content = content;
     }
 }

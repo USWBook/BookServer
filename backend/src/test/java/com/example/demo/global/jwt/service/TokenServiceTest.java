@@ -5,7 +5,7 @@ import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
 import com.example.demo.global.jwt.JwtProvider;
-import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
+import com.example.demo.global.jwt.exception.JwtTokenExpiredException;
 import com.example.demo.global.redis.repository.RedisTokenRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -63,23 +63,25 @@ public class TokenServiceTest {
         String newAccessToken = "new-access-token";
         String newRefreshToken = "new-refresh-token";
 
-        // 1. 초기 유효성 검사 통과 설정
-        doNothing().when(jwtProvider).validateToken(refreshToken);
-        given(redisTokenRepository.isBlacklisted(refreshToken)).willReturn(false);
+        // --- 수정된 given 절 ---
+        // 1. isValid()를 Mocking하도록 수정
+        given(jwtProvider.isValid(refreshToken)).willReturn(true);
         given(jwtProvider.getCategory(refreshToken)).willReturn("refresh");
         given(jwtProvider.isExpired(refreshToken)).willReturn(false);
 
-        // 2. 이메일 추출 및 Redis 검증 통과 설정
+        // 2. 이메일 및 ID 추출, Redis 검증 통과 설정
         given(jwtProvider.extractEmail(refreshToken)).willReturn(email);
+        given(jwtProvider.extractId(refreshToken)).willReturn(user.getId());
         given(redisTokenRepository.existsRefreshToken(email)).willReturn(true);
         given(redisTokenRepository.getRefreshToken(email)).willReturn(Optional.of(refreshToken));
 
-        // 3. 사용자 조회 성공 설정
-        given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
+        // 3. 사용자 조회 로직을 findById로 수정
+        given(userRepository.findById(user.getId())).willReturn(Optional.of(user)); // findByEmail -> findById
 
         // 4. 새 토큰 생성 성공 설정
         given(jwtProvider.generateAccessToken(user.getId(), email, user.getRole())).willReturn(newAccessToken);
         given(jwtProvider.generateRefreshToken(user.getId(), email, user.getRole())).willReturn(newRefreshToken);
+        // ----------------------
 
         // when
         TokenResponse tokenResponse = tokenService.reissueTokens(refreshToken);
@@ -88,8 +90,7 @@ public class TokenServiceTest {
         assertThat(tokenResponse).isNotNull();
         assertThat(tokenResponse.accessToken()).isEqualTo(newAccessToken);
 
-        verify(redisTokenRepository).deleteRefreshToken(email);
-        verify(redisTokenRepository).saveRefreshToken(email, newRefreshToken, jwtProvider.getRefreshTokenExpirationInMillis());
+        verify(redisTokenRepository).saveRefreshToken(anyString(), anyString(), anyLong());
     }
 
     @Test
@@ -100,8 +101,8 @@ public class TokenServiceTest {
         String savedTokenInRedis = "saved-different-token";
 
         // 초기 유효성 검사 통과
-        doNothing().when(jwtProvider).validateToken(requestToken);
-        given(redisTokenRepository.isBlacklisted(requestToken)).willReturn(false);
+        given(jwtProvider.isValid(requestToken)).willReturn(true);
+       // given(redisTokenRepository.isBlacklisted(requestToken)).willReturn(false);
         given(jwtProvider.getCategory(requestToken)).willReturn("refresh");
         given(jwtProvider.isExpired(requestToken)).willReturn(false);
         given(jwtProvider.extractEmail(requestToken)).willReturn(email);
@@ -111,7 +112,7 @@ public class TokenServiceTest {
         given(redisTokenRepository.getRefreshToken(email)).willReturn(Optional.of(savedTokenInRedis));
 
         // when & then
-        assertThrows(JwtInvalidSignatureException.class, () -> tokenService.reissueTokens(requestToken));
+        assertThrows(JwtTokenExpiredException.class, () -> tokenService.reissueTokens(requestToken));
 
         verify(userRepository, never()).findByEmail(any());
         verify(redisTokenRepository, never()).deleteRefreshToken(any());

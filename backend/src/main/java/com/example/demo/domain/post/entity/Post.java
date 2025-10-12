@@ -84,14 +84,18 @@ public class Post {
 
     // 게시글 수정
     public void updatePost(String title, String content, Integer postPrice) {
-        this.title = title;
-        this.content = content;
-        this.postPrice = postPrice;
+        if(title != null) this.title = title;
+        if(content != null) this.content = content;
+        if(postPrice != null) this.postPrice = postPrice;
         this.modifiedAt = LocalDateTime.now();
     }
     // 게시글 상태를 '판매완료'로 변경
     public void markAsSold() {
-        this.status = PostStatus.판매완료;
+        this.status = PostStatus.PostStatus_2;
+    }
+    // 게시글 상태를 '판매중'으로 변경
+    public void markAsSell() {
+        this.status = PostStatus.PostStatus_1;
     }
     // 좋아요 수 증가
     public void increaseLike() {
@@ -101,4 +105,9 @@ public class Post {
     public void decreaseLike() {
         this.likeCount = Math.max(0, this.likeCount - 1);
     }
+
+    public void addComment(PostComment comment) {
+        this.comments.add(comment);
+    }
+
 }
