@@ -240,10 +240,9 @@ public class PostController {
     public RsData<PostResponse> updateComment(
             @PathVariable UUID postId,
             @PathVariable UUID commentId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid CommentCreateRequest request) {
 
-        PostResponse post = postService.updateComment(postId, commentId, userDetails.getId(), request);
+        PostResponse post = postService.updateComment(postId, commentId, request);
         return RsData.of("200", "댓글 수정 성공했습니다.", post);
     }
 
@@ -259,10 +258,9 @@ public class PostController {
     @DeleteMapping("/{postId}/comment/{commentId}")
     public RsData<PostResponse> deleteComment(
             @PathVariable UUID postId,
-            @PathVariable UUID commentId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @PathVariable UUID commentId) {
 
-        PostResponse post = postService.deleteComment(postId, commentId, userDetails.getId());
+        PostResponse post = postService.deleteComment(postId, commentId);
         return RsData.of("200", "댓글 삭제 성공했습니다.", post);
     }
 
