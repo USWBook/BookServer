@@ -2,6 +2,7 @@ package com.example.demo.domain.post.service;
 
 import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.major.repository.MajorRepository;
+import com.example.demo.domain.post.dto.request.CommentCreateRequest;
 import com.example.demo.domain.post.dto.request.PostCreateRequest;
 import com.example.demo.domain.post.dto.request.PostUpdateRequest;
 import com.example.demo.domain.post.dto.response.PostResponse;
@@ -9,6 +10,7 @@ import com.example.demo.domain.post.entity.Post;
 import com.example.demo.domain.post.entity.PostLike;
 import com.example.demo.domain.post.enums.PostStatus;
 import com.example.demo.domain.post.exception.PostNotFoundException;
+import com.example.demo.domain.post.repository.PostCommentRepository;
 import com.example.demo.domain.post.repository.PostLikeRepository;
 import com.example.demo.domain.post.repository.PostRepository;
 
@@ -49,9 +51,13 @@ class PostServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private PostCommentRepository postCommentRepository;
+
     private UUID postId;
     private UUID userId;
     private UUID majorId;
+
     private Post post;
     private User user;
     private Major major;
@@ -91,6 +97,7 @@ class PostServiceTest {
     }
 
     @Test
+    @DisplayName("게시글 생성 - 성공")
     void createPost_success() {
         PostCreateRequest request = new PostCreateRequest(
                 post.getTitle(),
@@ -106,7 +113,7 @@ class PostServiceTest {
         );
 
         given(majorRepository.findById(major.getId())).willReturn(Optional.of(major));
-        given(userRepository.findById(userId));
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(postRepository.save(any(Post.class))).willReturn(post);
 
         UUID result = postService.createPost(userId,request);
@@ -118,19 +125,20 @@ class PostServiceTest {
     @Test
     @DisplayName("게시글 단건 조회 - 성공")
     void getPostById_success() {
-        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(postRepository.findByIdWithCommentsAndUsers(postId)).willReturn(Optional.of(post));
 
         PostResponse result = postService.getPostById(postId);
 
         assertThat(result.id()).isEqualTo(postId);
         assertThat(result.title()).isEqualTo(post.getTitle());
-        then(postRepository).should().findById(postId);
+
+        then(postRepository).should().findByIdWithCommentsAndUsers(postId);
     }
 
     @Test
     @DisplayName("게시글 단건 조회 - 실패 (존재하지 않음)")
     void getPostById_fail_notFound() {
-        given(postRepository.findById(postId)).willReturn(Optional.empty());
+        given(postRepository.findByIdWithCommentsAndUsers(postId)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> postService.getPostById(postId))
                 .isInstanceOf(PostNotFoundException.class)
@@ -181,7 +189,7 @@ class PostServiceTest {
     @Test
     @DisplayName("찜하기 - 성공 (중복 아님)")
     void likePost_success() {
-        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(postRepository.findByIdWithPessimisticLock(postId)).willReturn(Optional.of(post));
         given(postLikeRepository.findByUserIdAndPost(userId, post)).willReturn(Optional.empty());
         given(postLikeRepository.save(any(PostLike.class))).willReturn(
                 PostLike.builder()
@@ -200,7 +208,7 @@ class PostServiceTest {
     void likePost_alreadyLiked() {
         PostLike alreadyLiked = PostLike.builder().userId(userId).post(post).build();
 
-        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(postRepository.findByIdWithPessimisticLock(postId)).willReturn(Optional.of(post));
         given(postLikeRepository.findByUserIdAndPost(userId, post)).willReturn(Optional.of(alreadyLiked));
 
         postService.likePost(postId, userId);
@@ -214,7 +222,7 @@ class PostServiceTest {
     void unlikePost_success() {
         PostLike like = PostLike.builder().post(post).userId(userId).build();
 
-        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(postRepository.findByIdWithPessimisticLock(postId)).willReturn(Optional.of(post));
         given(postLikeRepository.findByUserIdAndPost(userId, post)).willReturn(Optional.of(like));
 
         postService.unlikePost(postId, userId);
@@ -226,12 +234,29 @@ class PostServiceTest {
     @Test
     @DisplayName("찜 해제 - 실패 (찜하지 않은 상태)")
     void unlikePost_noLikeRecord() {
-        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(postRepository.findByIdWithPessimisticLock(postId)).willReturn(Optional.of(post));
         given(postLikeRepository.findByUserIdAndPost(userId, post)).willReturn(Optional.empty());
 
         postService.unlikePost(postId, userId);
 
         assertThat(post.getLikeCount()).isEqualTo(0);
         then(postLikeRepository).should(never()).delete(any());
+    }
+
+    @Test
+    @DisplayName("댓글달기 성공")
+    public void createComment_success() {
+        CommentCreateRequest request = CommentCreateRequest
+                .builder()
+                .content("댓글")
+                .build();
+
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+
+        postService.createComment(postId, userId, request);
+
+        assertThat(request.content()).isEqualTo(post.getComments().getFirst().getContent());
+
     }
 }
