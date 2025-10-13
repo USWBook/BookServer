@@ -1,6 +1,9 @@
 package com.example.demo.domain.user.entity;
 
 import com.example.demo.domain.major.entity.Major;
+import com.example.demo.domain.user.enums.Grade;
+import com.example.demo.domain.user.enums.Semester;
+import com.example.demo.domain.user.enums.UserStatus;
 import com.example.demo.domain.user.role.Role;
 import jakarta.persistence.*;
 import lombok.*;

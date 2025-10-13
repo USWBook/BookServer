@@ -1,7 +1,6 @@
 package com.example.demo.global.converter;
 
-import com.example.demo.domain.user.entity.Grade;
-import com.example.demo.domain.user.entity.Semester;
+import com.example.demo.domain.user.enums.Semester;
 import org.springframework.core.convert.converter.Converter;
 
 public class StringToSemesterConverter implements Converter<String, Semester> {
