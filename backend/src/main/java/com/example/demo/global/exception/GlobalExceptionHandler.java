@@ -1,6 +1,7 @@
 // global/exception/GlobalExceptionHandler.java
 package com.example.demo.global.exception;
 
+import com.example.demo.domain.mail.exception.TooManyMailRequestException;
 import com.example.demo.global.response.RsData;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,6 +17,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestCookieException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -25,12 +27,44 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 @Slf4j
 @RestControllerAdvice
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
     private final HttpServletRequest request;
+
+    // 많은 요청이 들어올경우
+    @ExceptionHandler(TooManyMailRequestException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS) //  429 상태 코드
+    public RsData<String> handleTooManyMailRequestException(TooManyMailRequestException ex) {
+        return RsData.of("429", ex.getMessage());
+    }
+
+    /**
+     * @RequestBody에 데이터가 없을 때 발생하는 예외를 처리합니다.
+     * 값이 하나도 없을떄 NULL일떄
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public RsData<String> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        log.error("HttpMessageNotReadableException: {}", ex.getMessage());
+        return RsData.of("400-1", "요청 본문(Request Body)이 비어있거나 형식이 잘못되었습니다.");
+    }
+
+    /**
+     * @RequestParam에 데이터가 없을 때 발생하는 예외를 처리합니다.
+     * 파라미터가 빠진경우
+     */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public RsData<String> handleMissingServletRequestParameterException(MissingServletRequestParameterException ex) {
+        log.error("MissingServletRequestParameterException: {}", ex.getMessage());
+        // 어떤 파라미터가 누락되었는지 동적으로 메시지를 생성해줍니다.
+        String message = String.format("필수 파라미터 '%s'가 누락되었습니다.", ex.getParameterName());
+        return RsData.of("400-2", message);
+    }
 
     /**
      * @PathVariable 값의 타입이 일치하지 않을 경우 발생하는 예외를 처리합니다.
