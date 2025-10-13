@@ -1,4 +1,4 @@
-package com.example.demo.domain.mail.entity;
+package com.example.demo.domain.mail.enums;
 
 public enum MailStatus {
     PENDING, // 처리 중

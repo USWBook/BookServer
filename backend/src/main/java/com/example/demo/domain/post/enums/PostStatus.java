@@ -1,7 +1,6 @@
 package com.example.demo.domain.post.enums;
 
 import com.example.demo.domain.post.exception.InvalidPostStatusException;
-import com.example.demo.domain.user.exception.InvalidGradeException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
