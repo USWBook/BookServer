@@ -1,15 +1,13 @@
 package com.example.demo.domain.post.authorizer;
 
 import com.example.demo.domain.major.entity.Major;
-import com.example.demo.domain.post.authorizer.CommentAuthorizer;
 import com.example.demo.domain.post.entity.Post;
 import com.example.demo.domain.post.entity.PostComment;
 import com.example.demo.domain.post.enums.PostStatus;
-import com.example.demo.domain.post.exception.CommentNotFoundException;
 import com.example.demo.domain.post.repository.PostCommentRepository;
 import com.example.demo.domain.post.repository.PostRepository;
-import com.example.demo.domain.user.entity.Grade;
-import com.example.demo.domain.user.entity.Semester;
+import com.example.demo.domain.user.enums.Grade;
+import com.example.demo.domain.user.enums.Semester;
 import com.example.demo.domain.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
