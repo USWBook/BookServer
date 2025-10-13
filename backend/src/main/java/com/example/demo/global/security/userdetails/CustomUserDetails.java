@@ -1,7 +1,7 @@
 package com.example.demo.global.security.userdetails;
 
 import com.example.demo.domain.user.entity.User;
-import com.example.demo.domain.user.entity.UserStatus;
+import com.example.demo.domain.user.enums.UserStatus;
 import com.example.demo.domain.user.role.Role;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
