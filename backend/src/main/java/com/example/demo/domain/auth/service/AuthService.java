@@ -4,16 +4,17 @@ import com.example.demo.domain.auth.dto.request.PasswordChangeRequest;
 import com.example.demo.domain.auth.dto.request.ResetPasswordRequest;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
 import com.example.demo.domain.auth.exception.*;
+import com.example.demo.domain.mail.enums.EmailAuthPurpose;
 import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.major.exception.MajorNotFoundException;
 import com.example.demo.domain.major.repository.MajorRepository;
-import com.example.demo.domain.user.entity.Grade;
-import com.example.demo.domain.user.entity.Semester;
+import com.example.demo.domain.user.enums.Grade;
+import com.example.demo.domain.user.enums.Semester;
 import com.example.demo.domain.user.entity.User;
-import com.example.demo.domain.user.entity.UserStatus;
+import com.example.demo.domain.user.enums.UserStatus;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
-import com.example.demo.global.redis.repository.RedisTokenRepository;
+import com.example.demo.global.redis.repository.RedisMailRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,8 +32,8 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final RedisTokenRepository redisTokenRepository;
     private final MajorRepository majorRepository;
+    private final RedisMailRepository redisMailRepository;
 
     @Transactional
     public void signUp(SignUpRequest request) {
@@ -43,7 +44,7 @@ public class AuthService {
         }
 
         // 이메일 인증 여부 확인
-        if (!redisTokenRepository.isVerifiedEmail(request.email())) {
+        if (!redisMailRepository.isVerifiedEmail(request.email(), EmailAuthPurpose.SIGN_UP)) {
             throw new EmailNotVerifiedException();
         }
 
@@ -65,7 +66,7 @@ public class AuthService {
         userRepository.save(user);
 
         // 인증 상태 삭제 (더 이상 필요 없으므로)
-        redisTokenRepository.deleteVerifiedEmail(request.email());
+        redisMailRepository.deleteVerifiedEmail(request.email(), EmailAuthPurpose.SIGN_UP);
     }
 
 
@@ -83,17 +84,20 @@ public class AuthService {
     }
 
     @Transactional
-    public void resetPassword(UUID id,@Valid ResetPasswordRequest request) {
+    public void resetPassword(@Valid ResetPasswordRequest request) {
 
         // 이메일 인증 여부 확인
-        if (!redisTokenRepository.isVerifiedEmail(request.email())) {
+        if (!redisMailRepository.isVerifiedEmail(request.email(), EmailAuthPurpose.PASSWORD_RESET)) {
             throw new EmailNotVerifiedException();
         }
 
-        User user = userRepository.findById(id)
+        User user = userRepository.findByEmail(request.email())
                 .orElseThrow(UserNotFoundException::new);
 
         user.changePassword(passwordEncoder.encode(request.newPassword()));
+
+        redisMailRepository.deleteVerifiedEmail(request.email(), EmailAuthPurpose.PASSWORD_RESET);
+
     }
 
     /**
