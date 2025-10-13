@@ -1,10 +1,10 @@
 package com.example.demo.domain.auth;
 
 import com.example.demo.domain.auth.dto.request.LoginRequest;
-import com.example.demo.domain.user.entity.Grade;
-import com.example.demo.domain.user.entity.Semester;
+import com.example.demo.domain.user.enums.Grade;
+import com.example.demo.domain.user.enums.Semester;
 import com.example.demo.domain.user.entity.User;
-import com.example.demo.domain.user.entity.UserStatus;
+import com.example.demo.domain.user.enums.UserStatus;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
 import com.fasterxml.jackson.databind.ObjectMapper;

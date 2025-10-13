@@ -1,9 +1,8 @@
 package com.example.demo.domain.post.dto.response;
 
 import com.example.demo.domain.post.enums.PostStatus;
-import com.example.demo.domain.user.entity.Grade;
-import com.example.demo.domain.user.entity.Semester;
-import lombok.Getter;
+import com.example.demo.domain.user.enums.Grade;
+import com.example.demo.domain.user.enums.Semester;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

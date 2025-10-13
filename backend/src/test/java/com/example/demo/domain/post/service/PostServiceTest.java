@@ -17,8 +17,8 @@ import com.example.demo.domain.post.repository.PostCommentRepository;
 import com.example.demo.domain.post.repository.PostLikeRepository;
 import com.example.demo.domain.post.repository.PostRepository;
 
-import com.example.demo.domain.user.entity.Grade;
-import com.example.demo.domain.user.entity.Semester;
+import com.example.demo.domain.user.enums.Grade;
+import com.example.demo.domain.user.enums.Semester;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;

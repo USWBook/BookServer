@@ -157,9 +157,8 @@ public class AuthController implements AuthControllerDoc{
     @ApiUnauthorizedResponse
     @PostMapping("/password")
     public RsData<?> resetPassword(
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid ResetPasswordRequest resetPasswordRequest){
-        authService.resetPassword(userDetails.getId(),resetPasswordRequest);
+        authService.resetPassword(resetPasswordRequest);
         return RsData.of("200", "비밀번호 초기화 완료되었습니다.");
     }
 

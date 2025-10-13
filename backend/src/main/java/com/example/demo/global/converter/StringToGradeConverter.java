@@ -1,6 +1,6 @@
 package com.example.demo.global.converter;
 
-import com.example.demo.domain.user.entity.Grade;
+import com.example.demo.domain.user.enums.Grade;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
