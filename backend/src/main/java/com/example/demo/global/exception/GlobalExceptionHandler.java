@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -133,6 +134,15 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public RsData<?> handleEntityNotFoundException(EntityNotFoundException e) {
         return RsData.of("404", "해당 데이터를 찾을 수 없습니다.");
+    }
+
+    /**
+     * 잘못된 URL 요청 시 발생하는 예외를 처리. (404 Not Found)
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public RsData<?> handleNoResourceFoundException(NoResourceFoundException ex) {
+        return RsData.of("404", "요청하신 리소스(URL)를 찾을 수 없습니다.");
     }
 
     /**
