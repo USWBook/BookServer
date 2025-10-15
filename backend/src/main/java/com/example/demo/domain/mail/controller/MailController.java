@@ -34,6 +34,12 @@ public class MailController {
                     "\"message\": \"(예: Redis 연결 실패 등)\"" +
                     ", \"data\": null}"
     )
+    @ApiErrorResponse(
+            responseCode = "429",
+            description = "1분내로 재요청 보낼경우",
+            exampleName = "TooManyMailRequest",
+            exampleValue = "{\"code\": \"429\", \"message\": \"인증 메일 요청은 1분에 한 번만 가능합니다.\", \"data\": null}"
+    )
     @PostMapping("/email-verifications")
     public RsData<?> sendVerificationCode(@RequestBody @Valid MailRequestOrVerifyDto mailRequestOrVerifyDto) {
         try {
@@ -57,6 +63,15 @@ public class MailController {
             exampleName = "NotSendEmail",
             exampleValue = "{\"code\": \"404\", " +
                     "\"message\": \"email + \" 인증코드를 요청하지 않음\"\"" +
+                    ", \"data\": null}"
+    )
+    @ApiErrorResponse(
+            responseCode = "400-1",
+            description = "이넘에 맞지 않은 파라미터가 들어옴",
+            exampleName = "EnumValidateFail",
+            exampleValue = "{\"code\": \"404\", " +
+                    "\"message\": 'purpose' 필드에 유효하지 않은 형식의 값이 입력되었습니다.\"\n" +
+                    "\"" +
                     ", \"data\": null}"
     )
     @GetMapping("/status")

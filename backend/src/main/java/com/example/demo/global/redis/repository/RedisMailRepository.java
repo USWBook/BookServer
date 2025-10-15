@@ -21,10 +21,10 @@ public class RedisMailRepository {
         this.redisTemplate = redisTemplate;
     }
 
-    private static final String EMAIL_AUTH_PREFIX = "auth:code:";
-    private static final String VERIFIED_EMAIL_PREFIX = "verified:";
-    private static final String EMAIL_STATUS_PREFIX = "mail_status:";
-    private static final String MAIL_REQUEST_LOCK_PREFIX = "mail_lock:";
+    private static final String EMAIL_AUTH_PREFIX = "auth:code:"; // 상태코드
+    private static final String VERIFIED_EMAIL_PREFIX = "verified:"; // 인증여부
+    private static final String EMAIL_STATUS_PREFIX = "mail_status:"; // 메일전송 상태
+    private static final String MAIL_REQUEST_LOCK_PREFIX = "mail_lock:"; // 메일 재전송 여부
 
     private String generateKey(String prefix, EmailAuthPurpose purpose, String email) {
         return prefix + purpose.name() + ":" + email;
