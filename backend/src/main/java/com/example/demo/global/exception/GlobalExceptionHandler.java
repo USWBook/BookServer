@@ -13,6 +13,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -106,14 +107,6 @@ public class GlobalExceptionHandler {
         return RsData.of("400-6", e.getMessage());
     }
 
-    /**
-     * 너무 잦은 요청 시 (커스텀 예외)
-     */
-    @ExceptionHandler(TooManyMailRequestException.class)
-    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
-    public RsData<?> handleTooManyMailRequestException(TooManyMailRequestException ex) {
-        return RsData.of("429", ex.getMessage());
-    }
 
     /**
      * 인증 실패 (로그인 필요)
@@ -140,6 +133,33 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public RsData<?> handleEntityNotFoundException(EntityNotFoundException e) {
         return RsData.of("404", "해당 데이터를 찾을 수 없습니다.");
+    }
+
+    /**
+     * 틀린 HTTP Method로 요청시
+     */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    public RsData<?> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException ex) {
+
+        // 지원하는 메서드 목록을 보기 좋게 문자열로 만듬. (예: "POST, PUT")
+        String supportedMethods = Arrays.toString(ex.getSupportedMethods());
+
+        String message = String.format("HTTP 메서드 '%s'는 지원하지 않습니다. 지원하는 메서드는 %s 입니다.",
+                ex.getMethod(), //  클라이언트가 요청한 메서드
+                supportedMethods //  서버가 지원하는 메서드 목록
+        );
+
+        return RsData.of("405", message);
+    }
+
+    /**
+     * 너무 잦은 요청 시 (커스텀 예외)
+     */
+    @ExceptionHandler(TooManyMailRequestException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public RsData<?> handleTooManyMailRequestException(TooManyMailRequestException ex) {
+        return RsData.of("429", ex.getMessage());
     }
 
     // =================================================================================================================
