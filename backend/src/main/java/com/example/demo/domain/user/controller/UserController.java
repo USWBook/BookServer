@@ -43,7 +43,7 @@ public class UserController {
             exampleValue = "{\"code\": \"401\", \"message\": \"토큰이 만료되었습니다.\", \"data\": null}"
     )
     @ApiUnauthorizedResponse // 401
-    @GetMapping("/infomation")
+    @GetMapping("/information")
     public RsData<UserInfoResponse> infomation(@AuthenticationPrincipal CustomUserDetails userDetails) {
         UserInfoResponse userInfoResponse = userService.getUserInfo(userDetails.getId());
         return RsData.of("200", "회원정보 조회 성공",userInfoResponse);
@@ -69,7 +69,7 @@ public class UserController {
             exampleValue = "{\"code\": \"404\", \"message\": \"존재하지 않는 전공입니다.\", \"data\": null}"
     )
     @ApiUnauthorizedResponse
-    @PatchMapping("/infomation")
+    @PatchMapping("/information")
     public RsData<UserInfoResponse> changeInfomation(@AuthenticationPrincipal CustomUserDetails userDetails,@RequestBody ChangeInfoRequest request) {
         UserInfoResponse userInfoResponse = userService.changeInformation(userDetails.getId(),request);
         return RsData.of("200", "회원정보 수정 성공",userInfoResponse);
