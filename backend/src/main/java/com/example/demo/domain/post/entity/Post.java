@@ -91,11 +91,11 @@ public class Post {
     }
     // 게시글 상태를 '판매완료'로 변경
     public void markAsSold() {
-        this.status = PostStatus.PostStatus_2;
+        this.status = PostStatus.SOLD;
     }
     // 게시글 상태를 '판매중'으로 변경
     public void markAsSell() {
-        this.status = PostStatus.PostStatus_1;
+        this.status = PostStatus.SELLING;
     }
     // 좋아요 수 증가
     public void increaseLike() {

@@ -33,7 +33,7 @@ public class GlobalExceptionHandler {
     // =================================================================================================================
 
     /**
-     * @Valid, @Validated 에 의한 유효성 검증 실패 시 (主に @RequestBody, @ModelAttribute)
+     * @Valid, @Validated 에 의한 유효성 검증 실패 시 ( @RequestBody, @ModelAttribute)
      */
     @ExceptionHandler(BindException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)

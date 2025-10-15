@@ -90,7 +90,7 @@ public class InitDataHelper {
                         .content(content)
                         .postPrice(price)
                         .likeCount(0)
-                        .status(PostStatus.PostStatus_1)
+                        .status(PostStatus.SELLING)
                         .build()
         );
     }

@@ -8,8 +8,8 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 public enum PostStatus {
-    PostStatus_1("판매중"),
-    PostStatus_2("판매완료");
+    SELLING("판매중"),
+    SOLD("판매완료");
 
     private final String value;
 
