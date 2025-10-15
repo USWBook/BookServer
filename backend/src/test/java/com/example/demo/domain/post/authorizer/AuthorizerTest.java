@@ -78,7 +78,7 @@ class AuthorizerTest {
                 .courseName("강의")
                 .grade(Grade.GRADE_1)
                 .semester(Semester.SEMESTER_1)
-                .status(PostStatus.PostStatus_1)
+                .status(PostStatus.SELLING)
                 .likeCount(0)
                 .seller(user)
                 .major(major)
