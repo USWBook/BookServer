@@ -230,7 +230,6 @@
             }
 
 
-
             // 채팅 메시지 송신
             @Operation(summary = "채팅 메시지 전송", description = "채팅 메시지를 전송합니다.")
             @ApiSuccessResponse(description = "채팅 메시지 전송 완료",
@@ -376,6 +375,34 @@
 
                 return RsData.of("200", "채팅방 완전 삭제 처리 완료", null);
             }
+
+            //메시지 읽음처리
+            @Operation(summary = "메시지 읽음 처리", description = "해당 채팅방에서 특정 시점까지 메시지 읽음 상태를 처리합니다.")
+            @ApiSuccessResponse(
+                    description = "메시지 읽음 처리 완료",
+                    message = "메시지 읽음 처리 완료",
+                    dataType = MarkMessagesReadResponseDto.class
+            )
+            @PostMapping("/rooms/messages/read")
+            public RsData<MarkMessagesReadResponseDto> markMessagesRead(
+                    @RequestBody MarkMessagesReadRequestDto dto,
+                    Authentication authentication) {
+                String email = authentication.getName();
+                User user = userRepository.findByEmail(email)
+                        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+                UUID userId = user.getId();
+
+                chatService.markMessagesRead(dto.roomId(), dto.lastReadAt(), userId);
+
+                MarkMessagesReadResponseDto response = new MarkMessagesReadResponseDto(
+                        dto.roomId(),
+                        dto.lastReadAt(),
+                        userId
+                );
+                return RsData.of("200", "메시지 읽음 처리 완료", response);
+            }
+
+
 
         }
 
