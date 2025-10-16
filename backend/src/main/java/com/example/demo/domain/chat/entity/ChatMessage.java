@@ -40,4 +40,18 @@ public class ChatMessage {
 
     @CreationTimestamp
     private LocalDateTime sentAt;
+
+    private int readCount; // 기본값 2 (1:1 채팅 기준)
+
+    @PrePersist
+    public void prePersist() {
+        sentAt = LocalDateTime.now();
+        readCount = 2; // 기본값
+        isRead = false;
+    }
+
+    public void decreaseReadCount() {
+        if (readCount > 0) readCount--;
+        if (readCount == 0) isRead = true;
+    }
 }

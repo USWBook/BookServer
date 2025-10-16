@@ -1,6 +1,8 @@
 package com.example.demo.domain.chat.controller;
 
+import com.example.demo.domain.chat.dto.request.MarkMessagesReadRequestDto;
 import com.example.demo.domain.chat.dto.request.SendMessageRequestDto;
+import com.example.demo.domain.chat.dto.response.MarkMessagesReadResponseDto;
 import com.example.demo.domain.chat.dto.response.SendMessageResponseDto;
 import com.example.demo.domain.chat.entity.ChatMessage;
 import com.example.demo.domain.chat.service.ChatService;
@@ -11,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
@@ -55,4 +58,23 @@ public class ChatWebSocketController {
         String destination = "/sub/chat/" + savedMessage.getChatRoomId();
         messagingTemplate.convertAndSend(destination, data);
     }
+
+    @MessageMapping("/chat.read")
+    public void readMessages(@Payload MarkMessagesReadRequestDto dto, Principal principal) {
+        CustomUserDetails customUserDetails = (CustomUserDetails)
+                ((UsernamePasswordAuthenticationToken) principal).getPrincipal();
+        UUID userId = customUserDetails.getId();
+
+        chatService.markMessagesRead(dto.roomId(), dto.lastReadAt(), userId);
+
+        MarkMessagesReadResponseDto response = new MarkMessagesReadResponseDto(
+                dto.roomId(),
+                dto.lastReadAt(),
+                userId
+        );
+
+        messagingTemplate.convertAndSend("/sub/chat/" + dto.roomId() + "/read", response);
+    }
+
+
 }

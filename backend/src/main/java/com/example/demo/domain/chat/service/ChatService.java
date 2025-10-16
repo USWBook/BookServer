@@ -20,6 +20,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,6 +54,7 @@ public class ChatService {
                 .sender(senderUser)
                 .content(dto.message())
                 .isRead(false)
+                .readCount(2) // 처음에 두명 모두 안 읽은 상태
                 .build();
 
         return chatMessageRepository.save(message);
@@ -111,7 +113,17 @@ public class ChatService {
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
     }
 
+    @Transactional
+    public void markMessagesRead(UUID roomId, LocalDateTime lastReadAt, UUID readerId) {
+        List<ChatMessage> messages =
+                chatMessageRepository.findByChatRoomIdAndSentAtLessThanEqual(roomId, lastReadAt);
 
-
-
+        for (ChatMessage m : messages) {
+            // 내가 보낸 메시지는 제외
+            if (!m.getSender().getId().equals(readerId) && m.getReadCount() > 0) {
+                m.decreaseReadCount();
+            }
+        }
+        chatMessageRepository.saveAll(messages);
+    }
 }

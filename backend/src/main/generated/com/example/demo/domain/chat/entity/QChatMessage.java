@@ -32,6 +32,8 @@ public class QChatMessage extends EntityPathBase<ChatMessage> {
 
     public final BooleanPath isRead = createBoolean("isRead");
 
+    public final NumberPath<Integer> readCount = createNumber("readCount", Integer.class);
+
     public final com.example.demo.domain.user.entity.QUser sender;
 
     public final DateTimePath<java.time.LocalDateTime> sentAt = createDateTime("sentAt", java.time.LocalDateTime.class);

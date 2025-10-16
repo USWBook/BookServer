@@ -113,7 +113,7 @@ public class AuthController implements AuthControllerDoc{
 
 
     @Operation(summary = "비밀번호 변경", description = "현재 로그인한 사용자의 비밀번호를 변경합니다.")
-    @ApiSuccessResponse(description = "비밀번호 변경 성공")
+    @ApiSuccessResponse(description = "비밀번호 변경 성공", message = "비밀번호를 변경하였습니다.")
     @ApiErrorResponse(
             description = "유효성 검사 실패",
             exampleName = "ValidationFailure",
@@ -123,7 +123,7 @@ public class AuthController implements AuthControllerDoc{
             responseCode = "403",
             description = "현재 비밀번호 불일치 또는 유효성 검사 실패.",
             exampleName = "InvalidPassword",
-            exampleValue = "{\"code\": \"403\", \"message\": \"비밀번호가 일치하지 않습니다.\", \"data\": null}"
+            exampleValue = "{\"code\": \"400\", \"message\": \"비밀번호가 일치하지 않습니다.\", \"data\": null}"
     )
     @ApiUnauthorizedResponse
     @PatchMapping("/password")
@@ -137,9 +137,10 @@ public class AuthController implements AuthControllerDoc{
     @Operation(summary = "비밀번호 초기화", description = "이메일 인증 후 새 비밀번호로 재설정합니다.")
     @ApiSuccessResponse( description = "비밀번호 초기화 성공")
     @ApiErrorResponse(
-            description = "유효성 검사 실패",
-            exampleName = "ValidationFailure",
-            exampleValue = "{\"code\": \"400\", \"message\": \"비밀번호는 8자 이상, 16자 이하로 입력해주세요.\", \"data\": null}"
+            responseCode = "400",
+            description = "현재 비밀번호 불일치 또는 유효성 검사 실패.",
+            exampleName = "InvalidPassword",
+            exampleValue = "{\"code\": \"400\", \"message\": \"비밀번호는 영문, 숫자, 특수문자를 포함한 8~20자여야 합니다.\", \"data\": null}"
     )
     @ApiErrorResponse(
             responseCode = "403",
@@ -147,7 +148,6 @@ public class AuthController implements AuthControllerDoc{
             exampleName = "EmailNotVerified",
             exampleValue = "{\"code\": \"403\", \"message\": \"이메일 인증을 완료 하십시오\", \"data\": null}"
     )
-
     @ApiErrorResponse(
             responseCode = "404",
             description = "존재하지 않는 사용자",
