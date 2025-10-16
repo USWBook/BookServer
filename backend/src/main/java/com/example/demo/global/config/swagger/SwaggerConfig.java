@@ -60,13 +60,17 @@ public class SwaggerConfig {
         return (operation, handlerMethod) -> {
             ApiSuccessResponse successResponse = handlerMethod.getMethodAnnotation(ApiSuccessResponse.class);
             ApiErrorResponses errorResponses = handlerMethod.getMethodAnnotation(ApiErrorResponses.class);
-
+            ApiErrorResponse singleErrorResponse = handlerMethod.getMethodAnnotation(ApiErrorResponse.class);
             if (successResponse != null) {
                 handleSuccessResponse(operation, successResponse);
             }
             if (errorResponses != null) {
                 Arrays.stream(errorResponses.value())
                         .forEach(error -> handleErrorResponse(operation, error));
+            }
+
+            if (singleErrorResponse != null) {
+                handleErrorResponse(operation, singleErrorResponse);
             }
 
             ApiUnauthorizedResponse unauthorized = handlerMethod.getMethodAnnotation(ApiUnauthorizedResponse.class);
@@ -78,6 +82,23 @@ public class SwaggerConfig {
             if (forbidden != null) {
                 handleForbiddenResponse(operation);
             }
+
+            // 400 Bad Request 응답을 제거
+            operation.getResponses().remove("400");
+
+            // 수동 선언된 400 응답만 다시 추가
+            if (errorResponses != null) {
+                Arrays.stream(errorResponses.value())
+                        .filter(error -> "400".equals(error.responseCode()))
+                        .forEach(error -> handleErrorResponse(operation, error));
+            }
+
+            // 단일형 400 응답이 있으면 추가
+            if (singleErrorResponse != null && "400".equals(singleErrorResponse.responseCode())) {
+                handleErrorResponse(operation, singleErrorResponse);
+            }
+
+
             return operation;
         };
     }

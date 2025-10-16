@@ -39,6 +39,13 @@ public class AuthController implements AuthControllerDoc{
     @Operation(summary = "회원가입", description = "새로운 사용자를 등록합니다.")
     @ApiSuccessResponse(description = "회원가입 성공")
     @ApiErrorResponse(
+            responseCode = "400",
+            description = "a",
+            exampleName = "ExistEmailSignUp",
+            exampleValue = "{\"code\": \"409\", \"message\": \"이미 회원가입 되어 있는 이메일 입니다.\", \"data\": null}"
+    )
+
+    @ApiErrorResponse(
             responseCode = "409",
             description = "이미 회원가입 되어 있는 이메일로 회원가입 시도",
             exampleName = "ExistEmailSignUp",
@@ -108,12 +115,12 @@ public class AuthController implements AuthControllerDoc{
 
 
     @Operation(summary = "비밀번호 변경", description = "현재 로그인한 사용자의 비밀번호를 변경합니다.")
-    @ApiSuccessResponse(description = "비밀번호 변경 성공")
+    @ApiSuccessResponse(description = "비밀번호 변경 성공", message = "비밀번호를 변경하였습니다.")
     @ApiErrorResponse(
             responseCode = "400",
             description = "현재 비밀번호 불일치 또는 유효성 검사 실패.",
             exampleName = "InvalidPassword",
-            exampleValue = "{\"code\": \"403\", \"message\": \"비밀번호가 일치하지 않습니다.\", \"data\": null}"
+            exampleValue = "{\"code\": \"400\", \"message\": \"비밀번호가 일치하지 않습니다.\", \"data\": null}"
     )
     @ApiUnauthorizedResponse
     @PatchMapping("/password")
@@ -127,12 +134,17 @@ public class AuthController implements AuthControllerDoc{
     @Operation(summary = "비밀번호 초기화", description = "이메일 인증 후 새 비밀번호로 재설정합니다.")
     @ApiSuccessResponse( description = "비밀번호 초기화 성공")
     @ApiErrorResponse(
+            responseCode = "400",
+            description = "현재 비밀번호 불일치 또는 유효성 검사 실패.",
+            exampleName = "InvalidPassword",
+            exampleValue = "{\"code\": \"400\", \"message\": \"비밀번호는 영문, 숫자, 특수문자를 포함한 8~20자여야 합니다.\", \"data\": null}"
+    )
+    @ApiErrorResponse(
             responseCode = "403",
             description = "이메일 인증을 완료 하십시오.",
             exampleName = "EmailNotVerified",
             exampleValue = "{\"code\": \"403\", \"message\": \"이메일 인증을 완료 하십시오\", \"data\": null}"
     )
-
     @ApiErrorResponse(
             responseCode = "404",
             description = "존재하지 않는 사용자",
@@ -149,7 +161,7 @@ public class AuthController implements AuthControllerDoc{
     }
 
     @Operation(summary = "관리자 전용 API 테스트", description = "ADMIN 권한을 가진 사용자만 접근 가능한 테스트용 API입니다.")
-    @ApiSuccessResponse( description = " 관리자 권한으로 접근 성공")
+    @ApiSuccessResponse( description = " 관리자 권한으로 접근 성공", message = "관리자 페이지 접근 성공")
     @ApiUnauthorizedResponse //  로그인 필요 명시 401
     @ApiForbiddenResponse    //  권한 필요 명시 403
     @PreAuthorize("hasRole('ADMIN')")

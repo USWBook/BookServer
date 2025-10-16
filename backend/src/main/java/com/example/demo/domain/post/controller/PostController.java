@@ -4,6 +4,7 @@ import com.example.demo.domain.post.dto.request.CommentCreateRequest;
 import com.example.demo.domain.post.dto.request.PostCreateRequest;
 import com.example.demo.domain.post.dto.request.PostSearchCondition;
 import com.example.demo.domain.post.dto.request.PostUpdateRequest;
+import com.example.demo.domain.post.dto.response.PagePostListResponseWrapper;
 import com.example.demo.domain.post.dto.response.PostDetailResponse;
 import com.example.demo.domain.post.dto.response.PostListResponse;
 import com.example.demo.domain.post.dto.response.PostResponse;
@@ -17,6 +18,8 @@ import com.example.demo.global.response.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -87,8 +90,12 @@ public class PostController {
             @Parameter(name = "size", description = "페이지당 게시물 수", example = "10"),
             @Parameter(name = "sort", description = "정렬 기준 (예: createdAt,desc)", example = "createdAt,desc")
     })
-//    @ApiResponse(responseCode = "200", description = "조회 성공",
-//            content = @Content(schema = @Schema(implementation = PostListResponse.class)))
+    @ApiResponse(responseCode = "200", description = "조회 성공",
+            content = @io.swagger.v3.oas.annotations.media.Content(
+                    mediaType = "application/json",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PagePostListResponseWrapper.class)
+            )
+    )
     @ApiUnauthorizedResponse
     @GetMapping
     public RsData<Page<PostListResponse>> searchPosts(
@@ -98,6 +105,7 @@ public class PostController {
         Page<PostListResponse> posts = postService.searchPosts(condition, pageable);
         return RsData.of("200", "게시글 목록 조회에 성공했습니다.", posts);
     }
+
 
 
     @Operation(summary = "게시글 단건 조회", description = "ID로 특정 게시글의 상세 정보를 조회합니다.")
