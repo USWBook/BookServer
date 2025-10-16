@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -39,7 +40,7 @@ class PostControllerTest {
     @Autowired private JwtProvider jwtProvider;
 
     // 🔥 RedisTemplate<Object> mocking해서 Redis 의존성 제거
-    @MockBean(name = "chatRedisTemplate")
+    //@MockBean(name = "chatRedisTemplate")
     private RedisTemplate<String, Object> redisTemplate;
 
     private User testUser;
@@ -74,16 +75,16 @@ class PostControllerTest {
                 .andExpect(jsonPath("$.code").value("201"))
                 .andExpect(jsonPath("$.message").value("게시글이 성공적으로 등록되었습니다."));
 
-        assertThat(postRepository.findAll()).hasSize(2); // 기존 1개 + 생성 1개
+        assertThat(postRepository.findAll()).hasSize(6); // 기존 5개 + 생성 1개
     }
 
     @Test
     @DisplayName("게시글 전체 조회")
     void getAllPosts_success() throws Exception {
-        mockMvc.perform(get("/api/posts"))
+        mockMvc.perform(get("/api/posts")).andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200"))
-                .andExpect(jsonPath("$.data[0].title").value("자료구조 책 팝니다")); // InitTestData 게시글
+                .andExpect(jsonPath("$.data.content[0].title").value("55인공지능 책 팝니다"));// InitTestData 게시글
     }
 
     @Test

@@ -4,7 +4,7 @@ import com.example.demo.domain.auth.dto.request.LoginRequest;
 import com.example.demo.domain.auth.exception.BannedUserException;
 import com.example.demo.domain.auth.service.AuthService;
 import com.example.demo.domain.user.entity.User;
-import com.example.demo.domain.user.entity.UserStatus;
+import com.example.demo.domain.user.enums.UserStatus;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletInputStream;
@@ -14,13 +14,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 

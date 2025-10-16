@@ -5,10 +5,10 @@ import com.example.demo.domain.major.repository.MajorRepository;
 import com.example.demo.domain.post.entity.Post;
 import com.example.demo.domain.post.enums.PostStatus;
 import com.example.demo.domain.post.repository.PostRepository;
-import com.example.demo.domain.user.entity.Grade;
-import com.example.demo.domain.user.entity.Semester;
+import com.example.demo.domain.user.enums.Grade;
+import com.example.demo.domain.user.enums.Semester;
 import com.example.demo.domain.user.entity.User;
-import com.example.demo.domain.user.entity.UserStatus;
+import com.example.demo.domain.user.enums.UserStatus;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.role.Role;
 import lombok.RequiredArgsConstructor;
@@ -90,7 +90,7 @@ public class InitDataHelper {
                         .content(content)
                         .postPrice(price)
                         .likeCount(0)
-                        .status(PostStatus.판매중)
+                        .status(PostStatus.SELLING)
                         .build()
         );
     }

@@ -6,7 +6,7 @@ import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.post.entity.Post;
 import com.example.demo.domain.user.entity.User;
-import com.example.demo.domain.user.entity.UserStatus;
+import com.example.demo.domain.user.enums.UserStatus;
 import com.example.demo.domain.user.role.Role;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;

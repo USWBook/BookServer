@@ -3,13 +3,14 @@ package com.example.demo.domain.auth.service;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
 import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.auth.exception.ExistEmailSignUpException;
+import com.example.demo.domain.mail.enums.EmailAuthPurpose;
 import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.major.repository.MajorRepository;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.global.jwt.exception.JwtInvalidSignatureException;
 import com.example.demo.global.jwt.service.TokenService;
-import com.example.demo.global.redis.repository.RedisTokenRepository;
+import com.example.demo.global.redis.repository.RedisMailRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,9 +26,7 @@ import static org.mockito.BDDMockito.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthServiceTest {
@@ -41,7 +40,7 @@ public class AuthServiceTest {
     @Mock
     private UserRepository userRepository;
     @Mock
-    private RedisTokenRepository redisTokenRepository;
+    private RedisMailRepository redisMailRepository;
     @Mock
     private MajorRepository majorRepository;
 
@@ -59,7 +58,7 @@ public class AuthServiceTest {
         Major major = Major.builder().id(majorId).name("컴퓨터학부").build();
 
         given(userRepository.existsByEmail(request.email())).willReturn(false);
-        given(redisTokenRepository.isVerifiedEmail(request.email())).willReturn(true);
+        given(redisMailRepository.isVerifiedEmail(request.email(), EmailAuthPurpose.SIGN_UP)).willReturn(true);
         given(majorRepository.findById(request.majorId())).willReturn(Optional.of(major));
         given(passwordEncoder.encode(request.password())).willReturn(encodedPassword);
         given(userRepository.save(any(User.class))).willAnswer(invocation -> invocation.getArgument(0));
@@ -69,7 +68,7 @@ public class AuthServiceTest {
 
         // then
         verify(userRepository).save(any(User.class));
-        verify(redisTokenRepository).deleteVerifiedEmail(request.email());
+        verify(redisMailRepository).deleteVerifiedEmail(request.email(),EmailAuthPurpose.SIGN_UP);
     }
 
     @Test

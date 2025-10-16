@@ -3,7 +3,7 @@ package com.example.demo.domain.post.repository;
 import com.example.demo.domain.post.dto.request.PostSearchCondition;
 import com.example.demo.domain.post.dto.response.PostListResponse;
 import com.example.demo.domain.post.enums.PostStatus;
-import com.example.demo.domain.user.entity.Grade;
+import com.example.demo.domain.user.enums.Grade;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;

@@ -1,4 +1,4 @@
-package com.example.demo.domain.user.entity;
+package com.example.demo.domain.user.enums;
 
 import com.example.demo.domain.user.exception.InvalidGradeException;
 import com.fasterxml.jackson.annotation.JsonCreator;
