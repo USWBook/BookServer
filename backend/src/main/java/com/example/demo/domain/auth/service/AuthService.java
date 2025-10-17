@@ -22,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -35,13 +36,56 @@ public class AuthService {
     private final MajorRepository majorRepository;
     private final RedisMailRepository redisMailRepository;
 
+
     @Transactional
     public void signUp(SignUpRequest request) {
 
-        // 회원가입되어있는지 검증
-        if (userRepository.existsByEmail(request.email())) {
-            throw new ExistEmailSignUpException();
+        userRepository.findByEmail(request.email())
+                // 1. 이메일에 해당하는 유저가 존재할 경우 (Optional이 비어있지 않을 경우)
+                .ifPresentOrElse(
+                        user -> {
+                            // 1-1. 유저가 존재하지만, 탈퇴 상태(WITHDRAWAL)인 경우
+                            if (user.getStatus() == UserStatus.WITHDRAWAL) {
+                                reSignUp(user, request); // 재가입 로직 실행
+                            } else {
+                                // 1-2. 유저가 존재하며, 탈퇴 상태가 아닌 경우 (ACTIVE, BANNED 등)
+                                throw new ExistEmailSignUpException();
+                            }
+                        },
+                        // 2. 이메일에 해당하는 유저가 존재하지 않을 경우 (Optional이 비어있을 경우)
+                        () -> firstSignUp(request)
+                );
+
+    }
+
+
+    @Transactional
+    public void reSignUp(User withdrawnUser , SignUpRequest request) {
+
+        // 이메일 인증을 다시 했는지 확인하는 로직이 필요하다면 여기에 추가
+        if (!redisMailRepository.isVerifiedEmail(request.email(), EmailAuthPurpose.SIGN_UP)) {
+            throw new EmailNotVerifiedException();
         }
+
+        Major major = majorRepository.findById(request.majorId())
+                .orElseThrow(MajorNotFoundException::new);
+
+        // 기존 User 엔티티의 상태를 업데이트 (새로 생성하는 것이 아님)
+        withdrawnUser.reactivate(
+                 passwordEncoder.encode(request.password()),
+                 request.name(),
+                 request.studentId(),
+                 major,
+                Grade.fromValue(request.grade()),
+                Semester.fromValue(request.semester()),
+                Role.USER
+                );
+
+        redisMailRepository.deleteVerifiedEmail(request.email(), EmailAuthPurpose.SIGN_UP);
+    }
+
+    @Transactional
+    public void firstSignUp(SignUpRequest request) {
 
         // 이메일 인증 여부 확인
         if (!redisMailRepository.isVerifiedEmail(request.email(), EmailAuthPurpose.SIGN_UP)) {
