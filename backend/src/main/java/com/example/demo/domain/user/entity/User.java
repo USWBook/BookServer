@@ -78,6 +78,17 @@ public class User {
         this.status = UserStatus.WITHDRAWAL;
     }
 
+    public void reactivate(String password, String name, String studentId,Major major, Grade grade, Semester semester, Role role) {
+        this.password = password;
+        this.name = name;
+        this.studentId = studentId;
+        this.major = major;
+        this.grade = grade;
+        this.semester = semester;
+        this.role = role;
+        this.status = UserStatus.ACTIVE;
+    }
+
     public void changePassword(String newEncodedPassword) {
         this.password = newEncodedPassword;
     }
