@@ -1,6 +1,7 @@
 package com.example.demo.domain.user.controller;
 
 import com.example.demo.domain.user.dto.ChangeInfoRequest;
+import com.example.demo.domain.user.dto.UserWithdrawalRequest;
 import com.example.demo.global.annotation.swagger.ApiErrorResponse;
 import com.example.demo.global.annotation.swagger.ApiSuccessResponse;
 import com.example.demo.global.annotation.swagger.ApiUnauthorizedResponse;
@@ -10,9 +11,12 @@ import com.example.demo.domain.user.service.UserService;
 import com.example.demo.global.response.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @Tag(name = "User", description = "사용자 정보 API")
 @RequiredArgsConstructor
@@ -46,7 +50,7 @@ public class UserController {
     @GetMapping("/information")
     public RsData<UserInfoResponse> infomation(@AuthenticationPrincipal CustomUserDetails userDetails) {
         UserInfoResponse userInfoResponse = userService.getUserInfo(userDetails.getId());
-        return RsData.of("200", "회원정보 조회 성공",userInfoResponse);
+        return RsData.of("200", "회원정보 조회 성공", userInfoResponse);
     }
 
     @Operation(summary = "내 정보 수정", description = "현재 로그인한 사용자의 이름, 학년, 학기, 전공을 수정합니다.")
@@ -70,8 +74,19 @@ public class UserController {
     )
     @ApiUnauthorizedResponse
     @PatchMapping("/information")
-    public RsData<UserInfoResponse> changeInfomation(@AuthenticationPrincipal CustomUserDetails userDetails,@RequestBody ChangeInfoRequest request) {
-        UserInfoResponse userInfoResponse = userService.changeInformation(userDetails.getId(),request);
-        return RsData.of("200", "회원정보 수정 성공",userInfoResponse);
+    public RsData<UserInfoResponse> changeInfomation(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody ChangeInfoRequest request) {
+        UserInfoResponse userInfoResponse = userService.changeInformation(userDetails.getId(), request);
+        return RsData.of("200", "회원정보 수정 성공", userInfoResponse);
+    }
+
+    @PostMapping("/withdrawal")
+    public RsData<?> withdrawUserWithPassword(
+            @RequestBody UserWithdrawalRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        userService.withdraw(userDetails.getId(), request.password());
+
+        return RsData.of("200", "회원 탈퇴가 성공적으로 처리되었습니다.");
+
     }
 }
