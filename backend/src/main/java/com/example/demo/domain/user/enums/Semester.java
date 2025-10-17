@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.stream.Stream;
 
 public enum Semester {
+    Semester_0(0),
     SEMESTER_1(1),
     SEMESTER_2(2);
 
