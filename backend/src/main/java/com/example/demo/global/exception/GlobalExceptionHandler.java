@@ -14,7 +14,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -199,7 +198,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public RsData<?> handleAllUncaughtException(Exception e, HttpServletRequest request) { // 필요한 곳에서만 request를 파라미터로 받음
         log.error("🔥 500 Internal Server Error 발생: {}", e.getMessage(), e);
-        log.error("Request: {} {}", request.getMethod(), request.getRequestURI()); // 요청 정보 로깅
+        log.error("🔥🔥🔥Request: {} {}", request.getMethod(), request.getRequestURI()); // 요청 정보 로깅
         return RsData.of("500", "서버 내부 오류가 발생했습니다.");
     }
 }
