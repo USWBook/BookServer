@@ -39,7 +39,7 @@ dependencies {
 
 	// Web & API
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'  // 버전을 프로젝트에 맞게 확인해주세요.
+	//implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'  // 버전을 프로젝트에 맞게 확인해주세요.
 
 	// Security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -95,7 +95,7 @@ dependencies {
 	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
 
 	// Swagger 적용
-	//implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6"
+	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6"
 
 }
 

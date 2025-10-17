@@ -80,23 +80,23 @@ public class PostController {
      종합 예시 (1페이지, 15개씩, 가격 낮은 순):
      GET /api/posts?page=0&size=15&sort=postPrice,asc
      */
-    @Operation(summary = "게시글 목록 동적 검색 및 페이징 조회", description = "다양한 조건으로 게시글을 검색하고 페이징하여 조회합니다.")
-    @Parameters({
-            @Parameter(name = "grade", description = "학년 필터", example = "2"),
-            @Parameter(name = "status", description = "판매 상태 필터 (판매중, 판매완료)", example = "판매중"),
-            @Parameter(name = "bookName", description = "책 이름 검색어", example = "자료구조"),
-            @Parameter(name = "className", description = "강의명 검색어", example = "컴퓨터네트워크"),
-            @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
-            @Parameter(name = "size", description = "페이지당 게시물 수", example = "10"),
-            @Parameter(name = "sort", description = "정렬 기준 (예: createdAt,desc)", example = "createdAt,desc")
-    })
-    @ApiResponse(responseCode = "200", description = "조회 성공",
-            content = @io.swagger.v3.oas.annotations.media.Content(
-                    mediaType = "application/json",
-                    schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PagePostListResponseWrapper.class)
-            )
-    )
-    @ApiUnauthorizedResponse
+//    @Operation(summary = "게시글 목록 동적 검색 및 페이징 조회", description = "다양한 조건으로 게시글을 검색하고 페이징하여 조회합니다.")
+//    @Parameters({
+//            @Parameter(name = "grade", description = "학년 필터", example = "2"),
+//            @Parameter(name = "status", description = "판매 상태 필터 (판매중, 판매완료)", example = "판매중"),
+//            @Parameter(name = "bookName", description = "책 이름 검색어", example = "자료구조"),
+//            @Parameter(name = "className", description = "강의명 검색어", example = "컴퓨터네트워크"),
+//            @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
+//            @Parameter(name = "size", description = "페이지당 게시물 수", example = "10"),
+//            @Parameter(name = "sort", description = "정렬 기준 (예: createdAt,desc)", example = "createdAt,desc")
+//    })
+//    @ApiResponse(responseCode = "200", description = "조회 성공",
+//            content = @io.swagger.v3.oas.annotations.media.Content(
+//                    mediaType = "application/json",
+//                    schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PagePostListResponseWrapper.class)
+//            )
+//    )
+//    @ApiUnauthorizedResponse
     @GetMapping
     public RsData<Page<PostListResponse>> searchPosts(
             @ModelAttribute PostSearchCondition condition,
