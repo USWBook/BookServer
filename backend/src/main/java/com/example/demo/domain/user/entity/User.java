@@ -21,7 +21,7 @@ import java.util.UUID;
 public class User {
 
     @Id
-    @GeneratedValue(generator = "uuid2")
+    @GeneratedValue(strategy = GenerationType.UUID)
     @GenericGenerator(name = "uuid2", strategy = "uuid2")
     @Column(name = "user_id", columnDefinition = "BINARY(16)")
     private UUID id;
@@ -62,6 +62,32 @@ public class User {
         this.status = UserStatus.BANNED;
     }
 
+    public void withdraw() {
+
+        String uniqueAnonymousId = "withdrawn_" + this.id.toString();
+
+        this.name = "탈퇴한 사용자";
+        this.password = uniqueAnonymousId;// 복구 불가능
+        this.studentId = uniqueAnonymousId;
+
+        this.major = null; // @ManyToOne 관계는 null로 설정하여 연결을 끊음.
+        this.grade = Grade.GRADE_0;
+        this.semester = Semester.Semester_0;
+        this.role = Role.WITHDRAWAL;
+
+        this.status = UserStatus.WITHDRAWAL;
+    }
+
+    public void reactivate(String password, String name, String studentId,Major major, Grade grade, Semester semester, Role role) {
+        this.password = password;
+        this.name = name;
+        this.studentId = studentId;
+        this.major = major;
+        this.grade = grade;
+        this.semester = semester;
+        this.role = role;
+        this.status = UserStatus.ACTIVE;
+    }
 
     public void changePassword(String newEncodedPassword) {
         this.password = newEncodedPassword;

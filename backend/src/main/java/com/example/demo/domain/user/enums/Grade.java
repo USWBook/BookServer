@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.stream.Stream;
 
 public enum Grade {
+    GRADE_0(0),
     GRADE_1(1),
     GRADE_2(2),
     GRADE_3(3),

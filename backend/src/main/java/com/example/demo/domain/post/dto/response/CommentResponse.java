@@ -1,6 +1,7 @@
 package com.example.demo.domain.post.dto.response;
 
 import com.example.demo.domain.post.entity.PostComment;
+import com.example.demo.domain.user.enums.UserStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -22,11 +23,16 @@ public record CommentResponse(
         LocalDateTime modifiedAt
 ) {
     public static CommentResponse from(PostComment comment) {
+        String author = switch (comment.getUser().getStatus()) {
+            case WITHDRAWAL -> "탈퇴한 사용자";
+            case BANNED -> "밴 당한 사용자";
+            default -> comment.getUser().getName();
+        };
         return new CommentResponse(
                 comment.getId(),
                 comment.getUser().getId(), // 만약 댓글에서 바로 채팅으로 넘어간다면 필요함.
                 comment.getContent(),
-                comment.getUser().getName(), // 닉네임 받아옴
+                author, // 닉네임 받아옴
                 comment.getCreatedAt(),
                 comment.getModifiedAt()
         );

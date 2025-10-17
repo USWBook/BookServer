@@ -3,6 +3,7 @@ package com.example.demo.domain.post.dto.response;
 import com.example.demo.domain.post.enums.PostStatus;
 import com.example.demo.domain.user.enums.Grade;
 import com.example.demo.domain.user.enums.Semester;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
