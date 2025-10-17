@@ -9,6 +9,7 @@ import lombok.Getter;
 import java.time.LocalDateTime;
 import java.util.UUID;
 // 제목,대표사진,가격,찜 개수,업로드 시간,학년,전공
+@Schema(description = "게시글 목록 응답 DTO")
 public record PostListResponse(
         @Schema(description = "게시글 UUID", example = "550e8400-...")
         UUID id,
