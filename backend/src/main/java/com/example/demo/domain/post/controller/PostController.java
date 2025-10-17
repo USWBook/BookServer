@@ -46,8 +46,14 @@ public class PostController {
     @ApiSuccessResponse(
             responseCode = "201",
             description = "게시글 생성 성공",
-            message = "게시글이 성공적으로 생성되었습니다.",
-            dataType = UUID.class
+            message = "게시글이 성공적으로 생성되었습니다."
+            //dataType = UUID.class
+    )
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "예기치 못한 예외",
+            exampleName = "UnknownFound",
+            exampleValue = "{\"code\": \"400\", \"message\": \"예기치 못한 예외. 개발자 문의 바람\", \"data\": null}"
     )
     @ApiUnauthorizedResponse
     @PostMapping
@@ -194,10 +200,9 @@ public class PostController {
     public RsData<PostResponse> updateComment(
             @PathVariable UUID postId,
             @PathVariable UUID commentId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid CommentCreateRequest request) {
 
-        PostResponse post = postService.updateComment(postId, commentId, userDetails.getId(), request);
+        PostResponse post = postService.updateComment(postId, commentId, request);
         return RsData.of("200", "댓글 수정 성공했습니다.", post);
     }
 
@@ -207,10 +212,9 @@ public class PostController {
     @DeleteMapping("/{postId}/comment/{commentId}")
     public RsData<PostResponse> deleteComment(
             @PathVariable UUID postId,
-            @PathVariable UUID commentId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @PathVariable UUID commentId) {
 
-        PostResponse post = postService.deleteComment(postId, commentId, userDetails.getId());
+        PostResponse post = postService.deleteComment(postId, commentId);
         return RsData.of("200", "댓글 삭제 성공했습니다.", post);
     }
 

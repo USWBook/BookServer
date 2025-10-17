@@ -1,13 +1,12 @@
 package com.example.demo.global.init;
 
-import com.example.demo.domain.chat.dto.request.CreateChatRoomRequestDto;
 import com.example.demo.domain.chat.entity.ChatRoom;
 import com.example.demo.domain.chat.entity.ChatMessage;
 import com.example.demo.domain.chat.service.ChatRoomService;
 import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.post.entity.Post;
 import com.example.demo.domain.user.entity.User;
-import com.example.demo.domain.user.entity.UserStatus;
+import com.example.demo.domain.user.enums.UserStatus;
 import com.example.demo.domain.user.role.Role;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;

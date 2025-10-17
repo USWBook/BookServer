@@ -34,10 +34,11 @@ spring:
 
 # JWT configuration for the test environment
 # 이 키들은 JwtProvider 클래스의 @Value 어노테이션과 일치해야 함.
-jwt:
-  secret: VmpGYWIyUnBibWN6WkhKemFYTjBJRk5oY21SZlptRjFiSFI1Y0dVaA== # 테스트용 시크릿 키
-  access-expiration: 3600   # 1시간 (초)
-  refresh-expiration: 604800  # 7일 (초)
+custom:
+  jwt:
+    secret-key: VGVzdFNlY3JldEtleUZvckpXVEF1dGhlbnRpY2F0aW9uUHVycG9zZXNCYXNlNjQ=  # 테스트용 시크릿 키
+    access-token-expire-seconds: 3600   # 1시간 (초)
+    refresh-token-expire-seconds: 604800  # 7일 (초)
 
 
 

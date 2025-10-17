@@ -6,8 +6,8 @@ import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.major.exception.MajorNotFoundException;
 import com.example.demo.domain.major.repository.MajorRepository;
 import com.example.demo.domain.user.dto.ChangeInfoRequest;
-import com.example.demo.domain.user.entity.Grade;
-import com.example.demo.domain.user.entity.Semester;
+import com.example.demo.domain.user.enums.Grade;
+import com.example.demo.domain.user.enums.Semester;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.response.UserInfoResponse;
@@ -46,10 +46,10 @@ public class UserService {
 
         Major newMajor = findMajorOrNull(request.majorId());
 
-        Grade newGrade = (request.grade() != null) ? Grade.fromValue(request.grade()) : null;
-        Semester newSemester = (request.semester() != null) ? Semester.fromValue(request.semester()) : null;
+//        Grade newGrade = (request.grade() != null) ? Grade.fromValue(request.grade()) : null;
+//        Semester newSemester = (request.semester() != null) ? Semester.fromValue(request.semester()) : null;
         
-        currentUser.updateProfile(request.name(), newMajor, newGrade, newSemester);
+        currentUser.updateProfile(request.name(), newMajor, request.grade(), request.semester());
 
         return UserInfoResponse.from(currentUser);
     }

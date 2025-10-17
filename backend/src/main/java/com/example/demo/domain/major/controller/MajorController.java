@@ -30,6 +30,11 @@ public class MajorController {
             message = "전공 목록 조회 성공",
             dataType = MajorListResponse.class
     )
+    @ApiErrorResponse(
+            description = "예상치 못한 실패",
+            exampleName = "400Failure",
+            exampleValue = "{\"code\": \"400\", \"message\": \"개발자에게 문의 주세요\", \"data\": null}"
+    )
     @GetMapping("/list")
     public MajorListResponse getAllMajors() {
         List<MajorResponse> majors = majorService.getAllMajors();
