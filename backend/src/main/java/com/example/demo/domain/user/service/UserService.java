@@ -9,9 +9,11 @@ import com.example.demo.domain.user.dto.ChangeInfoRequest;
 import com.example.demo.domain.user.enums.Grade;
 import com.example.demo.domain.user.enums.Semester;
 import com.example.demo.domain.user.entity.User;
+import com.example.demo.domain.user.exception.PasswordNotEqualException;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.response.UserInfoResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,4 +65,13 @@ public class UserService {
     }
 
 
+    @Transactional
+    public void withdraw(UUID userId, String password) {
+
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+
+        if(!user.getPassword().equals(password)) throw new PasswordNotEqualException();
+
+        user.withdraw();
+    }
 }
