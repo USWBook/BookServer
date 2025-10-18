@@ -114,24 +114,44 @@ public class SecurityConfig {
 
                 // 경로 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/", "/ping", "/error", "/favicon.ico",
-                                "/actuator/**",
-                                "/swagger-ui.html",
-                                "/swagger-ui/**", "/v3/api-docs/**",
-                                "/css/**", "/js/**", "/images/**",
-                                "/h2-console/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**")
+                        .permitAll()
 
-                        // 공개 API만 선별 허용
+                        // ADMIN권한이 있어야만 접근 가능
+                        .requestMatchers("/api/admin","/api/admin/**")
+                        .hasRole("ADMIN")
+
+                        // 정적 리소스, Swagger 등 인증 없이 항상 허용되어야 하는 경로
+                        .requestMatchers("/",
+                                "/ping",
+                                "/error",
+                                "/favicon.ico",
+                                "/actuator/**",
+                                "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**",
+                                "/css/**", "/js/**", "/images/**",
+                                "/h2-console/**")
+                        .permitAll()
+
+                        // 사용자 인증 관련 API (로그인, 회원가입 등)는 모두 허용
                         .requestMatchers(
-                                "/api/major/**",
                                 "/api/auth/login",
                                 "/api/auth/signup",
                                 "/api/auth/reissue",
-                                "/api/mail/**",
-                                "/api/posts/**",
-                                "/api/chat/**",
-                                "/ws-chat/**"
+                                "/api/mail/**"
+                        ).permitAll()
+
+                        // 게시글 조회(GET)는 누구나 가능하도록 허용
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/posts", "/api/posts/**")
+                        .permitAll()
+
+                        //  채팅 관련 WebSocket 경로는 프로토콜 특성상 permitAll()로 열어두는 경우가 많음
+                        .requestMatchers("/api/chat/**", "/ws-chat/**")
+                        .permitAll()
+
+                        // 공개 API만 선별 허용
+                        .requestMatchers(
+                                "/api/major/**"
                         ).permitAll()
 
                         // 내정보/로그아웃 등은 인증 필요
