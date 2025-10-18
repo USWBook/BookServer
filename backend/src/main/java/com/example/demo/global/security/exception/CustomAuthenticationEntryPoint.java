@@ -1,4 +1,4 @@
-package com.example.demo.global.security.handler;
+package com.example.demo.global.security.exception;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
