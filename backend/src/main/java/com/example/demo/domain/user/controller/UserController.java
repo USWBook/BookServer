@@ -10,6 +10,7 @@ import com.example.demo.domain.user.response.UserInfoResponse;
 import com.example.demo.domain.user.service.UserService;
 import com.example.demo.global.response.RsData;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +49,7 @@ public class UserController {
     )
     @ApiUnauthorizedResponse // 401
     @GetMapping("/information")
-    public RsData<UserInfoResponse> infomation(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    public RsData<UserInfoResponse> infomation(@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         UserInfoResponse userInfoResponse = userService.getUserInfo(userDetails.getId());
         return RsData.of("200", "회원정보 조회 성공", userInfoResponse);
     }
@@ -74,7 +75,7 @@ public class UserController {
     )
     @ApiUnauthorizedResponse
     @PatchMapping("/information")
-    public RsData<UserInfoResponse> changeInfomation(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody ChangeInfoRequest request) {
+    public RsData<UserInfoResponse> changeInfomation(@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody ChangeInfoRequest request) {
         UserInfoResponse userInfoResponse = userService.changeInformation(userDetails.getId(), request);
         return RsData.of("200", "회원정보 수정 성공", userInfoResponse);
     }
@@ -82,7 +83,7 @@ public class UserController {
     @PostMapping("/withdrawal")
     public RsData<?> withdrawUserWithPassword(
             @RequestBody UserWithdrawalRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         userService.withdraw(userDetails.getId(), request.password());
 
