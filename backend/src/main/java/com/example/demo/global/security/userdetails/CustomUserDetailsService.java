@@ -28,10 +28,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         //  정지된 사용자인지 확인
         if (user.getStatus() == UserStatus.BANNED) {
             // LockedException을 던지면 Spring Security가 "계정이 잠김"으로 처리
-            throw new LockedException("계정이 정지되었습니다.");
+            throw new LockedException("밴된 계정입니다.");
         }
 
-        //  탈퇴한 사용자인지 확인
+        //  탈퇴한 사용자인지 확인 -> 어차피 비밀번호를 난수로 교체해 버려서 로그인 가능성은 아주 희박함
         if (user.getStatus() == UserStatus.WITHDRAWAL) {
             // DisabledException을 던지면 Spring Security가 "계정이 비활성화됨"으로 처리
             throw new DisabledException("탈퇴한 계정입니다.");
