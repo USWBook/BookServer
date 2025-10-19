@@ -4,6 +4,7 @@ import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.major.repository.MajorRepository;
 import com.example.demo.domain.post.dto.request.CommentCreateRequest;
 import com.example.demo.domain.post.dto.request.PostCreateRequest;
+import com.example.demo.domain.post.dto.request.PostReportRequest;
 import com.example.demo.domain.post.dto.request.PostUpdateRequest;
 import com.example.demo.domain.post.dto.response.PostResponse;
 import com.example.demo.domain.post.entity.Post;
@@ -17,6 +18,11 @@ import com.example.demo.domain.post.repository.PostCommentRepository;
 import com.example.demo.domain.post.repository.PostLikeRepository;
 import com.example.demo.domain.post.repository.PostRepository;
 
+import com.example.demo.domain.report.entity.UserReport;
+import com.example.demo.domain.report.enums.ReportReason;
+import com.example.demo.domain.report.enums.ReportType;
+import com.example.demo.domain.report.repository.UserReportRepository;
+import com.example.demo.domain.report.service.ReportService;
 import com.example.demo.domain.user.enums.Grade;
 import com.example.demo.domain.user.enums.Semester;
 import com.example.demo.domain.user.entity.User;
@@ -26,6 +32,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -58,6 +65,12 @@ class PostServiceTest {
     @Mock
     private PostCommentRepository postCommentRepository;
 
+    @Mock
+    private UserReportRepository userReportRepository;
+
+    @Mock
+    private ReportService reportService;
+
     private UUID postId;
     private UUID userId;
     private UUID majorId;
@@ -67,6 +80,7 @@ class PostServiceTest {
     private User user;
     private Major major;
     private PostComment comment;
+
 
     @BeforeEach
     void setUp() {
@@ -378,6 +392,50 @@ class PostServiceTest {
         // AssertJ의 상태 검증 대신, Mockito의 '행위 검증'을 사용.
         // "postCommentRepository의 delete 메서드가 'comment' 객체를 인자로 받아 정확히 1번 호출되었는가?"
         then(postCommentRepository).should().delete(comment);
+    }
+
+    @Test
+    @DisplayName("게시물 신고 성공")
+    public void reportPost_success() {
+        // given
+        UUID reporterId = UUID.randomUUID();
+        User reporter = User.builder()
+                .id(reporterId)
+                .name("신고자_김길동")
+                .build();
+
+        UUID postIdToReport = UUID.randomUUID();
+
+        PostReportRequest request = new PostReportRequest(
+                ReportType.POST,
+                ReportReason.REASON_1,
+                postIdToReport
+        );
+
+        //  서비스 로직의 의존성 Mocking
+        // userRepository.findById가 호출되면, 위에서 만든 reporter 객체를 반환하도록 설정
+        given(userRepository.findById(reporterId)).willReturn(Optional.of(reporter));
+
+        // when
+        postService.reportPost(request, reporterId);
+
+        // then
+        // userReportRepository.save()가 호출되었는지, 그리고 어떤 값으로 호출되었는지 검증
+
+        // UserReport 객체를 "캡처"할 ArgumentCaptor 생성
+        ArgumentCaptor<UserReport> reportCaptor = ArgumentCaptor.forClass(UserReport.class);
+
+        // save 메서드가 호출되었는지 확인하고, 그때 전달된 UserReport 객체를 캡처
+        verify(userReportRepository).save(reportCaptor.capture());
+
+        // 캡처된 UserReport 객체를 가져옴
+        UserReport capturedReport = reportCaptor.getValue();
+
+        // 캡처된 객체의 내용이 우리가 기대한 값과 일치하는지 검증
+        assertThat(capturedReport.getReporterName()).isEqualTo("신고자_김길동");
+        assertThat(capturedReport.getReportType()).isEqualTo(ReportType.POST);
+        assertThat(capturedReport.getReason()).isEqualTo(ReportReason.REASON_1);
+        assertThat(capturedReport.getReportThingId()).isEqualTo(postIdToReport);
     }
 
 }

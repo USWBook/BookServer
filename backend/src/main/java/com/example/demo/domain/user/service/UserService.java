@@ -74,4 +74,11 @@ public class UserService {
 
         user.withdraw();
     }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void banUser(String sellerName) {
+        User user = userRepository.findByName(sellerName).orElseThrow(UserNotFoundException::new);
+        user.ban();
+    }
 }
