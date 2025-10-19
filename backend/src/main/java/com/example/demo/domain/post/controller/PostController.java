@@ -1,9 +1,6 @@
 package com.example.demo.domain.post.controller;
 
-import com.example.demo.domain.post.dto.request.CommentCreateRequest;
-import com.example.demo.domain.post.dto.request.PostCreateRequest;
-import com.example.demo.domain.post.dto.request.PostSearchCondition;
-import com.example.demo.domain.post.dto.request.PostUpdateRequest;
+import com.example.demo.domain.post.dto.request.*;
 import com.example.demo.domain.post.dto.response.PagePostListResponseWrapper;
 import com.example.demo.domain.post.dto.response.PostDetailResponse;
 import com.example.demo.domain.post.dto.response.PostListResponse;
@@ -218,6 +215,14 @@ public class PostController {
         return RsData.of("200", "댓글 삭제 성공했습니다.", post);
     }
 
+    @PostMapping("report")
+    public RsData<?> reportPost(
+            @RequestBody PostReportRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
+    ){
+        postService.reportPost(request,userDetails.getId());
+        return RsData.of("201","게시물 신고 성공했습니다.");
+    }
     // 아래 세개는 동적쿼리 안넣었을때 구현 해둔거임
 //    @GetMapping
 //    public RsData<Page<PostListResponse>> getPosts(
