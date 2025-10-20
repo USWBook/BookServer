@@ -4,16 +4,16 @@ import com.example.demo.domain.auth.exception.UserNotFoundException;
 import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.major.exception.MajorNotFoundException;
 import com.example.demo.domain.major.repository.MajorRepository;
-import com.example.demo.domain.post.dto.request.CommentCreateRequest;
-import com.example.demo.domain.post.dto.request.PostSearchCondition;
+import com.example.demo.domain.post.dto.request.*;
 import com.example.demo.domain.post.dto.response.PostListResponse;
 import com.example.demo.domain.post.entity.PostComment;
+import com.example.demo.domain.post.exception.AlreadyReportException;
 import com.example.demo.domain.post.exception.CommentNotFoundException;
 import com.example.demo.domain.post.exception.CommentNotInPostException;
 import com.example.demo.domain.post.repository.PostCommentRepository;
+import com.example.demo.domain.report.entity.UserReport;
+import com.example.demo.domain.report.repository.UserReportRepository;
 import com.example.demo.domain.user.entity.User;
-import com.example.demo.domain.post.dto.request.PostCreateRequest;
-import com.example.demo.domain.post.dto.request.PostUpdateRequest;
 import com.example.demo.domain.post.dto.response.PostResponse;
 import com.example.demo.domain.post.entity.Post;
 import com.example.demo.domain.post.entity.PostLike;
@@ -41,6 +41,7 @@ public class PostService {
     private final MajorRepository majorRepository;
     private final UserRepository userRepository;
     private final PostCommentRepository postCommentRepository;
+    private final UserReportRepository userReportRepository;
 
     // 게시글 생성
     @Transactional
@@ -198,15 +199,33 @@ public class PostService {
     }
 
     // 판매완료로 변경
-    @PreAuthorize("isAuthenticated() and @postAuthorizer.hasAuthority(#postId, principal.id)")
+    @PreAuthorize("isAuthenticated() and @postAuthorizer.hasAuthority(#postId, userId)")
     @Transactional
-    public void soldPost(UUID postId) {
+    public void soldPost(UUID postId, UUID userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(PostNotFoundException::new);
 
         post.markAsSold();
-
-        return;
     }
 
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void deletePostByAdmin(UUID postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(PostNotFoundException::new);
+        postRepository.delete(post);
+    }
+
+    @Transactional
+    public void reportPost(PostReportRequest request, UUID id) {
+        User user = userRepository.findById(id).orElseThrow(UserNotFoundException::new);
+
+        if(userReportRepository.existsByReporterNameAndReportThingId(user.getName(),request.Id())){
+            throw new AlreadyReportException();
+        }
+
+        UserReport report = PostReportRequest.toUserReport(request,user.getName());
+
+        userReportRepository.save(report);
+    }
 }

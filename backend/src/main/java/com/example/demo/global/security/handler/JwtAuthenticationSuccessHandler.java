@@ -43,7 +43,7 @@ public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHan
         // 응답 바디 (선택) — 간단한 성공 메시지
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("{\"code\":\"200\",\"message\":\"로그인 성공\"}");
+        response.getWriter().write("{\"code\":\"200\",\"message\":\"로그인 성공\",\"data\":{\"Role\": \""+role+"\"}}");
     }
 }
 

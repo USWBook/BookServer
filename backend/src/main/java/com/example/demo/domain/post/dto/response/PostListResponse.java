@@ -8,33 +8,33 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.util.UUID;
 // 제목,대표사진,가격,찜 개수,업로드 시간,학년,전공
-//@Schema(description = "게시글 목록 응답 DTO")
+@Schema(description = "게시글 목록 응답 DTO")
 public record PostListResponse(
-        //@Schema(description = "게시글 UUID", example = "550e8400-...")
+        @Schema(description = "게시글 UUID", example = "550e8400-...")
         UUID id,
 
-        //@Schema(description = "게시글 제목", example = "중고 노트북 판매합니다")
+        @Schema(description = "게시글 제목", example = "중고 노트북 판매합니다")
         String title,
 
-        //@Schema(description = "가격", example = "500000")
+        @Schema(description = "가격", example = "500000")
         Integer postPrice,
 
-        //@Schema(description = "찜 개수", example = "10")
+        @Schema(description = "찜 개수", example = "10")
         Integer likeCount,
 
-        //@Schema(description = "댓글 개수", example = "3")
+        @Schema(description = "댓글 개수", example = "3")
         Long commentCount,
 
-        //@Schema(description = "학년", example = "2")
+        @Schema(description = "학년", example = "2")
         Integer grade,
 
-        //@Schema(description = "학기", example = "1")
+        @Schema(description = "학기", example = "1")
         Integer semester,
 
-        //@Schema(description = "게시글 상태", example = "ACTIVE")
+        @Schema(description = "게시글 상태", example = "ACTIVE")
         String status,
 
-        //@Schema(description = "업로드 시간", example = "2025-10-10T12:34:56")
+        @Schema(description = "업로드 시간", example = "2025-10-10T12:34:56")
         LocalDateTime createdAt
 ) {
 
