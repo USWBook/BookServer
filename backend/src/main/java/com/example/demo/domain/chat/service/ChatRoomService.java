@@ -98,28 +98,28 @@ public class ChatRoomService {
 
         return chatRoom;
     }
-    //유저 신고
-    @Transactional
-    public UserReport reportUserByRoom(UUID roomId, User reporter, ReportReason reason) {
-        ChatRoom chatRoom = findChatRoomById(roomId);
-        if (chatRoom == null) throw new RuntimeException("채팅방 없음");
-
-        UUID reportedUserId = chatRoom.getSender().equals(reporter.getId())
-                ? chatRoom.getReceiver()
-                : chatRoom.getSender();
-
-        User reported = userRepository.findById(reportedUserId)
-                .orElseThrow(() -> new RuntimeException("신고 대상자 없음"));
-
-        UserReport report = UserReport.builder()
-                .reporter(reporter)
-                .reported(reported)
-                .reason(ReportReason.valueOf(reason.name()))
-                .reportedAt(LocalDateTime.now())
-                .build();
-
-        return userReportRepository.save(report);
-    }
+//    //유저 신고
+//    @Transactional
+//    public UserReport reportUserByRoom(UUID roomId, User reporter, ReportReason reason) {
+//        ChatRoom chatRoom = findChatRoomById(roomId);
+//        if (chatRoom == null) throw new RuntimeException("채팅방 없음");
+//
+//        UUID reportedUserId = chatRoom.getSender().equals(reporter.getId())
+//                ? chatRoom.getReceiver()
+//                : chatRoom.getSender();
+//
+//        User reported = userRepository.findById(reportedUserId)
+//                .orElseThrow(() -> new RuntimeException("신고 대상자 없음"));
+//
+//        UserReport report = UserReport.builder()
+//                .reporter(reporter)
+//                .reported(reported)
+//                .reason(ReportReason.valueOf(reason.name()))
+//                .reportedAt(LocalDateTime.now())
+//                .build();
+//
+//        return userReportRepository.save(report);
+//    }
 
     //Redis에 저장된 채팅방 데이터를 조회
     public ChatRoom findChatRoomById(UUID roomId) {
