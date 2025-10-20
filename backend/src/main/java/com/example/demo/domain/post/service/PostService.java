@@ -7,6 +7,7 @@ import com.example.demo.domain.major.repository.MajorRepository;
 import com.example.demo.domain.post.dto.request.*;
 import com.example.demo.domain.post.dto.response.PostListResponse;
 import com.example.demo.domain.post.entity.PostComment;
+import com.example.demo.domain.post.exception.AlreadyReportException;
 import com.example.demo.domain.post.exception.CommentNotFoundException;
 import com.example.demo.domain.post.exception.CommentNotInPostException;
 import com.example.demo.domain.post.repository.PostCommentRepository;
@@ -218,6 +219,11 @@ public class PostService {
     @Transactional
     public void reportPost(PostReportRequest request, UUID id) {
         User user = userRepository.findById(id).orElseThrow(UserNotFoundException::new);
+
+        if(userReportRepository.existsByReporterNameAndReportThingId(user.getName(),request.Id())){
+            throw new AlreadyReportException();
+        }
+
         UserReport report = PostReportRequest.toUserReport(request,user.getName());
 
         userReportRepository.save(report);
