@@ -1,6 +1,8 @@
 package com.example.demo.domain.user.controller;
 
+import com.example.demo.domain.post.entity.Post;
 import com.example.demo.domain.user.dto.ChangeInfoRequest;
+import com.example.demo.domain.user.dto.UploadPost;
 import com.example.demo.domain.user.dto.UserWithdrawalRequest;
 import com.example.demo.global.annotation.swagger.ApiErrorResponse;
 import com.example.demo.global.annotation.swagger.ApiSuccessResponse;
@@ -11,12 +13,16 @@ import com.example.demo.domain.user.service.UserService;
 import com.example.demo.global.response.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
+import java.util.List;
+
 
 @Tag(name = "User", description = "사용자 정보 API")
 @RequiredArgsConstructor
@@ -89,4 +95,15 @@ public class UserController {
         return RsData.of("200", "회원 탈퇴가 성공적으로 처리되었습니다.");
 
     }
+
+    @GetMapping("/upload/post")
+    public RsData<Page<UploadPost>> getUploadPost(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        Page<UploadPost> uploadPostsPage = userService.getMyPosts(userDetails.getId(), pageable);
+
+        return RsData.of("200","내가 올린 게시물 조회 성공",uploadPostsPage);
+    }
+
 }

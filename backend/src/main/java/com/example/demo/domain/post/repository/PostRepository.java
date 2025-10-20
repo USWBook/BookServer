@@ -2,6 +2,7 @@ package com.example.demo.domain.post.repository;
 // 게시글 저장소
 import com.example.demo.domain.post.dto.response.PostListResponse;
 import com.example.demo.domain.post.entity.Post;
+import com.example.demo.domain.user.dto.UploadPost;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,6 +34,7 @@ public interface PostRepository extends JpaRepository<Post, UUID>, PostRepositor
     @Query("SELECT p FROM Post p WHERE p.id = :id")
     Optional<Post> findByIdWithPessimisticLock(@Param("id") UUID id);
 
+    Page<Post> findBySellerId(UUID sellerId, Pageable pageable);
 
     // 아래는 동적 쿼리 적용 전에 사용하던 메서드임
 //    // 게시글 목록 조회 (페이징 + 댓글 개수) 판매중과 판매완료 분리해야함
