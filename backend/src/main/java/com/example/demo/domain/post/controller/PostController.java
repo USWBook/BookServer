@@ -83,23 +83,23 @@ public class PostController {
      종합 예시 (1페이지, 15개씩, 가격 낮은 순):
      GET /api/posts?page=0&size=15&sort=postPrice,asc
      */
-//    @Operation(summary = "게시글 목록 동적 검색 및 페이징 조회", description = "다양한 조건으로 게시글을 검색하고 페이징하여 조회합니다.")
-//    @Parameters({
-//            @Parameter(name = "grade", description = "학년 필터", example = "2"),
-//            @Parameter(name = "status", description = "판매 상태 필터 (판매중, 판매완료)", example = "판매중"),
-//            @Parameter(name = "bookName", description = "책 이름 검색어", example = "자료구조"),
-//            @Parameter(name = "className", description = "강의명 검색어", example = "컴퓨터네트워크"),
-//            @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
-//            @Parameter(name = "size", description = "페이지당 게시물 수", example = "10"),
-//            @Parameter(name = "sort", description = "정렬 기준 (예: createdAt,desc)", example = "createdAt,desc")
-//    })
-//    @ApiResponse(responseCode = "200", description = "조회 성공",
-//            content = @io.swagger.v3.oas.annotations.media.Content(
-//                    mediaType = "application/json",
-//                    schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PagePostListResponseWrapper.class)
-//            )
-//    )
-//    @ApiUnauthorizedResponse
+    @Operation(summary = "게시글 목록 동적 검색 및 페이징 조회", description = "다양한 조건으로 게시글을 검색하고 페이징하여 조회합니다.")
+    @Parameters({
+            @Parameter(name = "grade", description = "학년 필터", example = "2"),
+            @Parameter(name = "status", description = "판매 상태 필터 (판매중, 판매완료)", example = "판매중"),
+            @Parameter(name = "bookName", description = "책 이름 검색어", example = "자료구조"),
+            @Parameter(name = "className", description = "강의명 검색어", example = "컴퓨터네트워크"),
+            @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
+            @Parameter(name = "size", description = "페이지당 게시물 수", example = "10"),
+            @Parameter(name = "sort", description = "정렬 기준 (예: createdAt,desc)", example = "createdAt,desc")
+    })
+    @ApiResponse(responseCode = "200", description = "조회 성공",
+            content = @io.swagger.v3.oas.annotations.media.Content(
+                    mediaType = "application/json",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PagePostListResponseWrapper.class)
+            )
+    )
+    @ApiUnauthorizedResponse
     @GetMapping
     public RsData<Page<PostListResponse>> searchPosts(
             @ModelAttribute PostSearchCondition condition,
@@ -111,37 +111,37 @@ public class PostController {
 
 
 
-//    @Operation(summary = "게시글 단건 조회", description = "ID로 특정 게시글의 상세 정보를 조회합니다.")
-//    @ApiSuccessResponse(
-//            description = "조회 성공",
-//            message = "게시글 상세 조회에 성공했습니다.",
-//            dataType = PostResponse.class
-//    )
-//    @ApiErrorResponse(
-//            responseCode = "404",
-//            description = "존재하지 않는 게시글",
-//            exampleName = "PostNotFound",
-//            exampleValue = "{\"code\": \"404\", \"message\": \"해당 게시글을 찾을 수 없습니다.\", \"data\": null}"
-//    )
-//    @ApiUnauthorizedResponse
-//    @GetMapping("/{id}")
-//    public PostDetailResponse getPost(@PathVariable UUID id) {
-//        PostResponse post = postService.getPostById(id);
-//        return PostDetailResponse.of("200", "게시글 상세 조회에 성공했습니다.", post);
-//    }
-//
-//    @Operation(summary = "게시글 삭제", description = "ID로 특정 게시글을 삭제합니다. (본인 또는 관리자만 가능)")
-//    @ApiSuccessResponse(description = "삭제 성공")
-//    @ApiUnauthorizedResponse
+    @Operation(summary = "게시글 단건 조회", description = "ID로 특정 게시글의 상세 정보를 조회합니다.")
+    @ApiSuccessResponse(
+            description = "조회 성공",
+            message = "게시글 상세 조회에 성공했습니다.",
+            dataType = PostResponse.class
+    )
+    @ApiErrorResponse(
+            responseCode = "404",
+            description = "존재하지 않는 게시글",
+            exampleName = "PostNotFound",
+            exampleValue = "{\"code\": \"404\", \"message\": \"해당 게시글을 찾을 수 없습니다.\", \"data\": null}"
+    )
+    @ApiUnauthorizedResponse
+    @GetMapping("/{id}")
+    public PostDetailResponse getPost(@PathVariable UUID id) {
+        PostResponse post = postService.getPostById(id);
+        return PostDetailResponse.of("200", "게시글 상세 조회에 성공했습니다.", post);
+    }
+
+    @Operation(summary = "게시글 삭제", description = "ID로 특정 게시글을 삭제합니다. (본인 또는 관리자만 가능)")
+    @ApiSuccessResponse(description = "삭제 성공")
+    @ApiUnauthorizedResponse
     @DeleteMapping("/{id}")
     public RsData<Empty> deletePost(@PathVariable UUID id) {
         postService.deletePost(id);
         return RsData.of("200", "게시글이 성공적으로 삭제되었습니다.");
     }
 
-//    @Operation(summary = "게시글 수정", description = "ID로 특정 게시글의 정보를 수정합니다. (본인만 가능)")
-//    @ApiSuccessResponse( description = "수정 성공")
-//    @ApiUnauthorizedResponse
+    @Operation(summary = "게시글 수정", description = "ID로 특정 게시글의 정보를 수정합니다. (본인만 가능)")
+    @ApiSuccessResponse( description = "수정 성공")
+    @ApiUnauthorizedResponse
     @PatchMapping("/{id}")
     public RsData<Empty> updatePost(@PathVariable UUID id, @RequestBody @Valid PostUpdateRequest request) {
         postService.updatePost(id, request);
@@ -149,9 +149,9 @@ public class PostController {
     }
 
     // 찜에선 로킹 해야함
-//    @Operation(summary = "게시글 찜하기", description = "특정 게시글을 찜 목록에 추가합니다.")
-//    @ApiSuccessResponse(description = "찜하기 성공")
-//    @ApiUnauthorizedResponse
+    @Operation(summary = "게시글 찜하기", description = "특정 게시글을 찜 목록에 추가합니다.")
+    @ApiSuccessResponse(description = "찜하기 성공")
+    @ApiUnauthorizedResponse
     @PostMapping("/{postId}/likes")
     public RsData<Empty> likePost(
             @PathVariable UUID postId,
@@ -160,9 +160,9 @@ public class PostController {
         return RsData.of("200", "찜 완료되었습니다.");
     }
 
-//    @Operation(summary = "게시글 찜 해제", description = "특정 게시글을 찜 목록에서 제거합니다.")
-//    @ApiSuccessResponse(description = "찜 해제 성공")
-//    @ApiUnauthorizedResponse
+    @Operation(summary = "게시글 찜 해제", description = "특정 게시글을 찜 목록에서 제거합니다.")
+    @ApiSuccessResponse(description = "찜 해제 성공")
+    @ApiUnauthorizedResponse
     @DeleteMapping("/{postId}/likes")
     public RsData<Empty> unlikePost(
             @PathVariable UUID postId,
@@ -171,14 +171,14 @@ public class PostController {
         return RsData.of("200", "찜 해제되었습니다.");
     }
 
-//    @Operation(summary = "댓글 작성")
-//    @ApiSuccessResponse(
-//            responseCode = "201",
-//            description = "댓글 작성 성공",
-//            message = "댓글달기 성공했습니다.",
-//            dataType = PostResponse.class
-//    )
-//    @ApiUnauthorizedResponse
+    @Operation(summary = "댓글 작성")
+    @ApiSuccessResponse(
+            responseCode = "201",
+            description = "댓글 작성 성공",
+            message = "댓글달기 성공했습니다.",
+            dataType = PostResponse.class
+    )
+    @ApiUnauthorizedResponse
     @PostMapping("/{postId}/comment")
     @ResponseStatus(HttpStatus.CREATED)
     public PostDetailResponse postComment(
@@ -190,9 +190,9 @@ public class PostController {
         return PostDetailResponse.of("201", "댓글달기 성공했습니다.", post);
     }
 
-//    @Operation(summary = "댓글 수정")
-//    @ApiSuccessResponse(description = "댓글 수정 성공")
-//    @ApiUnauthorizedResponse
+    @Operation(summary = "댓글 수정")
+    @ApiSuccessResponse(description = "댓글 수정 성공")
+    @ApiUnauthorizedResponse
     @PatchMapping("/{postId}/comment/{commentId}")
     public RsData<PostResponse> updateComment(
             @PathVariable UUID postId,
@@ -203,9 +203,9 @@ public class PostController {
         return RsData.of("200", "댓글 수정 성공했습니다.", post);
     }
 
-//    @Operation(summary = "댓글 삭제")
-//    @ApiSuccessResponse( description = "댓글 삭제 성공")
-//    @ApiUnauthorizedResponse
+    @Operation(summary = "댓글 삭제")
+    @ApiSuccessResponse( description = "댓글 삭제 성공")
+    @ApiUnauthorizedResponse
     @DeleteMapping("/{postId}/comment/{commentId}")
     public RsData<PostResponse> deleteComment(
             @PathVariable UUID postId,
