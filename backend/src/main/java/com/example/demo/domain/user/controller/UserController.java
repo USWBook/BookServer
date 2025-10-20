@@ -96,7 +96,7 @@ public class UserController {
 
     }
 
-    @GetMapping("/upload/post")
+    @GetMapping("/post")
     public RsData<Page<UploadPost>> getUploadPost(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
