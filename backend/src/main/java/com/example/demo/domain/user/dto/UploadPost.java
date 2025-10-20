@@ -3,6 +3,7 @@ package com.example.demo.domain.user.dto;
 import com.example.demo.domain.post.entity.Post;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record UploadPost(
         String postImage,
@@ -11,7 +12,8 @@ public record UploadPost(
         Integer price,
         LocalDateTime createdAt,
         Integer likeCount,
-        String content
+        String content,
+        UUID postId
 ) {
     public static UploadPost from(Post post) {
         String statusValue = (post.getStatus() != null) ? post.getStatus().getValue() : null;
@@ -23,7 +25,8 @@ public record UploadPost(
                 post.getPostPrice(),
                 post.getCreatedAt(),
                 post.getLikeCount(),
-                post.getContent()
+                post.getContent(),
+                post.getId()
         );
     }
 }

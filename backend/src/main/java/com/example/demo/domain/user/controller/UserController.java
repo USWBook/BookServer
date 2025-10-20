@@ -106,4 +106,15 @@ public class UserController {
         return RsData.of("200","내가 올린 게시물 조회 성공",uploadPostsPage);
     }
 
+    @GetMapping("/likePost")
+    public RsData<Page<UploadPost>> getLikePost(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable){
+
+        Page<UploadPost> likePostsPage = userService.getMyLikePosts(userDetails.getId(), pageable);
+
+        return RsData.of("200","내가 찜한 게시물 조회 성공",likePostsPage);
+    }
+
+
 }
