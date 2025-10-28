@@ -9,6 +9,7 @@ import com.example.demo.domain.purchase.repository.PurchaseHistoryRepository;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +25,8 @@ public class PurchaseService {
     private final PurchaseHistoryRepository purchaseHistoryRepository;
 
     @Transactional
-    public void completeTransaction(UUID postId, UUID buyerId) {
+    @PreAuthorize("isAuthenticated() and @postAuthorizer.hasAuthority(#postId, #sellerId)")
+    public void completeTransaction(UUID sellerId, UUID postId, UUID buyerId) {
 
         Post post = postRepository.findById(postId).orElseThrow(PostNotFoundException::new);
         User buyer = userRepository.findById(buyerId).orElseThrow(UserNotFoundException::new);
