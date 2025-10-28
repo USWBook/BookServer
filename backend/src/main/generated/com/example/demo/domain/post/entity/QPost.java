@@ -30,7 +30,7 @@ public class QPost extends EntityPathBase<Post> {
 
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
-    public final EnumPath<com.example.demo.domain.user.entity.Grade> grade = createEnum("grade", com.example.demo.domain.user.entity.Grade.class);
+    public final EnumPath<com.example.demo.domain.user.enums.Grade> grade = createEnum("grade", com.example.demo.domain.user.enums.Grade.class);
 
     public final ComparablePath<java.util.UUID> id = createComparable("id", java.util.UUID.class);
 
@@ -50,7 +50,7 @@ public class QPost extends EntityPathBase<Post> {
 
     public final com.example.demo.domain.user.entity.QUser seller;
 
-    public final EnumPath<com.example.demo.domain.user.entity.Semester> semester = createEnum("semester", com.example.demo.domain.user.entity.Semester.class);
+    public final EnumPath<com.example.demo.domain.user.enums.Semester> semester = createEnum("semester", com.example.demo.domain.user.enums.Semester.class);
 
     public final EnumPath<com.example.demo.domain.post.enums.PostStatus> status = createEnum("status", com.example.demo.domain.post.enums.PostStatus.class);
 

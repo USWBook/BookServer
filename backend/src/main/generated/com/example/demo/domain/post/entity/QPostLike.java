@@ -22,6 +22,8 @@ public class QPostLike extends EntityPathBase<PostLike> {
 
     public static final QPostLike postLike = new QPostLike("postLike");
 
+    public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
+
     public final ComparablePath<java.util.UUID> id = createComparable("id", java.util.UUID.class);
 
     public final QPost post;
