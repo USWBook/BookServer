@@ -18,6 +18,12 @@ public record ReportUserResponseDto(
         @Schema(description = "피신고자 닉네임", example = "reportedNick")
         String reportedName,
 
+        @Schema(description = "신고자 ID", example = "907c6d4f-...")
+        UUID reporterId,
+
+        @Schema(description = "피신고자 ID", example = "907c6d4f-...")
+        UUID reportedId,
+
         @Schema(description = "신고 사유", example = "욕설")
         ReportReason reason,
 
