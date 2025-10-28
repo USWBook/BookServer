@@ -187,9 +187,9 @@ public class PostService {
     }
 
     // 판매중으로 변경
-    @PreAuthorize("isAuthenticated() and @postAuthorizer.hasAuthority(#postId, principal.id)")
+    @PreAuthorize("isAuthenticated() and @postAuthorizer.hasAuthority(#postId, sellerId)")
     @Transactional
-    public void sellPost(UUID postId) {
+    public void sellPost(UUID postId, UUID sellerId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(PostNotFoundException::new);
 

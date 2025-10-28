@@ -236,6 +236,16 @@ public class PostController {
 
         return RsData.of("201","거래가 성립되었습니다!");
     }
+
+    @PostMapping("api/post/{postId}/sell")
+    public RsData<?> sellPost(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID postId){
+
+        postService.sellPost(postId,userDetails.getId());
+
+        return RsData.of("200","게시물 상태를 판매중으로 변경하였습니다.");
+    }
     // 아래 세개는 동적쿼리 안넣었을때 구현 해둔거임
 //    @GetMapping
 //    public RsData<Page<PostListResponse>> getPosts(
