@@ -309,8 +309,8 @@
 
                 UserReport report = chatRoomService.reportUserByRoom(roomId, reporter, requestDto.reason());
 
-                // 신고 대상자 정보는 신고 기록 저장 시점이 아닌 여기서 조회
                 ChatRoom chatRoom = chatRoomService.findChatRoomById(roomId);
+
                 UUID reportedUserId = chatRoom.getSender().equals(reporter.getId())
                         ? chatRoom.getReceiver()
                         : chatRoom.getSender();
@@ -318,24 +318,20 @@
                 User reportedUser = userRepository.findById(reportedUserId)
                         .orElseThrow(() -> new RuntimeException("신고 대상자 유저를 찾을 수 없습니다."));
 
-                // DTO 생성 시 신고자·피신고자 닉네임과 ID 모두 포함
                 ReportUserResponseDto responseDto = new ReportUserResponseDto(
                         report.getId(),
                         reporter.getName(),
                         reportedUser.getName(),
+                        reporter.getId(),
+                        reportedUser.getId(),
                         report.getReason(),
                         report.getReportType(),
                         report.getReportThingId(),
                         report.getReportedAt()
-//                        reporter.getId(),
-//                        reportedUser.getId()
                 );
 
                 return RsData.of("200", "신고 완료", responseDto);
             }
-
-
-
 
             // 채팅방 나가기 (논리 삭제)
             @Operation(summary = "채팅방 나가기", description = "채팅방에서 나가고, 남은 인원수를 반환합니다.")

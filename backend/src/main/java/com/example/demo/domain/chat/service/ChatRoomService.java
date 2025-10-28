@@ -105,14 +105,16 @@ public class ChatRoomService {
         ChatRoom chatRoom = findChatRoomById(roomId);
         if (chatRoom == null) throw new RuntimeException("채팅방 없음");
 
-        // 신고 대상자 ID는 필요 시 조회만, UserReport에 저장은 안함
         UUID reportedUserId = chatRoom.getSender().equals(reporter.getId())
                 ? chatRoom.getReceiver()
                 : chatRoom.getSender();
 
-        // 신고 기록 저장 (피신고자 닉네임 없음)
+        User reported = userRepository.findById(reportedUserId)
+                .orElseThrow(() -> new RuntimeException("신고 대상자 없음"));
+
         UserReport report = UserReport.builder()
-                .reporterName(reporter.getName())
+                .reporterName(reporter.getName())   // 닉네임만 저장
+                //.reportedName는 엔티티에서 제거했으므로 저장 안 함
                 .reportType(ReportType.CHAT)
                 .reason(reason)
                 .reportThingId(roomId)
@@ -121,6 +123,7 @@ public class ChatRoomService {
 
         return userReportRepository.save(report);
     }
+
 
     //Redis에 저장된 채팅방 데이터를 조회
     public ChatRoom findChatRoomById(UUID roomId) {
