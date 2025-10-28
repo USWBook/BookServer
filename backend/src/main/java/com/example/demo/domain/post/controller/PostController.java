@@ -226,7 +226,7 @@ public class PostController {
         return RsData.of("201","게시물 신고 성공했습니다.");
     }
 
-    @PostMapping("api/post/{postId}/complete")
+    @PostMapping("/{postId}/complete")
     public RsData<?> completePost(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable UUID postId,
@@ -237,7 +237,7 @@ public class PostController {
         return RsData.of("201","거래가 성립되었습니다!");
     }
 
-    @PostMapping("api/post/{postId}/sell")
+    @PostMapping("/{postId}/sell")
     public RsData<?> sellPost(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable UUID postId){
