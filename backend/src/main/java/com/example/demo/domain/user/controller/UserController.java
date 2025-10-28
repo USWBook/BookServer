@@ -120,7 +120,7 @@ public class UserController {
     @GetMapping("/purchases")
     public RsData<Page<PostResponse>> getPurchaseHistory(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable){
+            @PageableDefault(size = 8, sort = "transactionDate", direction = Sort.Direction.DESC) Pageable pageable){
 
         Page<PostResponse> purchasePage = userService.getMyPurchaseList(userDetails.getId(),pageable);
 
