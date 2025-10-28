@@ -80,6 +80,10 @@ public class AuthService {
                 Semester.fromValue(request.semester()),
                 Role.USER
                 );
+        // 프로필 이미지 재설정 (옵셔널)
+        if (request.profileImageUrl() != null && !request.profileImageUrl().isEmpty()) {
+            withdrawnUser.updateProfileImage(request.profileImageUrl());
+        }
 
         redisMailRepository.deleteVerifiedEmail(request.email(), EmailAuthPurpose.SIGN_UP);
     }
@@ -105,6 +109,7 @@ public class AuthService {
                 .semester(Semester.fromValue(request.semester()))
                 .role(Role.USER)
                 .status(UserStatus.ACTIVE)
+                .profileImageUrl(request.profileImageUrl())
                 .build();
 
         userRepository.save(user);

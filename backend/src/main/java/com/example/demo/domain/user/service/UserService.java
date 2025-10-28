@@ -39,14 +39,7 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-
-        return new UserInfoResponse(
-                user.getName(),
-                user.getMajor().getName(),
-                user.getEmail(),
-                user.getGrade().getValue(),
-                user.getSemester().getValue()
-        );
+        return UserInfoResponse.from(user);
     }
 
     @Transactional
@@ -62,6 +55,13 @@ public class UserService {
         currentUser.updateProfile(request.name(), newMajor, request.grade(), request.semester());
 
         return UserInfoResponse.from(currentUser);
+    }
+
+    @Transactional
+    public void changeProfileImage(UUID userId, String imageUrl) {
+        User currentUser = userRepository.findById(userId)
+                .orElseThrow(MemberNotFoundException::new);
+        currentUser.updateProfileImage(imageUrl);
     }
 
     private Major findMajorOrNull(UUID majorId) {

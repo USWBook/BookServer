@@ -40,7 +40,7 @@ public record PostCreateRequest(
         @NotNull
         Integer semester,
 
-        @Schema(description = "사진 경로", example = "https://example.com/image.jpg")
+        @Schema(description = "사진 경로 (nullable)", example = "https://example.com/image.jpg")
         String postImage,
 
         @Schema(description = "게시물 본문", example = "졸업해서 싸게 팝니다")

@@ -10,7 +10,7 @@ public record PostUpdateRequest(
         String content,
         @Schema(description = "가격", example = "10000")
         Integer postPrice,
-        @Schema(description = "사진 경로", example = "https://s3.bucket/book.jpg")
+        @Schema(description = "사진 경로 (nullable)", example = "https://s3.bucket/book.jpg")
         String postImage
 ) {
 }

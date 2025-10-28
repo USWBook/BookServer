@@ -259,7 +259,7 @@ public class PostController {
 //        return RsData.of("200", "강의명 : " + classname + " 게시글 목록 검색에 성공했습니다.", posts);
 //    }
 
-    @Operation(summary = "이미지 업로드", description = "S3에 이미지를 업로드하고 URL을 반환합니다.")
+    @Operation(summary = "게시글 이미지 업로드", description = "S3에 게시글 이미지를 업로드하고 URL을 반환합니다.")
     @ApiSuccessResponse(
             responseCode = "200",
             description = "이미지 업로드 성공",

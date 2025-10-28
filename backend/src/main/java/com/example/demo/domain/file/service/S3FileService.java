@@ -47,6 +47,31 @@ public class S3FileService {
             throw new RuntimeException("파일 업로드 중 오류가 발생했습니다.", e);
         }
     }
+
+    // 사용자 프로필 이미지 업로드 (users/ prefix)
+    public String uploadUserProfileImage(MultipartFile file) {
+        try {
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+            String fileName = "users/" + UUID.randomUUID() + extension;
+
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(fileName)
+                    .contentType(file.getContentType())
+                    .build();
+
+            s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(
+                    file.getInputStream(), file.getSize()));
+
+            return String.format("https://%s.s3.ap-northeast-2.amazonaws.com/%s", bucket, fileName);
+        } catch (IOException e) {
+            throw new RuntimeException("프로필 이미지 업로드 중 오류가 발생했습니다.", e);
+        }
+    }
 }
 
 

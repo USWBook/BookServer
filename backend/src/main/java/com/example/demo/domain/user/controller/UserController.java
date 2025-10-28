@@ -11,6 +11,9 @@ import com.example.demo.global.security.userdetails.CustomUserDetails;
 import com.example.demo.domain.user.response.UserInfoResponse;
 import com.example.demo.domain.user.service.UserService;
 import com.example.demo.global.response.RsData;
+import com.example.demo.domain.file.service.S3FileService;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +23,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -31,6 +35,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final S3FileService s3FileService;
 
     @Operation(summary = "내 정보 조회", description = "현재 로그인한 사용자의 정보를 조회합니다.")
     @ApiSuccessResponse(description = "회원정보 조회 성공")
@@ -116,5 +121,27 @@ public class UserController {
         return RsData.of("200","내가 찜한 게시물 조회 성공",likePostsPage);
     }
 
+    @Operation(summary = "프로필 이미지 업로드", description = "S3에 프로필 이미지를 업로드하고 사용자 정보에 반영합니다.")
+    @ApiSuccessResponse(description = "프로필 이미지 업로드 성공")
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "예기치 못한 예외",
+            exampleName = "UnknownFound",
+            exampleValue = "{\"code\": \"400\", \"message\": \"예기치 못한 예외. 개발자 문의 바람\", \"data\": null}"
+    )
+    @ApiUnauthorizedResponse
+    @PostMapping("/profile-image")
+    public RsData<String> uploadProfileImage(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam("file") MultipartFile file
+    ) {
+        if (file == null || file.isEmpty()) {
+            return RsData.of("400", "파일이 비어있습니다.", null);
+        }
+
+        String imageUrl = s3FileService.uploadUserProfileImage(file);
+        userService.changeProfileImage(userDetails.getId(), imageUrl);
+        return RsData.of("200", "프로필 이미지가 성공적으로 업로드되었습니다.", imageUrl);
+    }
 
 }
