@@ -83,10 +83,11 @@ public class Post {
     private List<PostComment> comments = new ArrayList<>();
 
     // 게시글 수정
-    public void updatePost(String title, String content, Integer postPrice) {
+    public void updatePost(String title, String content, Integer postPrice, String postImage) {
         if(title != null) this.title = title;
         if(content != null) this.content = content;
         if(postPrice != null) this.postPrice = postPrice;
+        if(postImage != null) this.postImage = postImage;
         this.modifiedAt = LocalDateTime.now();
     }
     // 게시글 상태를 '판매완료'로 변경

@@ -9,6 +9,7 @@ import com.example.demo.domain.post.dto.response.PostDetailResponse;
 import com.example.demo.domain.post.dto.response.PostListResponse;
 import com.example.demo.domain.post.dto.response.PostResponse;
 import com.example.demo.domain.post.service.PostService;
+import com.example.demo.domain.file.service.S3FileService;
 import com.example.demo.global.annotation.swagger.ApiErrorResponse;
 import com.example.demo.global.annotation.swagger.ApiSuccessResponse;
 import com.example.demo.global.annotation.swagger.ApiUnauthorizedResponse;
@@ -31,6 +32,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -41,6 +43,7 @@ import java.util.UUID;
 public class PostController {
 
     private final PostService postService;
+    private final S3FileService s3FileService;
 
     @Operation(summary = "게시글 생성")
     @ApiSuccessResponse(
@@ -300,5 +303,28 @@ public class PostController {
 //
 //        return RsData.of("200", "강의명 : " + classname + " 게시글 목록 검색에 성공했습니다.", posts);
 //    }
+
+    @Operation(summary = "이미지 업로드", description = "S3에 이미지를 업로드하고 URL을 반환합니다.")
+    @ApiSuccessResponse(
+            responseCode = "200",
+            description = "이미지 업로드 성공",
+            message = "이미지가 성공적으로 업로드되었습니다."
+    )
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "예기치 못한 예외",
+            exampleName = "UnknownFound",
+            exampleValue = "{\"code\": \"400\", \"message\": \"예기치 못한 예외. 개발자 문의 바람\", \"data\": null}"
+    )
+    @ApiUnauthorizedResponse
+    @PostMapping("/upload-image")
+    public RsData<String> uploadImage(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return RsData.of("400", "파일이 비어있습니다.", null);
+        }
+
+        String imageUrl = s3FileService.uploadFile(file);
+        return RsData.of("200", "이미지가 성공적으로 업로드되었습니다.", imageUrl);
+    }
 }
 

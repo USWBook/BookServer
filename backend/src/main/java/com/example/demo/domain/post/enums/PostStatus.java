@@ -14,7 +14,7 @@ public enum PostStatus {
     private final String value;
 
     PostStatus(String value) {this.value = value;}
-
+    
 
     @JsonCreator
     public static com.example.demo.domain.post.enums.PostStatus fromValue(String value) {

@@ -101,7 +101,7 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(PostNotFoundException::new);
 
-        post.updatePost(request.title(), request.content(), request.postPrice());
+        post.updatePost(request.title(), request.content(), request.postPrice(), request.postImage());
 
         return PostResponse.from(post);
     }
