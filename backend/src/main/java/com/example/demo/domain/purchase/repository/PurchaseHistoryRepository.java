@@ -1,0 +1,16 @@
+package com.example.demo.domain.purchase.repository;
+
+import com.example.demo.domain.purchase.entity.PurchaseHistory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface PurchaseHistoryRepository extends JpaRepository<PurchaseHistory, UUID> {
+    Page<PurchaseHistory> findByBuyerId(UUID currentUserId, Pageable pageable);
+    Optional<PurchaseHistory> findByPostId(UUID postId);
+}

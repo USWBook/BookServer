@@ -11,6 +11,8 @@ import com.example.demo.domain.post.exception.AlreadyReportException;
 import com.example.demo.domain.post.exception.CommentNotFoundException;
 import com.example.demo.domain.post.exception.CommentNotInPostException;
 import com.example.demo.domain.post.repository.PostCommentRepository;
+import com.example.demo.domain.purchase.entity.PurchaseHistory;
+import com.example.demo.domain.purchase.repository.PurchaseHistoryRepository;
 import com.example.demo.domain.report.entity.UserReport;
 import com.example.demo.domain.report.repository.UserReportRepository;
 import com.example.demo.domain.user.entity.User;
@@ -42,6 +44,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostCommentRepository postCommentRepository;
     private final UserReportRepository userReportRepository;
+    private final PurchaseHistoryRepository purchaseHistoryRepository;
 
     // 게시글 생성
     @Transactional
@@ -187,15 +190,17 @@ public class PostService {
     }
 
     // 판매중으로 변경
-    @PreAuthorize("isAuthenticated() and @postAuthorizer.hasAuthority(#postId, principal.id)")
+    @PreAuthorize("isAuthenticated() and @postAuthorizer.hasAuthority(#postId, sellerId)")
     @Transactional
-    public void sellPost(UUID postId) {
+    public void sellPost(UUID postId, UUID sellerId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(PostNotFoundException::new);
 
+        Optional<PurchaseHistory> purchaseOpt = purchaseHistoryRepository.findByPostId(postId);
+        purchaseOpt.ifPresent(purchaseHistoryRepository::delete);
+        
         post.markAsSell();
 
-        return;
     }
 
     // 판매완료로 변경
