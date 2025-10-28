@@ -117,7 +117,7 @@ public class UserController {
         return RsData.of("200","내가 찜한 게시물 조회 성공",likePostsPage);
     }
 
-    @GetMapping("api/user/purchases")
+    @GetMapping("/purchases")
     public RsData<Page<PostResponse>> getPurchaseHistory(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable){
