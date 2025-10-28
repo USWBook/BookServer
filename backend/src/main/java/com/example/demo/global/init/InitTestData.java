@@ -41,6 +41,28 @@ public class InitTestData {
         Major mechMajor = helper.createMajor("기계공학과");
 
         // 3. 사용자 생성
+
+        User withdraw = helper.createUser(
+                "withdraw@example.com",
+                "password123",
+                "withdrawal",
+                "20230033",
+                csMajor,
+                Role.USER,
+                UserStatus.WITHDRAWAL,
+                1,
+                2);
+        User ban = helper.createUser(
+                "ban@example.com",
+                "password123",
+                "ban",
+                "20230044",
+                csMajor,
+                Role.USER,
+                UserStatus.BANNED,
+                1,
+                2);
+
         User user = helper.createUser(
                 "user@example.com",
                 "password123",

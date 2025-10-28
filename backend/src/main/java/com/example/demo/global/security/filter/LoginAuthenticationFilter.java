@@ -12,9 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationServiceException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -48,7 +46,11 @@ public class LoginAuthenticationFilter extends UsernamePasswordAuthenticationFil
                     .orElseThrow(() -> new UsernameNotFoundException(email));
 
             if (user.getStatus() == UserStatus.BANNED) {
-                throw new BannedUserException();
+                throw new LockedException("밴된 계정입니다.");
+            }
+
+            if (user.getStatus() == UserStatus.WITHDRAWAL) {
+                throw new DisabledException("탈퇴한 계정입니다.");
             }
 
             /*

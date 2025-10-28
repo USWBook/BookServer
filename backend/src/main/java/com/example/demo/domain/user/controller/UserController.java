@@ -1,6 +1,9 @@
 package com.example.demo.domain.user.controller;
 
+import com.example.demo.domain.post.entity.Post;
 import com.example.demo.domain.user.dto.ChangeInfoRequest;
+import com.example.demo.domain.user.dto.UploadPost;
+import com.example.demo.domain.user.dto.UserWithdrawalRequest;
 import com.example.demo.global.annotation.swagger.ApiErrorResponse;
 import com.example.demo.global.annotation.swagger.ApiSuccessResponse;
 import com.example.demo.global.annotation.swagger.ApiUnauthorizedResponse;
@@ -11,8 +14,15 @@ import com.example.demo.global.response.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 
 @Tag(name = "User", description = "사용자 정보 API")
 @RequiredArgsConstructor
@@ -46,7 +56,7 @@ public class UserController {
     @GetMapping("/information")
     public RsData<UserInfoResponse> infomation(@AuthenticationPrincipal CustomUserDetails userDetails) {
         UserInfoResponse userInfoResponse = userService.getUserInfo(userDetails.getId());
-        return RsData.of("200", "회원정보 조회 성공",userInfoResponse);
+        return RsData.of("200", "회원정보 조회 성공", userInfoResponse);
     }
 
     @Operation(summary = "내 정보 수정", description = "현재 로그인한 사용자의 이름, 학년, 학기, 전공을 수정합니다.")
@@ -70,8 +80,41 @@ public class UserController {
     )
     @ApiUnauthorizedResponse
     @PatchMapping("/information")
-    public RsData<UserInfoResponse> changeInfomation(@AuthenticationPrincipal CustomUserDetails userDetails,@RequestBody ChangeInfoRequest request) {
-        UserInfoResponse userInfoResponse = userService.changeInformation(userDetails.getId(),request);
-        return RsData.of("200", "회원정보 수정 성공",userInfoResponse);
+    public RsData<UserInfoResponse> changeInfomation(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody ChangeInfoRequest request) {
+        UserInfoResponse userInfoResponse = userService.changeInformation(userDetails.getId(), request);
+        return RsData.of("200", "회원정보 수정 성공", userInfoResponse);
     }
+
+    @PostMapping("/withdrawal")
+    public RsData<?> withdrawUserWithPassword(
+            @RequestBody UserWithdrawalRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        userService.withdraw(userDetails.getId(), request.password());
+
+        return RsData.of("200", "회원 탈퇴가 성공적으로 처리되었습니다.");
+
+    }
+
+    @GetMapping("/post")
+    public RsData<Page<UploadPost>> getUploadPost(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        Page<UploadPost> uploadPostsPage = userService.getMyPosts(userDetails.getId(), pageable);
+
+        return RsData.of("200","내가 올린 게시물 조회 성공",uploadPostsPage);
+    }
+
+    @GetMapping("/likePost")
+    public RsData<Page<UploadPost>> getLikePost(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable){
+
+        Page<UploadPost> likePostsPage = userService.getMyLikePosts(userDetails.getId(), pageable);
+
+        return RsData.of("200","내가 찜한 게시물 조회 성공",likePostsPage);
+    }
+
+
 }

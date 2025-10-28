@@ -1,6 +1,7 @@
 package com.example.demo.domain.post.dto.response;
 
 import com.example.demo.domain.post.entity.Post;
+import com.example.demo.domain.user.enums.UserStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -33,6 +34,8 @@ public record PostResponse(
         String majorName,
         @Schema(description = "판매상태", example = "판매중")
         String PostStatus,
+        @Schema(description = "판매자 닉네임",example = "박스프링")
+        String sellerName,
         @Schema(description = "댓글들")
         List<CommentResponse> comments
 ) {
@@ -41,6 +44,11 @@ public record PostResponse(
         List<CommentResponse> commentResponses = post.getComments().stream()
                 .map(CommentResponse::from)
                 .toList();
+        String author = switch (post.getSeller().getStatus()) {
+            case WITHDRAWAL -> "탈퇴한 사용자";
+            case BANNED -> "밴 당한 사용자";
+            default -> post.getSeller().getName();
+        };
         return new PostResponse(
                 post.getId(),
                 post.getTitle(),
@@ -54,6 +62,7 @@ public record PostResponse(
                 post.getLikeCount(),
                 post.getMajor().getName(),
                 post.getStatus().getValue(),
+                author,
                 commentResponses
         );
     }

@@ -37,6 +37,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final AntPathMatcher antPathMatcher = new AntPathMatcher();
     private final TokenService tokenService;
 
+    /**
+     * 이 필터는 HTTP 요청이 들어올 때마다 실행됩니다. (OncePerRequestFilter)
+     * 역할: HTTP 요청 헤더에서 JWT Access Token을 감지하고, 토큰이 유효하다면
+     * SecurityContext에 인증 정보를 설정하여 해당 요청 동안 사용자가 인증된 것으로 간주하게 만듭니다.
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -86,19 +91,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 //            User user = userRepository.findByEmail(email)
 //                    .orElseThrow(JwtUserNotFoundException::new);
 
-            // UserDetails 구현체 생성 (DB 조회 없이)
+            // CustomUserDetails 객체를 생성(DB 조회 없이)하여 인증 주체(principal)로 사용
             CustomUserDetails customUserDetails = new CustomUserDetails(userId,email, role);
+
+            /*
+             * [핵심] 인증 객체 생성
+             *
+             * JWT가 성공적으로 검증되었으므로, 우리는 이 사용자를 '인증된 사용자'로 간주합니다.
+             * 비밀번호가 없으므로 credentials 인자는 null을 전달합니다.
+             * 이 Authentication 객체는 '이미 인증이 완료된 상태'임을 나타냅니다.
+             * 여기서는 AuthenticationManager를 통한 인증 절차가 전혀 필요 없습니다.
+             */
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
 
+            // ---  SecurityContext에 인증 정보 등록 ---
+            /*
+             * SecurityContextHolder는 현재 실행 중인 스레드의 보안 컨텍스트를 관리합니다.
+             * 여기에 인증 정보를 설정하면, 현재 요청을 처리하는 동안 @AuthenticationPrincipal 등을 통해
+             * 컨트롤러나 서비스 레이어에서 인증된 사용자 정보에 접근할 수 있게 됩니다.
+             * 이것이 바로 "상태 없는(stateless)" 인증을 구현하는 핵심 부분입니다.
+             */
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
 
 
         } catch (CustomJwtException e) {
-            SecurityContextHolder.clearContext();
+            // 토큰 검증 과정에서 발생한 모든 예외를 처리
+            SecurityContextHolder.clearContext(); // 컨텍스트를 깨끗하게 비움
+            // CustomAuthenticationEntryPoint를 통해 클라이언트에게 401 응답을 보냄
             authenticationEntryPoint.commence(request, response, new BadCredentialsException(e.getMessage(), e));
-            return;
+            return; // 예외 발생 시 필터 체인 중단
         }
         chain.doFilter(request, response);
     }

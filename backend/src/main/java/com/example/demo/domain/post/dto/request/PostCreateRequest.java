@@ -15,25 +15,40 @@ import java.util.UUID;
 @Schema(description = "게시물 생성 요청 DTO")
 public record PostCreateRequest(
         @Schema(description = "게시물 제목", example = "자료구조 싸게 팝니다")
-        @NotBlank String title,
+        @NotBlank
+        String title,
+
         @Schema(description = "책 제목", example = "자료구조")
-        @NotBlank String postName,
+        @NotBlank
+        String postName,
+
         @Schema(description = "가격", example = "10000")
-        @NotNull Integer postPrice,
+        @NotNull
+        Integer postPrice,
+
         @Schema(description = "교수명", example = "홍길동 교슈")
         String professor,
+
         @Schema(description = "강의명", example = "컴공 자료구조강의")
         String courseName,
+
         @Schema(description = "학년", example = "4")
-        @NotNull Integer grade,
+        @NotNull
+        Integer grade,
+
         @Schema(description = "학기", example = "2")
-        @NotNull Integer semester,
+        @NotNull
+        Integer semester,
+
         @Schema(description = "사진 경로", example = "https://example.com/image.jpg")
         String postImage,
+
         @Schema(description = "게시물 본문", example = "졸업해서 싸게 팝니다")
         String content,
+
         @Schema(description = "전공 ID", example = "a1b2c3d4-...")
-        @NotNull UUID majorId
+        @NotNull
+        UUID majorId
 ) {
     public static Post toEntity(PostCreateRequest request, User seller, Major major) {
         return Post.builder()
