@@ -6,6 +6,7 @@ import com.example.demo.domain.post.dto.response.PostDetailResponse;
 import com.example.demo.domain.post.dto.response.PostListResponse;
 import com.example.demo.domain.post.dto.response.PostResponse;
 import com.example.demo.domain.post.service.PostService;
+import com.example.demo.domain.purchase.service.PurchaseService;
 import com.example.demo.global.annotation.swagger.ApiErrorResponse;
 import com.example.demo.global.annotation.swagger.ApiSuccessResponse;
 import com.example.demo.global.annotation.swagger.ApiUnauthorizedResponse;
@@ -38,6 +39,7 @@ import java.util.UUID;
 public class PostController {
 
     private final PostService postService;
+    private final PurchaseService purchaseService;
 
     @Operation(summary = "게시글 생성")
     @ApiSuccessResponse(
@@ -222,6 +224,17 @@ public class PostController {
     ){
         postService.reportPost(request,userDetails.getId());
         return RsData.of("201","게시물 신고 성공했습니다.");
+    }
+
+    @PostMapping("api/post/{post_id}/complete")
+    public RsData<?> completePost(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID postId,
+            @RequestBody CompletePostRequest request
+    ){
+        purchaseService.completeTransaction(userDetails.getId(),postId,request.buyerId());
+
+        return RsData.of("201","거래가 성립되었습니다!");
     }
     // 아래 세개는 동적쿼리 안넣었을때 구현 해둔거임
 //    @GetMapping
