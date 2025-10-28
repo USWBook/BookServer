@@ -226,7 +226,7 @@ public class PostController {
         return RsData.of("201","게시물 신고 성공했습니다.");
     }
 
-    @PostMapping("api/post/{post_id}/complete")
+    @PostMapping("api/post/{postId}/complete")
     public RsData<?> completePost(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable UUID postId,
