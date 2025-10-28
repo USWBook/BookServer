@@ -1,6 +1,6 @@
 package com.example.demo.domain.user.controller;
 
-import com.example.demo.domain.post.entity.Post;
+import com.example.demo.domain.post.dto.response.PostResponse;
 import com.example.demo.domain.user.dto.ChangeInfoRequest;
 import com.example.demo.domain.user.dto.UploadPost;
 import com.example.demo.domain.user.dto.UserWithdrawalRequest;
@@ -117,5 +117,14 @@ public class UserController {
         return RsData.of("200","내가 찜한 게시물 조회 성공",likePostsPage);
     }
 
+    @GetMapping("api/user/purchases")
+    public RsData<Page<PostResponse>> getPurchaseHistory(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable){
+
+        Page<PostResponse> purchasePage = userService.getMyPurchaseList(userDetails.getId(),pageable);
+
+        return RsData.of("200","내가 구매한 게시물 조회 성공",purchasePage);
+    }
 
 }
