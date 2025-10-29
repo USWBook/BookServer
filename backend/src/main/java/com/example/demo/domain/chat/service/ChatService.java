@@ -85,7 +85,7 @@ public class ChatService {
                 .orElseThrow(() -> new IllegalArgumentException("보낸 사용자 없음"));
 
         // 파일 저장 처리
-        String uploadDir = "C:/url";
+        String uploadDir = Paths.get(System.getProperty("user.dir"), "uploads", "chat-images").toString();
         String filename = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
         Path filepath = Paths.get(uploadDir, filename);
         try {
@@ -95,7 +95,7 @@ public class ChatService {
             throw new RuntimeException("이미지 저장 실패", e);
         }
 
-        String imageUrl = "/static/chat-images/" + filename;
+        String imageUrl = "/chat-images/" + filename;
 
         // 메시지 entity 저장
         ChatMessage imageMessage = ChatMessage.builder()

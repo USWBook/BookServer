@@ -126,7 +126,8 @@ public class SecurityConfig {
                                 "/favicon.ico",
                                 "/actuator/**",
                                 "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**",
-                                "/css/**", "/js/**", "/images/**",
+                                "/css/**", "/js/**", "/images/**", 
+                                "/chat-images/**",
                                 "/h2-console/**")
                         .permitAll()
 
