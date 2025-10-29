@@ -19,7 +19,10 @@ public record UserInfoResponse(
         Integer grade,
 
         @Schema(description = "학기", example = "1")
-        Integer semester
+        Integer semester,
+
+        @Schema(description = "프로필 이미지 URL (nullable)", example = "https://s3.ap-northeast-2.amazonaws.com/bucket/users/abc.jpg")
+        String profileImageUrl
 ) {
     public static UserInfoResponse from(User user) {
 //        // 사용자가 null이거나 탈퇴 상태일 경우처리
@@ -38,7 +41,8 @@ public record UserInfoResponse(
                 majorName,
                 user.getEmail(),
                 gradeValue,
-                semesterValue
+                semesterValue,
+                user.getProfileImageUrl()
         );
     }
 }

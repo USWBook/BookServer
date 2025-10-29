@@ -87,6 +87,9 @@ dependencies {
 
 	// AWS Secrets Manager SDK
 	implementation 'software.amazon.awssdk:secretsmanager:2.25.45'
+	
+	// AWS S3 SDK
+	implementation 'software.amazon.awssdk:s3:2.25.45'
 
 	// QueryDSL 추가
 	implementation "com.querydsl:querydsl-jpa:${queryDslVersion}:jakarta"

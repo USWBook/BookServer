@@ -57,6 +57,9 @@ public class User {
     @Column(nullable = false)
     private UserStatus status;
 
+	// 프로필 이미지 URL (nullable)
+	private String profileImageUrl;
+
 
     public void ban() {
         this.status = UserStatus.BANNED;
@@ -99,5 +102,9 @@ public class User {
         if (grade != null) this.grade = grade;
         if (semester != null) this.semester = semester;
     }
+
+	public void updateProfileImage(String profileImageUrl) {
+		this.profileImageUrl = profileImageUrl;
+	}
 
 }

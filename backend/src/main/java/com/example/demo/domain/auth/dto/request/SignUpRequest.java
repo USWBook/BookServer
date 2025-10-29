@@ -40,5 +40,8 @@ public record SignUpRequest(
 
         @Schema(description = "학기", example = "2")
         @NotNull(message = "학기는 필수입니다.")
-        Integer semester
+        Integer semester,
+
+        @Schema(description = "프로필 이미지 URL (nullable)", example = "https://s3.ap-northeast-2.amazonaws.com/bucket/users/abc.jpg")
+        String profileImageUrl
 ) {}

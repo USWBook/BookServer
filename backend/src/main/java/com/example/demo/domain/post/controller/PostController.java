@@ -7,6 +7,7 @@ import com.example.demo.domain.post.dto.response.PostListResponse;
 import com.example.demo.domain.post.dto.response.PostResponse;
 import com.example.demo.domain.post.service.PostService;
 import com.example.demo.domain.purchase.service.PurchaseService;
+import com.example.demo.domain.file.service.S3FileService;
 import com.example.demo.global.annotation.swagger.ApiErrorResponse;
 import com.example.demo.global.annotation.swagger.ApiSuccessResponse;
 import com.example.demo.global.annotation.swagger.ApiUnauthorizedResponse;
@@ -29,6 +30,10 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.RequestPart;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.UUID;
 
@@ -40,6 +45,7 @@ public class PostController {
 
     private final PostService postService;
     private final PurchaseService purchaseService;
+    private final S3FileService s3FileService;
 
     @Operation(summary = "게시글 생성")
     @ApiSuccessResponse(
@@ -55,13 +61,48 @@ public class PostController {
             exampleValue = "{\"code\": \"400\", \"message\": \"예기치 못한 예외. 개발자 문의 바람\", \"data\": null}"
     )
     @ApiUnauthorizedResponse
-    @PostMapping
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public RsData<?> createPost(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid PostCreateRequest request) {
 
         UUID postId = postService.createPost(userDetails.getId(), request);
+        return RsData.of("201", "게시글이 성공적으로 등록되었습니다.", postId);
+    }
+
+    @Operation(summary = "게시글 생성(이미지 포함)", description = "멀티파트로 request(JSON 텍스트)와 file(이미지, 선택)을 받아 S3 업로드 후 URL을 주입하여 게시글을 생성합니다.")
+    @ApiSuccessResponse(responseCode = "201", description = "게시글 생성 성공", message = "게시글이 성공적으로 생성되었습니다.")
+    @ApiUnauthorizedResponse
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public RsData<?> createPostMultipart(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestPart("request") String requestJson,
+            @RequestPart(value = "file", required = false) MultipartFile file
+    ) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        PostCreateRequest base = mapper.readValue(requestJson, PostCreateRequest.class);
+
+        String imageUrl = base.postImage();
+        if (file != null && !file.isEmpty()) {
+            imageUrl = s3FileService.uploadFile(file);
+        }
+
+        PostCreateRequest finalRequest = new PostCreateRequest(
+                base.title(),
+                base.postName(),
+                base.postPrice(),
+                base.professor(),
+                base.courseName(),
+                base.grade(),
+                base.semester(),
+                imageUrl,
+                base.content(),
+                base.majorId()
+        );
+
+        UUID postId = postService.createPost(userDetails.getId(), finalRequest);
         return RsData.of("201", "게시글이 성공적으로 등록되었습니다.", postId);
     }
 
@@ -278,5 +319,7 @@ public class PostController {
 //
 //        return RsData.of("200", "강의명 : " + classname + " 게시글 목록 검색에 성공했습니다.", posts);
 //    }
+
+
 }
 

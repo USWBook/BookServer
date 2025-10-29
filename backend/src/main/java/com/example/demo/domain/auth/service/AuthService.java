@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -35,6 +36,9 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final MajorRepository majorRepository;
     private final RedisMailRepository redisMailRepository;
+
+    @Value("${custom.user.default-profile-image-url:https://static.example.com/default-profile.png}")
+    private String defaultProfileImageUrl;
 
 
     @Transactional
@@ -80,6 +84,11 @@ public class AuthService {
                 Semester.fromValue(request.semester()),
                 Role.USER
                 );
+        // 프로필 이미지 재설정 (없으면 기본 이미지)
+        String profileUrl = (request.profileImageUrl() != null && !request.profileImageUrl().isEmpty())
+                ? request.profileImageUrl()
+                : defaultProfileImageUrl;
+        withdrawnUser.updateProfileImage(profileUrl);
 
         redisMailRepository.deleteVerifiedEmail(request.email(), EmailAuthPurpose.SIGN_UP);
     }
@@ -95,6 +104,10 @@ public class AuthService {
         Major major = majorRepository.findById(request.majorId())
                 .orElseThrow(MajorNotFoundException::new);
 
+        String profileUrl = (request.profileImageUrl() != null && !request.profileImageUrl().isEmpty())
+                ? request.profileImageUrl()
+                : defaultProfileImageUrl;
+
         User user = User.builder()
                 .email(request.email())
                 .password(passwordEncoder.encode(request.password()))
@@ -105,6 +118,7 @@ public class AuthService {
                 .semester(Semester.fromValue(request.semester()))
                 .role(Role.USER)
                 .status(UserStatus.ACTIVE)
+                .profileImageUrl(profileUrl)
                 .build();
 
         userRepository.save(user);
