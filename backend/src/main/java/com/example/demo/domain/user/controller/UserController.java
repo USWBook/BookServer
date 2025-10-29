@@ -1,6 +1,6 @@
 package com.example.demo.domain.user.controller;
 
-import com.example.demo.domain.post.entity.Post;
+import com.example.demo.domain.post.dto.response.PostResponse;
 import com.example.demo.domain.user.dto.ChangeInfoRequest;
 import com.example.demo.domain.user.dto.UploadPost;
 import com.example.demo.domain.user.dto.UserWithdrawalRequest;
@@ -15,6 +15,7 @@ import com.example.demo.domain.file.service.S3FileService;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -59,7 +60,7 @@ public class UserController {
     )
     @ApiUnauthorizedResponse // 401
     @GetMapping("/information")
-    public RsData<UserInfoResponse> infomation(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    public RsData<UserInfoResponse> infomation(@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         UserInfoResponse userInfoResponse = userService.getUserInfo(userDetails.getId());
         return RsData.of("200", "회원정보 조회 성공", userInfoResponse);
     }
@@ -85,7 +86,7 @@ public class UserController {
     )
     @ApiUnauthorizedResponse
     @PatchMapping("/information")
-    public RsData<UserInfoResponse> changeInfomation(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody ChangeInfoRequest request) {
+    public RsData<UserInfoResponse> changeInfomation(@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody ChangeInfoRequest request) {
         UserInfoResponse userInfoResponse = userService.changeInformation(userDetails.getId(), request);
         return RsData.of("200", "회원정보 수정 성공", userInfoResponse);
     }
@@ -93,7 +94,7 @@ public class UserController {
     @PostMapping("/withdrawal")
     public RsData<?> withdrawUserWithPassword(
             @RequestBody UserWithdrawalRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         userService.withdraw(userDetails.getId(), request.password());
 
@@ -142,6 +143,15 @@ public class UserController {
         String imageUrl = s3FileService.uploadUserProfileImage(file);
         userService.changeProfileImage(userDetails.getId(), imageUrl);
         return RsData.of("200", "프로필 이미지가 성공적으로 업로드되었습니다.", imageUrl);
+    }
+    @GetMapping("/purchases")
+    public RsData<Page<PostResponse>> getPurchaseHistory(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PageableDefault(size = 8, sort = "transactionDate", direction = Sort.Direction.DESC) Pageable pageable){
+
+        Page<PostResponse> purchasePage = userService.getMyPurchaseList(userDetails.getId(),pageable);
+
+        return RsData.of("200","내가 구매한 게시물 조회 성공",purchasePage);
     }
 
 }

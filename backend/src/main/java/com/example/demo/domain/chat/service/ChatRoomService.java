@@ -13,6 +13,7 @@ import com.example.demo.domain.post.entity.Post;
 import com.example.demo.domain.post.repository.PostRepository;
 import com.example.demo.domain.report.entity.UserReport;
 import com.example.demo.domain.report.enums.ReportReason;
+import com.example.demo.domain.report.enums.ReportType;
 import com.example.demo.domain.report.repository.UserReportRepository;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.repository.UserRepository;
@@ -98,28 +99,31 @@ public class ChatRoomService {
 
         return chatRoom;
     }
-//    //유저 신고
-//    @Transactional
-//    public UserReport reportUserByRoom(UUID roomId, User reporter, ReportReason reason) {
-//        ChatRoom chatRoom = findChatRoomById(roomId);
-//        if (chatRoom == null) throw new RuntimeException("채팅방 없음");
-//
-//        UUID reportedUserId = chatRoom.getSender().equals(reporter.getId())
-//                ? chatRoom.getReceiver()
-//                : chatRoom.getSender();
-//
-//        User reported = userRepository.findById(reportedUserId)
-//                .orElseThrow(() -> new RuntimeException("신고 대상자 없음"));
-//
-//        UserReport report = UserReport.builder()
-//                .reporter(reporter)
-//                .reported(reported)
-//                .reason(ReportReason.valueOf(reason.name()))
-//                .reportedAt(LocalDateTime.now())
-//                .build();
-//
-//        return userReportRepository.save(report);
-//    }
+    //유저 신고
+    @Transactional
+    public UserReport reportUserByRoom(UUID roomId, User reporter, ReportReason reason) {
+        ChatRoom chatRoom = findChatRoomById(roomId);
+        if (chatRoom == null) throw new RuntimeException("채팅방 없음");
+
+        UUID reportedUserId = chatRoom.getSender().equals(reporter.getId())
+                ? chatRoom.getReceiver()
+                : chatRoom.getSender();
+
+        User reported = userRepository.findById(reportedUserId)
+                .orElseThrow(() -> new RuntimeException("신고 대상자 없음"));
+
+        UserReport report = UserReport.builder()
+                .reporterName(reporter.getName())   // 닉네임만 저장
+                //.reportedName는 엔티티에서 제거했으므로 저장 안 함
+                .reportType(ReportType.CHAT)
+                .reason(reason)
+                .reportThingId(roomId)
+                .reportedAt(LocalDateTime.now())
+                .build();
+
+        return userReportRepository.save(report);
+    }
+
 
     //Redis에 저장된 채팅방 데이터를 조회
     public ChatRoom findChatRoomById(UUID roomId) {

@@ -6,6 +6,7 @@ import com.example.demo.domain.post.dto.response.PostDetailResponse;
 import com.example.demo.domain.post.dto.response.PostListResponse;
 import com.example.demo.domain.post.dto.response.PostResponse;
 import com.example.demo.domain.post.service.PostService;
+import com.example.demo.domain.purchase.service.PurchaseService;
 import com.example.demo.domain.file.service.S3FileService;
 import com.example.demo.global.annotation.swagger.ApiErrorResponse;
 import com.example.demo.global.annotation.swagger.ApiSuccessResponse;
@@ -43,6 +44,7 @@ import java.util.UUID;
 public class PostController {
 
     private final PostService postService;
+    private final PurchaseService purchaseService;
     private final S3FileService s3FileService;
 
     @Operation(summary = "게시글 생성")
@@ -264,6 +266,27 @@ public class PostController {
         postService.reportPost(request,userDetails.getId());
         return RsData.of("201","게시물 신고 성공했습니다.");
     }
+
+    @PostMapping("/{postId}/complete")
+    public RsData<?> completePost(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID postId,
+            @RequestBody CompletePostRequest request
+    ){
+        purchaseService.completeTransaction(userDetails.getId(),postId,request.buyerId());
+
+        return RsData.of("201","거래가 성립되었습니다!");
+    }
+
+    @PostMapping("/{postId}/sell")
+    public RsData<?> sellPost(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID postId){
+
+        postService.sellPost(postId,userDetails.getId());
+
+        return RsData.of("200","게시물 상태를 판매중으로 변경하였습니다.");
+    }
     // 아래 세개는 동적쿼리 안넣었을때 구현 해둔거임
 //    @GetMapping
 //    public RsData<Page<PostListResponse>> getPosts(
@@ -297,6 +320,6 @@ public class PostController {
 //        return RsData.of("200", "강의명 : " + classname + " 게시글 목록 검색에 성공했습니다.", posts);
 //    }
 
-    
+
 }
 

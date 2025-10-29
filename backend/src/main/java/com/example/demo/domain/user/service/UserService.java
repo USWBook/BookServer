@@ -5,9 +5,12 @@ import com.example.demo.domain.auth.exception.UserNotFoundException;
 import com.example.demo.domain.major.entity.Major;
 import com.example.demo.domain.major.exception.MajorNotFoundException;
 import com.example.demo.domain.major.repository.MajorRepository;
+import com.example.demo.domain.post.dto.response.PostResponse;
 import com.example.demo.domain.post.entity.Post;
 import com.example.demo.domain.post.repository.PostLikeRepository;
 import com.example.demo.domain.post.repository.PostRepository;
+import com.example.demo.domain.purchase.entity.PurchaseHistory;
+import com.example.demo.domain.purchase.repository.PurchaseHistoryRepository;
 import com.example.demo.domain.user.dto.ChangeInfoRequest;
 import com.example.demo.domain.user.dto.UploadPost;
 import com.example.demo.domain.user.entity.User;
@@ -23,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -33,6 +37,7 @@ public class UserService {
     private final MajorRepository majorRepository;
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
+    private final PurchaseHistoryRepository purchaseHistoryRepository;
 
     @Transactional(readOnly = true)
     public UserInfoResponse getUserInfo(UUID userId) {
@@ -110,5 +115,18 @@ public class UserService {
         Page<Post> postPage = postLikeRepository.findLikedPostsByUserId(userId, pageable);
 
         return postPage.map(UploadPost::from);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PostResponse> getMyPurchaseList(UUID currentUserId,Pageable pageable) {
+
+        Page<PurchaseHistory> purchases = purchaseHistoryRepository.findByBuyerId(currentUserId, pageable);
+
+        return purchases
+                .map(ph ->
+                        PostResponse.from(ph.getPost()));
+
+//        return purchases.map(PurchaseHistory::getPost) // Page<Post>로 변환
+//                .map(PostResponse::from);      // Page<PostResponse>로 변환
     }
 }

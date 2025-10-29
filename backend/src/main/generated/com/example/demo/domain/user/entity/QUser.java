@@ -24,7 +24,7 @@ public class QUser extends EntityPathBase<User> {
 
     public final StringPath email = createString("email");
 
-    public final EnumPath<Grade> grade = createEnum("grade", Grade.class);
+    public final EnumPath<com.example.demo.domain.user.enums.Grade> grade = createEnum("grade", com.example.demo.domain.user.enums.Grade.class);
 
     public final ComparablePath<java.util.UUID> id = createComparable("id", java.util.UUID.class);
 
@@ -36,9 +36,9 @@ public class QUser extends EntityPathBase<User> {
 
     public final EnumPath<com.example.demo.domain.user.role.Role> role = createEnum("role", com.example.demo.domain.user.role.Role.class);
 
-    public final EnumPath<Semester> semester = createEnum("semester", Semester.class);
+    public final EnumPath<com.example.demo.domain.user.enums.Semester> semester = createEnum("semester", com.example.demo.domain.user.enums.Semester.class);
 
-    public final EnumPath<UserStatus> status = createEnum("status", UserStatus.class);
+    public final EnumPath<com.example.demo.domain.user.enums.UserStatus> status = createEnum("status", com.example.demo.domain.user.enums.UserStatus.class);
 
     public final StringPath studentId = createString("studentId");
 
