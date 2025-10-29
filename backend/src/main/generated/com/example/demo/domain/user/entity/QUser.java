@@ -34,6 +34,8 @@ public class QUser extends EntityPathBase<User> {
 
     public final StringPath password = createString("password");
 
+    public final StringPath profileImageUrl = createString("profileImageUrl");
+
     public final EnumPath<com.example.demo.domain.user.role.Role> role = createEnum("role", com.example.demo.domain.user.role.Role.class);
 
     public final EnumPath<com.example.demo.domain.user.enums.Semester> semester = createEnum("semester", com.example.demo.domain.user.enums.Semester.class);
