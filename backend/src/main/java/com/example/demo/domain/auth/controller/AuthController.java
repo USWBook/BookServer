@@ -5,6 +5,7 @@ import com.example.demo.domain.auth.dto.request.ResetPasswordRequest;
 import com.example.demo.domain.auth.dto.request.SignUpRequest;
 import com.example.demo.domain.auth.dto.response.TokenResponse;
 import com.example.demo.domain.auth.service.AuthService;
+import com.example.demo.domain.file.service.S3FileService;
 import com.example.demo.global.annotation.swagger.ApiErrorResponse;
 import com.example.demo.global.annotation.swagger.ApiForbiddenResponse;
 import com.example.demo.global.annotation.swagger.ApiSuccessResponse;
@@ -26,6 +27,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.RequestPart;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Tag(name = "Authentication", description = "인증/인가 API")
 @RestController
@@ -34,6 +39,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController implements AuthControllerDoc{
 
     private final AuthService authService;
+    private final S3FileService s3FileService;
     private final TokenService tokenService;
 
     @Operation(summary = "회원가입", description = "새로운 사용자를 등록합니다.")
@@ -61,11 +67,49 @@ public class AuthController implements AuthControllerDoc{
             exampleName = "MajorNotFound",
             exampleValue = "{\"code\": \"404\", \"message\": \"존재하지 않는 전공입니다.\", \"data\": null}"
     )
-    @PostMapping("/signup")
+    @PostMapping(value = "/signup", consumes = MediaType.APPLICATION_JSON_VALUE)
     public RsData<?> signUp(@RequestBody @Valid SignUpRequest request) {
         authService.signUp(request);
         return RsData.of("200", "회원가입 성공");
     }
+
+    // 동일 경로에서 멀티파트(form-data) 지원: request(Text: JSON) + file(File)
+    @Operation(summary = "회원가입(멀티파트 지원)", description = "request(JSON 텍스트)와 file(이미지 파일, 선택)을 멀티파트로 받아 회원가입합니다.")
+    @ApiSuccessResponse(description = "회원가입 성공")
+    @ApiErrorResponse(
+            description = "유효성 검사 실패",
+            exampleName = "ValidationFailure",
+            exampleValue = "{\"code\": \"400\", \"message\": \"비밀번호는 8자 이상, 16자 이하로 입력해주세요.\", \"data\": null}"
+    )
+    @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public RsData<?> signUpMultipart(
+            @RequestPart("request") String requestJson,
+            @RequestPart(value = "file", required = false) MultipartFile file
+    ) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        SignUpRequest baseRequest = mapper.readValue(requestJson, SignUpRequest.class);
+
+        String profileUrl = baseRequest.profileImageUrl();
+        if (file != null && !file.isEmpty()) {
+            profileUrl = s3FileService.uploadUserProfileImage(file);
+        }
+
+        SignUpRequest finalRequest = new SignUpRequest(
+                baseRequest.email(),
+                baseRequest.password(),
+                baseRequest.name(),
+                baseRequest.studentId(),
+                baseRequest.majorId(),
+                baseRequest.grade(),
+                baseRequest.semester(),
+                profileUrl
+        );
+
+        authService.signUp(finalRequest);
+        return RsData.of("200", "회원가입 성공");
+    }
+
+    
 
     @Operation(summary = "토큰 재발급", description = "HttpOnly 쿠키에 담긴 Refresh Token을 사용하여 Access Token과 Refresh Token을 재발급합니다.")
     @ApiResponse(responseCode = "200", description = "토큰 재발급 성공",

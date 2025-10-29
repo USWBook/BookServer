@@ -38,7 +38,6 @@ public class UserService {
     public UserInfoResponse getUserInfo(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
-
         return UserInfoResponse.from(user);
     }
 
@@ -57,19 +56,21 @@ public class UserService {
         return UserInfoResponse.from(currentUser);
     }
 
-    @Transactional
-    public void changeProfileImage(UUID userId, String imageUrl) {
-        User currentUser = userRepository.findById(userId)
-                .orElseThrow(MemberNotFoundException::new);
-        currentUser.updateProfileImage(imageUrl);
-    }
-
     private Major findMajorOrNull(UUID majorId) {
         if (majorId == null) {
             return null;
         }
         return majorRepository.findById(majorId)
                 .orElseThrow(MajorNotFoundException::new);
+    }
+
+    @Transactional
+    public void changeProfileImage(UUID userId, String imageUrl) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        user.updateProfileImage(imageUrl);
+        // JPA 더티 체킹에 의해 트랜잭션 커밋 시 반영됩니다.
     }
 
 
