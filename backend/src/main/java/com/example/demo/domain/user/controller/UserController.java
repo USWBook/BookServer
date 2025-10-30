@@ -122,27 +122,16 @@ public class UserController {
         return RsData.of("200","내가 찜한 게시물 조회 성공",likePostsPage);
     }
 
-    @Operation(summary = "프로필 이미지 업로드", description = "S3에 프로필 이미지를 업로드하고 사용자 정보에 반영합니다.")
-    @ApiSuccessResponse(description = "프로필 이미지 업로드 성공")
-    @ApiErrorResponse(
-            responseCode = "400",
-            description = "예기치 못한 예외",
-            exampleName = "UnknownFound",
-            exampleValue = "{\"code\": \"400\", \"message\": \"예기치 못한 예외. 개발자 문의 바람\", \"data\": null}"
-    )
+    @Operation(summary = "프로필 이미지 URL 반영", description = "사전 업로드로 얻은 URL을 사용자 프로필에 반영합니다.")
+    @ApiSuccessResponse(description = "프로필 이미지 변경 성공")
     @ApiUnauthorizedResponse
-    @PostMapping("/profile-image")
-    public RsData<String> uploadProfileImage(
+    @PatchMapping("/profile-image-url")
+    public RsData<String> updateProfileImageUrl(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestParam("file") MultipartFile file
+            @RequestBody com.example.demo.domain.user.dto.ProfileImageUrlRequest request
     ) {
-        if (file == null || file.isEmpty()) {
-            return RsData.of("400", "파일이 비어있습니다.", null);
-        }
-
-        String imageUrl = s3FileService.uploadUserProfileImage(file);
-        userService.changeProfileImage(userDetails.getId(), imageUrl);
-        return RsData.of("200", "프로필 이미지가 성공적으로 업로드되었습니다.", imageUrl);
+        userService.changeProfileImage(userDetails.getId(), request.profileImageUrl());
+        return RsData.of("200", "프로필 이미지가 성공적으로 반영되었습니다.", request.profileImageUrl());
     }
     @GetMapping("/purchases")
     public RsData<Page<PostResponse>> getPurchaseHistory(

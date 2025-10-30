@@ -28,12 +28,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.RequestPart;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.UUID;
 
@@ -71,40 +69,7 @@ public class PostController {
         return RsData.of("201", "게시글이 성공적으로 등록되었습니다.", postId);
     }
 
-    @Operation(summary = "게시글 생성(이미지 포함)", description = "멀티파트로 request(JSON 텍스트)와 file(이미지, 선택)을 받아 S3 업로드 후 URL을 주입하여 게시글을 생성합니다.")
-    @ApiSuccessResponse(responseCode = "201", description = "게시글 생성 성공", message = "게시글이 성공적으로 생성되었습니다.")
-    @ApiUnauthorizedResponse
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public RsData<?> createPostMultipart(
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestPart("request") String requestJson,
-            @RequestPart(value = "file", required = false) MultipartFile file
-    ) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        PostCreateRequest base = mapper.readValue(requestJson, PostCreateRequest.class);
-
-        String imageUrl = base.postImage();
-        if (file != null && !file.isEmpty()) {
-            imageUrl = s3FileService.uploadFile(file);
-        }
-
-        PostCreateRequest finalRequest = new PostCreateRequest(
-                base.title(),
-                base.postName(),
-                base.postPrice(),
-                base.professor(),
-                base.courseName(),
-                base.grade(),
-                base.semester(),
-                imageUrl,
-                base.content(),
-                base.majorId()
-        );
-
-        UUID postId = postService.createPost(userDetails.getId(), finalRequest);
-        return RsData.of("201", "게시글이 성공적으로 등록되었습니다.", postId);
-    }
+    // 멀티파트 방식 제거: 사전 업로드 후 JSON으로 최종 제출
 
     // 게시글 전체 조회
     /**
