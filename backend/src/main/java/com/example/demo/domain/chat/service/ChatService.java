@@ -85,8 +85,8 @@ public class ChatService {
                 .orElseThrow(() -> new IllegalArgumentException("보낸 사용자 없음"));
 
         // 파일 저장 처리
-        String uploadDir = "C:/url";
-        String filename = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
+        String uploadDir = Paths.get(System.getProperty("user.dir"), "uploads", "chat-images").toString();
+        String filename = UUID.randomUUID() + "_" + sanitizeFilename(imageFile.getOriginalFilename());
         Path filepath = Paths.get(uploadDir, filename);
         try {
             Files.createDirectories(filepath.getParent());
@@ -95,7 +95,7 @@ public class ChatService {
             throw new RuntimeException("이미지 저장 실패", e);
         }
 
-        String imageUrl = "/static/chat-images/" + filename;
+        String imageUrl = "/chat-images/" + filename;
 
         // 메시지 entity 저장
         ChatMessage imageMessage = ChatMessage.builder()
@@ -107,6 +107,15 @@ public class ChatService {
 
         return chatMessageRepository.save(imageMessage);
     }
+
+    // 파일명에서 한글 및 특수문자 등 안전하지 않은 문자 _ 로 변환
+    private String sanitizeFilename(String filename) {
+        if (filename == null) {
+            return "";
+        }
+        return filename.replaceAll("[^a-zA-Z0-9\\.\\-_]", "_");
+    }
+
 
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
