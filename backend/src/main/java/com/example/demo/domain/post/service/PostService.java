@@ -198,20 +198,11 @@ public class PostService {
 
         Optional<PurchaseHistory> purchaseOpt = purchaseHistoryRepository.findByPostId(postId);
         purchaseOpt.ifPresent(purchaseHistoryRepository::delete);
-        
+
         post.markAsSell();
 
     }
 
-    // 판매완료로 변경
-    @PreAuthorize("isAuthenticated() and @postAuthorizer.hasAuthority(#postId, userId)")
-    @Transactional
-    public void soldPost(UUID postId, UUID userId) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(PostNotFoundException::new);
-
-        post.markAsSold();
-    }
 
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
