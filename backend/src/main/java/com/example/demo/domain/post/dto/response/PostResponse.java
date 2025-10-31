@@ -36,6 +36,8 @@ public record PostResponse(
         String PostStatus,
         @Schema(description = "판매자 닉네임",example = "박스프링")
         String sellerName,
+        @Schema(description = "판매자 식별값",example = "UUID")
+        UUID sellerId,
         @Schema(description = "댓글들")
         List<CommentResponse> comments
 ) {
@@ -63,6 +65,7 @@ public record PostResponse(
                 post.getMajor().getName(),
                 post.getStatus().getValue(),
                 author,
+                post.getSeller().getId(),
                 commentResponses
         );
     }
