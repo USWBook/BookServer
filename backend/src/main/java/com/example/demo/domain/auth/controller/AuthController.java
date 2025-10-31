@@ -169,6 +169,12 @@ public class AuthController implements AuthControllerDoc{
         return RsData.of("200", "비밀번호 초기화 완료되었습니다.");
     }
 
+    @GetMapping("/{name}/exists")
+    public RsData<?> nameExists(@PathVariable String name){
+        boolean isexists = authService.isDuplicateName(name);
+        return RsData.of("200","닉네임 중복 검사 성공",isexists);
+    }
+
     @Operation(summary = "관리자 전용 API 테스트", description = "ADMIN 권한을 가진 사용자만 접근 가능한 테스트용 API입니다.")
     @ApiSuccessResponse( description = " 관리자 권한으로 접근 성공")
     @ApiErrorResponse(

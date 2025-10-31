@@ -135,6 +135,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/signup",
+                                "/api/auth/*/exists",
                                 "/api/auth/reissue",
                                 "/api/mail/**"
                         ).permitAll()
