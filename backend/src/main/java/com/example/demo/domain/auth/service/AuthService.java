@@ -62,13 +62,15 @@ public class AuthService {
     @Transactional
     public void reSignUp(User withdrawnUser , SignUpRequest request) {
 
-        // 이메일 인증을 다시 했는지 확인하는 로직이 필요하다면 여기에 추가
-        if (!redisMailRepository.isVerifiedEmail(request.email(), EmailAuthPurpose.SIGN_UP)) {
-            throw new EmailNotVerifiedException();
-        }
+        // 이메일 인증을 다시 했는지 확인
+        didVerifyEmail(request.email(), EmailAuthPurpose.SIGN_UP);
 
         Major major = majorRepository.findById(request.majorId())
                 .orElseThrow(MajorNotFoundException::new);
+
+        if(isDuplicateName(request.name())) {
+            throw new ArealyExistsName(request.name());
+        }
 
         // 기존 User 엔티티의 상태를 업데이트 (새로 생성하는 것이 아님)
         withdrawnUser.reactivate(
@@ -89,16 +91,24 @@ public class AuthService {
         redisMailRepository.deleteVerifiedEmail(request.email(), EmailAuthPurpose.SIGN_UP);
     }
 
+    private void didVerifyEmail(String request, EmailAuthPurpose signUp) {
+        if (!redisMailRepository.isVerifiedEmail(request, signUp)) {
+            throw new EmailNotVerifiedException();
+        }
+    }
+
     @Transactional
     public void firstSignUp(SignUpRequest request) {
 
         // 이메일 인증 여부 확인
-        if (!redisMailRepository.isVerifiedEmail(request.email(), EmailAuthPurpose.SIGN_UP)) {
-            throw new EmailNotVerifiedException();
-        }
+        didVerifyEmail(request.email(), EmailAuthPurpose.SIGN_UP);
 
         Major major = majorRepository.findById(request.majorId())
                 .orElseThrow(MajorNotFoundException::new);
+
+        if(isDuplicateName(request.name())) {
+            throw new ArealyExistsName(request.name());
+        }
 
         User user = User.builder()
                 .email(request.email())
@@ -137,9 +147,7 @@ public class AuthService {
     public void resetPassword(@Valid ResetPasswordRequest request) {
 
         // 이메일 인증 여부 확인
-        if (!redisMailRepository.isVerifiedEmail(request.email(), EmailAuthPurpose.PASSWORD_RESET)) {
-            throw new EmailNotVerifiedException();
-        }
+        didVerifyEmail(request.email(), EmailAuthPurpose.PASSWORD_RESET);
 
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(UserNotFoundException::new);
