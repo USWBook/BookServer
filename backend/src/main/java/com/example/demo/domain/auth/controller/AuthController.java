@@ -169,7 +169,7 @@ public class AuthController implements AuthControllerDoc{
         return RsData.of("200", "비밀번호 초기화 완료되었습니다.");
     }
 
-    @GetMapping("/{name}/exists/")
+    @GetMapping("/{name}/exists")
     public RsData<?> nameExists(@PathVariable String name){
         boolean isexists = authService.isDuplicateName(name);
         return RsData.of("200","닉네임 중복 검사 성공",isexists);
