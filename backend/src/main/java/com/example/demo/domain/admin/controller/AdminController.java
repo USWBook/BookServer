@@ -43,7 +43,7 @@ public class AdminController {
     @PostMapping("/ban")
     @PreAuthorize("hasRole('ADMIN')")
     public RsData<Void> banUser(@RequestBody BanRequestByAdmin banRequest) {
-        userService.banUser(banRequest.userName());
+        userService.banUser(banRequest.userId());
         return RsData.of("200", "해당 유저를 정지 처리했습니다.");
     }
 }
