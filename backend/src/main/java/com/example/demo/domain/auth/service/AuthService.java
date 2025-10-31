@@ -167,4 +167,9 @@ public class AuthService {
             userRepository.save(user); // 준영속상태이기에 save로 영속 상태로 만들고, 변경 사항을 DB에 반영
         }
     }
+
+    @Transactional(readOnly = true)
+    public boolean isDuplicateName(String name) {
+        return userRepository.existsByName(name);
+    }
 }
