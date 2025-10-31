@@ -91,8 +91,8 @@ public class UserService {
 
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
-    public void banUser(String sellerName) {
-        User user = userRepository.findByName(sellerName).orElseThrow(UserNotFoundException::new);
+    public void banUser(UUID userId) {
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         user.ban();
     }
 
