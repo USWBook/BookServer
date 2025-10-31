@@ -1,5 +1,6 @@
 package com.example.demo.domain.user.service;
 
+import com.example.demo.domain.auth.exception.ArealyExistsName;
 import com.example.demo.domain.auth.exception.MemberNotFoundException;
 import com.example.demo.domain.auth.exception.UserNotFoundException;
 import com.example.demo.domain.major.entity.Major;
@@ -55,7 +56,9 @@ public class UserService {
 
 //        Grade newGrade = (request.grade() != null) ? Grade.fromValue(request.grade()) : null;
 //        Semester newSemester = (request.semester() != null) ? Semester.fromValue(request.semester()) : null;
-        
+        if(userRepository.existsByName(request.name())) {
+            throw new ArealyExistsName(request.name());
+        }
         currentUser.updateProfile(request.name(), newMajor, request.grade(), request.semester());
 
         return UserInfoResponse.from(currentUser);
