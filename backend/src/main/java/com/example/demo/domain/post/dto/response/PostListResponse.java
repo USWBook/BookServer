@@ -16,6 +16,9 @@ public record PostListResponse(
         @Schema(description = "게시글 제목", example = "중고 노트북 판매합니다")
         String title,
 
+        @Schema(description = "대표 사진", example = "https://example.com/image.jpg")
+        String postImage,
+
         @Schema(description = "가격", example = "500000")
         Integer postPrice,
 
@@ -38,10 +41,11 @@ public record PostListResponse(
         LocalDateTime createdAt
 ) {
 
-    public PostListResponse(UUID id, String title, Integer postPrice, Integer likeCount, Long commentCount, Grade grade, Semester semester, PostStatus status, LocalDateTime createdAt) {
+    public PostListResponse(UUID id, String title, String postImage, Integer postPrice, Integer likeCount, Long commentCount, Grade grade, Semester semester, PostStatus status, LocalDateTime createdAt) {
         this(
                 id,
                 title,
+                postImage,
                 postPrice,
                 likeCount,
                 commentCount,
