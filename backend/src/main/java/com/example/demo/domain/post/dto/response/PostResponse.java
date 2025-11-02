@@ -41,8 +41,7 @@ public record PostResponse(
         @Schema(description = "댓글들")
         List<CommentResponse> comments
 ) {
-    public static PostResponse from(Post post) {
-        // 댓글이 없으면 빈 배열
+    public static PostResponse from(Post post, String presignedUrl) {
         List<CommentResponse> commentResponses = post.getComments().stream()
                 .map(CommentResponse::from)
                 .toList();
@@ -58,7 +57,7 @@ public record PostResponse(
                 post.getPostPrice(),
                 post.getCourseName(),
                 post.getProfessor(),
-                post.getPostImage(),
+                presignedUrl,
                 post.getContent(),
                 post.getCreatedAt(),
                 post.getLikeCount(),

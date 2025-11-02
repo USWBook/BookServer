@@ -9,6 +9,7 @@ import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 @Configuration
 public class S3Config {
@@ -44,6 +45,31 @@ public class S3Config {
     @Bean
     public String s3Bucket() {
         return bucket;
+    }
+
+    // Local/Dev 환경: Presigner 생성
+    @Bean
+    @Profile({"local", "dev"})
+    public S3Presigner s3PresignerLocal(
+            @Value("${custom.aws.credentials.access-key}") String accessKey,
+            @Value("${custom.aws.credentials.secret-key}") String secretKey
+    ) {
+        AwsBasicCredentials awsCredentials = AwsBasicCredentials.create(accessKey, secretKey);
+        
+        return S3Presigner.builder()
+                .region(Region.AP_NORTHEAST_2)
+                .credentialsProvider(StaticCredentialsProvider.create(awsCredentials))
+                .build();
+    }
+
+    // STG/Prod 환경: Presigner 생성 (IAM Role 사용)
+    @Bean
+    @Profile({"stg", "prod"})
+    public S3Presigner s3PresignerCloud() {
+        return S3Presigner.builder()
+                .region(Region.AP_NORTHEAST_2)
+                .credentialsProvider(DefaultCredentialsProvider.create())
+                .build();
     }
 }
 
