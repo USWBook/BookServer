@@ -24,15 +24,8 @@ public record UserInfoResponse(
         @Schema(description = "프로필 이미지 URL (nullable)", example = "https://s3.ap-northeast-2.amazonaws.com/bucket/users/abc.jpg")
         String profileImageUrl
 ) {
-    public static UserInfoResponse from(User user) {
-//        // 사용자가 null이거나 탈퇴 상태일 경우처리
-//        if (user == null || user.getStatus() == UserStatus.WITHDRAWN) {
-//            return new UserInfoResponse("탈퇴한 사용자", null, null, null, null);
-//        }
-
+    public static UserInfoResponse from(User user, String presignedUrl) {
         String majorName = (user.getMajor() != null) ? user.getMajor().getName() : null;
-
-        // enum에서 숫자 값을 추출하여 DTO에 담음.
         Integer gradeValue = (user.getGrade() != null) ? user.getGrade().getValue() : null;
         Integer semesterValue = (user.getSemester() != null) ? user.getSemester().getValue() : null;
 
@@ -42,7 +35,7 @@ public record UserInfoResponse(
                 user.getEmail(),
                 gradeValue,
                 semesterValue,
-                user.getProfileImageUrl()
+                presignedUrl
         );
     }
 }

@@ -23,14 +23,17 @@ import com.example.demo.domain.post.exception.PostNotFoundException;
 import com.example.demo.domain.post.repository.PostLikeRepository;
 import com.example.demo.domain.post.repository.PostRepository;
 import com.example.demo.domain.user.repository.UserRepository;
+import com.example.demo.domain.file.service.S3FileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -45,6 +48,7 @@ public class PostService {
     private final PostCommentRepository postCommentRepository;
     private final UserReportRepository userReportRepository;
     private final PurchaseHistoryRepository purchaseHistoryRepository;
+    private final S3FileService s3FileService;
 
     // 게시글 생성
     @Transactional
@@ -62,7 +66,26 @@ public class PostService {
 
     // 게시글 조회(필터링이나 검색은 PostSearchCondition에 맞게 url에 파라미터로 넘겨주면 됨)
     public Page<PostListResponse> searchPosts(PostSearchCondition condition, Pageable pageable) {
-        return postRepository.search(condition, pageable);
+        Page<PostListResponse> page = postRepository.search(condition, pageable);
+        // Presigned URL로 변환
+        List<PostListResponse> content = page.getContent().stream()
+                .map(response -> {
+                    String presignedUrl = s3FileService.generatePresignedUrl(response.postImage());
+                    return new PostListResponse(
+                            response.id(),
+                            response.title(),
+                            presignedUrl,
+                            response.postPrice(),
+                            response.likeCount(),
+                            response.commentCount(),
+                            response.grade(),
+                            response.semester(),
+                            response.status(),
+                            response.createdAt()
+                    );
+                })
+                .toList();
+        return new PageImpl<>(content, page.getPageable(), page.getTotalElements());
     }
     // 아래 세개는 동적쿼리 안넣었을때 구현 해둔거임
 //    @Transactional(readOnly = true)
@@ -85,7 +108,8 @@ public class PostService {
     public PostResponse getPostById(UUID id) {
         Post post = postRepository.findByIdWithCommentsAndUsers(id)
                 .orElseThrow(PostNotFoundException::new);
-        return PostResponse.from(post);
+        String presignedUrl = s3FileService.generatePresignedUrl(post.getPostImage());
+        return PostResponse.from(post, presignedUrl);
     }
 
     // 게시글 삭제
@@ -107,7 +131,8 @@ public class PostService {
 
         post.updatePost(request.title(), request.content(), request.postPrice(), request.postImage());
 
-        return PostResponse.from(post);
+        String presignedUrl = s3FileService.generatePresignedUrl(post.getPostImage());
+        return PostResponse.from(post, presignedUrl);
     }
 
     // 찜하기
@@ -154,7 +179,8 @@ public class PostService {
         post.addComment(comment);
         postCommentRepository.save(comment);
 
-        return PostResponse.from(post);
+        String presignedUrl = s3FileService.generatePresignedUrl(post.getPostImage());
+        return PostResponse.from(post, presignedUrl);
     }
 
      // 댓글 수정
@@ -170,7 +196,8 @@ public class PostService {
 
          comment.updateContent(request.content());
 
-         return PostResponse.from(comment.getPost());
+         String presignedUrl = s3FileService.generatePresignedUrl(comment.getPost().getPostImage());
+         return PostResponse.from(comment.getPost(), presignedUrl);
     }
 
     // 댓글 삭제
@@ -186,7 +213,8 @@ public class PostService {
 
         postCommentRepository.delete(comment);
 
-        return PostResponse.from(comment.getPost());
+        String presignedUrl = s3FileService.generatePresignedUrl(comment.getPost().getPostImage());
+        return PostResponse.from(comment.getPost(), presignedUrl);
     }
 
     // 판매중으로 변경

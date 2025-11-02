@@ -15,11 +15,11 @@ public record UploadPost(
         String content,
         UUID postId
 ) {
-    public static UploadPost from(Post post) {
+    public static UploadPost from(Post post, String presignedUrl) {
         String statusValue = (post.getStatus() != null) ? post.getStatus().getValue() : null;
 
         return new UploadPost(
-                post.getPostImage(),
+                presignedUrl,
                 post.getTitle(),
                 statusValue,
                 post.getPostPrice(),
