@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -17,5 +18,8 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> 
 
     // 채팅방에서 특정 시각 이전(포함) 메시지 모두 조회
     List<ChatMessage> findByChatRoomIdAndSentAtLessThanEqual(UUID chatRoomId, LocalDateTime lastReadAt);
+
+    // 특정 채팅방의 최신 메시지 조회 (sentAt 내림차순 정렬 후 첫 번째)
+    Optional<ChatMessage> findFirstByChatRoomIdOrderBySentAtDesc(UUID roomId);
 
 }
