@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -36,9 +35,6 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final MajorRepository majorRepository;
     private final RedisMailRepository redisMailRepository;
-
-    @Value("${custom.user.default-profile-image-url:https://static.example.com/default-profile.png}")
-    private String defaultProfileImageUrl;
 
 
     @Transactional
@@ -66,13 +62,15 @@ public class AuthService {
     @Transactional
     public void reSignUp(User withdrawnUser , SignUpRequest request) {
 
-        // 이메일 인증을 다시 했는지 확인하는 로직이 필요하다면 여기에 추가
-        if (!redisMailRepository.isVerifiedEmail(request.email(), EmailAuthPurpose.SIGN_UP)) {
-            throw new EmailNotVerifiedException();
-        }
+        // 이메일 인증을 다시 했는지 확인
+        didVerifyEmail(request.email(), EmailAuthPurpose.SIGN_UP);
 
         Major major = majorRepository.findById(request.majorId())
                 .orElseThrow(MajorNotFoundException::new);
+
+        if(isDuplicateName(request.name())) {
+            throw new ArealyExistsName(request.name());
+        }
 
         // 기존 User 엔티티의 상태를 업데이트 (새로 생성하는 것이 아님)
         withdrawnUser.reactivate(
@@ -84,29 +82,33 @@ public class AuthService {
                 Semester.fromValue(request.semester()),
                 Role.USER
                 );
-        // 프로필 이미지 재설정 (없으면 기본 이미지)
+        // 프로필 이미지 재설정 (없으면 null 유지)
         String profileUrl = (request.profileImageUrl() != null && !request.profileImageUrl().isEmpty())
                 ? request.profileImageUrl()
-                : defaultProfileImageUrl;
+                : null;
         withdrawnUser.updateProfileImage(profileUrl);
 
         redisMailRepository.deleteVerifiedEmail(request.email(), EmailAuthPurpose.SIGN_UP);
+    }
+
+    private void didVerifyEmail(String request, EmailAuthPurpose signUp) {
+        if (!redisMailRepository.isVerifiedEmail(request, signUp)) {
+            throw new EmailNotVerifiedException();
+        }
     }
 
     @Transactional
     public void firstSignUp(SignUpRequest request) {
 
         // 이메일 인증 여부 확인
-        if (!redisMailRepository.isVerifiedEmail(request.email(), EmailAuthPurpose.SIGN_UP)) {
-            throw new EmailNotVerifiedException();
-        }
+        didVerifyEmail(request.email(), EmailAuthPurpose.SIGN_UP);
 
         Major major = majorRepository.findById(request.majorId())
                 .orElseThrow(MajorNotFoundException::new);
 
-        String profileUrl = (request.profileImageUrl() != null && !request.profileImageUrl().isEmpty())
-                ? request.profileImageUrl()
-                : defaultProfileImageUrl;
+        if(isDuplicateName(request.name())) {
+            throw new ArealyExistsName(request.name());
+        }
 
         User user = User.builder()
                 .email(request.email())
@@ -118,7 +120,7 @@ public class AuthService {
                 .semester(Semester.fromValue(request.semester()))
                 .role(Role.USER)
                 .status(UserStatus.ACTIVE)
-                .profileImageUrl(profileUrl)
+                .profileImageUrl(request.profileImageUrl())
                 .build();
 
         userRepository.save(user);
@@ -145,9 +147,7 @@ public class AuthService {
     public void resetPassword(@Valid ResetPasswordRequest request) {
 
         // 이메일 인증 여부 확인
-        if (!redisMailRepository.isVerifiedEmail(request.email(), EmailAuthPurpose.PASSWORD_RESET)) {
-            throw new EmailNotVerifiedException();
-        }
+        didVerifyEmail(request.email(), EmailAuthPurpose.PASSWORD_RESET);
 
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(UserNotFoundException::new);
@@ -174,5 +174,10 @@ public class AuthService {
             user.changePassword(passwordEncoder.encode(rawPassword));
             userRepository.save(user); // 준영속상태이기에 save로 영속 상태로 만들고, 변경 사항을 DB에 반영
         }
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isDuplicateName(String name) {
+        return userRepository.existsByName(name);
     }
 }

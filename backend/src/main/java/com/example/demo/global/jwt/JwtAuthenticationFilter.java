@@ -54,7 +54,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 "/v3/api-docs/**",
                 "/api/auth/**",
                 "/api/major/**",
-                "/api/mail/**"
+                "/api/mail/**",
+                "/api/files/image"
         };
 
         String path = request.getRequestURI();

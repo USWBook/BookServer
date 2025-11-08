@@ -28,12 +28,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.RequestPart;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.UUID;
 
@@ -71,40 +69,51 @@ public class PostController {
         return RsData.of("201", "게시글이 성공적으로 등록되었습니다.", postId);
     }
 
-    @Operation(summary = "게시글 생성(이미지 포함)", description = "멀티파트로 request(JSON 텍스트)와 file(이미지, 선택)을 받아 S3 업로드 후 URL을 주입하여 게시글을 생성합니다.")
-    @ApiSuccessResponse(responseCode = "201", description = "게시글 생성 성공", message = "게시글이 성공적으로 생성되었습니다.")
+    @Operation(summary = "게시글 생성 (Multipart)", description = "multipart/form-data로 게시글과 이미지를 함께 업로드합니다.")
+    @ApiSuccessResponse(
+            responseCode = "201",
+            description = "게시글 생성 성공",
+            message = "게시글이 성공적으로 생성되었습니다."
+    )
+    @ApiErrorResponse(
+            responseCode = "400",
+            description = "예기치 못한 예외",
+            exampleName = "UnknownFound",
+            exampleValue = "{\"code\": \"400\", \"message\": \"예기치 못한 예외. 개발자 문의 바람\", \"data\": null}"
+    )
     @ApiUnauthorizedResponse
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public RsData<?> createPostMultipart(
+    public RsData<?> createPostWithMultipart(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestPart("request") String requestJson,
-            @RequestPart(value = "file", required = false) MultipartFile file
-    ) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        PostCreateRequest base = mapper.readValue(requestJson, PostCreateRequest.class);
+            @RequestParam("title") String title,
+            @RequestParam("postName") String postName,
+            @RequestParam("postPrice") Integer postPrice,
+            @RequestParam(value = "professor", required = false) String professor,
+            @RequestParam(value = "courseName", required = false) String courseName,
+            @RequestParam("grade") Integer grade,
+            @RequestParam("semester") Integer semester,
+            @RequestParam(value = "postImage", required = false) MultipartFile postImageFile,
+            @RequestParam(value = "content", required = false) String content,
+            @RequestParam("majorId") UUID majorId) {
 
-        String imageUrl = base.postImage();
-        if (file != null && !file.isEmpty()) {
-            imageUrl = s3FileService.uploadFile(file);
+        // 파일이 있는 경우 S3에 업로드
+        String postImageUrl = null;
+        if (postImageFile != null && !postImageFile.isEmpty()) {
+            postImageUrl = s3FileService.uploadFile(postImageFile);
         }
 
-        PostCreateRequest finalRequest = new PostCreateRequest(
-                base.title(),
-                base.postName(),
-                base.postPrice(),
-                base.professor(),
-                base.courseName(),
-                base.grade(),
-                base.semester(),
-                imageUrl,
-                base.content(),
-                base.majorId()
+        // PostCreateRequest 생성
+        PostCreateRequest request = new PostCreateRequest(
+                title, postName, postPrice, professor, courseName,
+                grade, semester, postImageUrl, content, majorId
         );
 
-        UUID postId = postService.createPost(userDetails.getId(), finalRequest);
+        UUID postId = postService.createPost(userDetails.getId(), request);
         return RsData.of("201", "게시글이 성공적으로 등록되었습니다.", postId);
     }
+
+    // 멀티파트 방식 제거: 사전 업로드 후 JSON으로 최종 제출
 
     // 게시글 전체 조회
     /**

@@ -135,6 +135,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/signup",
+                                "/api/auth/*/exists",
                                 "/api/auth/reissue",
                                 "/api/mail/**"
                         ).permitAll()
@@ -150,7 +151,8 @@ public class SecurityConfig {
 
                         // 공개 API만 선별 허용
                         .requestMatchers(
-                                "/api/major/**"
+                                "/api/major/**",
+                                "/api/files/image"
                         ).permitAll()
 
                         // 내정보/로그아웃 등은 인증 필요

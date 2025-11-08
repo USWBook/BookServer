@@ -27,10 +27,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.bind.annotation.RequestPart;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.MediaType;
+
+import java.util.UUID;
 
 @Tag(name = "Authentication", description = "인증/인가 API")
 @RestController
@@ -73,41 +73,59 @@ public class AuthController implements AuthControllerDoc{
         return RsData.of("200", "회원가입 성공");
     }
 
-    // 동일 경로에서 멀티파트(form-data) 지원: request(Text: JSON) + file(File)
-    @Operation(summary = "회원가입(멀티파트 지원)", description = "request(JSON 텍스트)와 file(이미지 파일, 선택)을 멀티파트로 받아 회원가입합니다.")
+    @Operation(summary = "회원가입 (Multipart)", description = "multipart/form-data로 회원가입과 프로필 이미지를 함께 업로드합니다.")
     @ApiSuccessResponse(description = "회원가입 성공")
     @ApiErrorResponse(
+            responseCode = "400",
             description = "유효성 검사 실패",
             exampleName = "ValidationFailure",
             exampleValue = "{\"code\": \"400\", \"message\": \"비밀번호는 8자 이상, 16자 이하로 입력해주세요.\", \"data\": null}"
     )
+    @ApiErrorResponse(
+            responseCode = "409",
+            description = "이미 회원가입 되어 있는 이메일로 회원가입 시도",
+            exampleName = "ExistEmailSignUp",
+            exampleValue = "{\"code\": \"409\", \"message\": \"이미 회원가입 되어 있는 이메일 입니다.\", \"data\": null}"
+    )
+    @ApiErrorResponse(
+            responseCode = "403",
+            description = "이메일 인증을 완료 하십시오.",
+            exampleName = "EmailNotVerified",
+            exampleValue = "{\"code\": \"403\", \"message\": \"이메일 인증을 완료 하십시오\", \"data\": null}"
+    )
+    @ApiErrorResponse(
+            responseCode = "404",
+            description = "찾을 수 없는 전공",
+            exampleName = "MajorNotFound",
+            exampleValue = "{\"code\": \"404\", \"message\": \"존재하지 않는 전공입니다.\", \"data\": null}"
+    )
     @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public RsData<?> signUpMultipart(
-            @RequestPart("request") String requestJson,
-            @RequestPart(value = "file", required = false) MultipartFile file
-    ) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        SignUpRequest baseRequest = mapper.readValue(requestJson, SignUpRequest.class);
+    public RsData<?> signUpWithMultipart(
+            @RequestParam("email") String email,
+            @RequestParam("password") String password,
+            @RequestParam("name") String name,
+            @RequestParam("studentId") String studentId,
+            @RequestParam("majorId") UUID majorId,
+            @RequestParam("grade") Integer grade,
+            @RequestParam("semester") Integer semester,
+            @RequestParam(value = "profileImage", required = false) MultipartFile profileImageFile) {
 
-        String profileUrl = baseRequest.profileImageUrl();
-        if (file != null && !file.isEmpty()) {
-            profileUrl = s3FileService.uploadUserProfileImage(file);
+        // 파일이 있는 경우 S3에 업로드
+        String profileImageUrl = null;
+        if (profileImageFile != null && !profileImageFile.isEmpty()) {
+            profileImageUrl = s3FileService.uploadUserProfileImage(profileImageFile);
         }
 
-        SignUpRequest finalRequest = new SignUpRequest(
-                baseRequest.email(),
-                baseRequest.password(),
-                baseRequest.name(),
-                baseRequest.studentId(),
-                baseRequest.majorId(),
-                baseRequest.grade(),
-                baseRequest.semester(),
-                profileUrl
+        // SignUpRequest 생성
+        SignUpRequest request = new SignUpRequest(
+                email, password, name, studentId, majorId, grade, semester, profileImageUrl
         );
 
-        authService.signUp(finalRequest);
+        authService.signUp(request);
         return RsData.of("200", "회원가입 성공");
     }
+
+    // 멀티파트 회원가입 제거: 사전 업로드 + JSON 최종 제출만 지원
 
     
 
@@ -204,6 +222,12 @@ public class AuthController implements AuthControllerDoc{
             @RequestBody @Valid ResetPasswordRequest resetPasswordRequest){
         authService.resetPassword(resetPasswordRequest);
         return RsData.of("200", "비밀번호 초기화 완료되었습니다.");
+    }
+
+    @GetMapping("/{name}/exists")
+    public RsData<?> nameExists(@PathVariable String name){
+        boolean isexists = authService.isDuplicateName(name);
+        return RsData.of("200","닉네임 중복 검사 성공",isexists);
     }
 
     @Operation(summary = "관리자 전용 API 테스트", description = "ADMIN 권한을 가진 사용자만 접근 가능한 테스트용 API입니다.")

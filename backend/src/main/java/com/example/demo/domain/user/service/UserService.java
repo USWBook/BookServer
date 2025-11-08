@@ -1,5 +1,6 @@
 package com.example.demo.domain.user.service;
 
+import com.example.demo.domain.auth.exception.ArealyExistsName;
 import com.example.demo.domain.auth.exception.MemberNotFoundException;
 import com.example.demo.domain.auth.exception.UserNotFoundException;
 import com.example.demo.domain.major.entity.Major;
@@ -17,6 +18,7 @@ import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.exception.PasswordNotEqualException;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.response.UserInfoResponse;
+import com.example.demo.domain.file.service.S3FileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,12 +40,14 @@ public class UserService {
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
     private final PurchaseHistoryRepository purchaseHistoryRepository;
+    private final S3FileService s3FileService;
 
     @Transactional(readOnly = true)
     public UserInfoResponse getUserInfo(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
-        return UserInfoResponse.from(user);
+        String presignedUrl = s3FileService.generatePresignedUrl(user.getProfileImageUrl());
+        return UserInfoResponse.from(user, presignedUrl);
     }
 
     @Transactional
@@ -55,10 +59,13 @@ public class UserService {
 
 //        Grade newGrade = (request.grade() != null) ? Grade.fromValue(request.grade()) : null;
 //        Semester newSemester = (request.semester() != null) ? Semester.fromValue(request.semester()) : null;
-        
+        if(userRepository.existsByName(request.name())) {
+            throw new ArealyExistsName(request.name());
+        }
         currentUser.updateProfile(request.name(), newMajor, request.grade(), request.semester());
 
-        return UserInfoResponse.from(currentUser);
+        String presignedUrl = s3FileService.generatePresignedUrl(currentUser.getProfileImageUrl());
+        return UserInfoResponse.from(currentUser, presignedUrl);
     }
 
     private Major findMajorOrNull(UUID majorId) {
@@ -91,8 +98,8 @@ public class UserService {
 
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
-    public void banUser(String sellerName) {
-        User user = userRepository.findByName(sellerName).orElseThrow(UserNotFoundException::new);
+    public void banUser(UUID userId) {
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         user.ban();
     }
 
@@ -103,7 +110,10 @@ public class UserService {
         }
         Page<Post> postPage = postRepository.findBySellerId(userId, pageable);
 
-        return postPage.map(UploadPost::from);
+        return postPage.map(post -> {
+            String presignedUrl = s3FileService.generatePresignedUrl(post.getPostImage());
+            return UploadPost.from(post, presignedUrl);
+        });
     }
 
     @Transactional(readOnly = true)
@@ -114,7 +124,10 @@ public class UserService {
 
         Page<Post> postPage = postLikeRepository.findLikedPostsByUserId(userId, pageable);
 
-        return postPage.map(UploadPost::from);
+        return postPage.map(post -> {
+            String presignedUrl = s3FileService.generatePresignedUrl(post.getPostImage());
+            return UploadPost.from(post, presignedUrl);
+        });
     }
 
     @Transactional(readOnly = true)
@@ -122,11 +135,9 @@ public class UserService {
 
         Page<PurchaseHistory> purchases = purchaseHistoryRepository.findByBuyerId(currentUserId, pageable);
 
-        return purchases
-                .map(ph ->
-                        PostResponse.from(ph.getPost()));
-
-//        return purchases.map(PurchaseHistory::getPost) // Page<Post>로 변환
-//                .map(PostResponse::from);      // Page<PostResponse>로 변환
+        return purchases.map(ph -> {
+            String presignedUrl = s3FileService.generatePresignedUrl(ph.getPost().getPostImage());
+            return PostResponse.from(ph.getPost(), presignedUrl);
+        });
     }
 }
