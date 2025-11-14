@@ -267,7 +267,7 @@ public class PostController {
         return RsData.of("200", "댓글 삭제 성공했습니다.", post);
     }
 
-    @PostMapping("report")
+    @PostMapping("/report")
     public RsData<?> reportPost(
             @RequestBody PostReportRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
