@@ -233,7 +233,6 @@ public class PostService {
 
 
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
     public void deletePostByAdmin(UUID postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(PostNotFoundException::new);
