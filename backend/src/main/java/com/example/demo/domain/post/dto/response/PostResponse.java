@@ -5,6 +5,7 @@ import com.example.demo.domain.user.enums.UserStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,8 +23,8 @@ public record PostResponse(
         String courseName,
         @Schema(description = "교수명", example = "홍길동 교슈")
         String professorName,
-        @Schema(description = "사진 경로", example = "https://example.com/image.jpg")
-        String postImage,
+        @Schema(description = "사진 경로 리스트", example = "[\"https://example.com/image1.jpg\", \"https://example.com/image2.jpg\"]")
+        List<String> postImages,
         @Schema(description = "게시물 본문", example = "졸업해서 싸게 팝니다")
         String content,
         @Schema(description = "작성일", example = "yyyy-mm-dd")
@@ -41,7 +42,7 @@ public record PostResponse(
         @Schema(description = "댓글들")
         List<CommentResponse> comments
 ) {
-    public static PostResponse from(Post post, String presignedUrl) {
+    public static PostResponse from(Post post, List<String> presignedUrls) {
         List<CommentResponse> commentResponses = post.getComments().stream()
                 .map(CommentResponse::from)
                 .toList();
@@ -57,7 +58,7 @@ public record PostResponse(
                 post.getPostPrice(),
                 post.getCourseName(),
                 post.getProfessor(),
-                presignedUrl,
+                presignedUrls != null ? presignedUrls : new ArrayList<>(),
                 post.getContent(),
                 post.getCreatedAt(),
                 post.getLikeCount(),

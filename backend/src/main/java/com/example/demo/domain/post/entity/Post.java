@@ -53,7 +53,11 @@ public class Post {
     @Enumerated(EnumType.STRING)
     private Semester semester;
 
-    private String postImage;
+    @ElementCollection
+    @CollectionTable(name = "post_images", joinColumns = @JoinColumn(name = "post_id"))
+    @Column(name = "image_url")
+    @Builder.Default
+    private List<String> postImages = new ArrayList<>();
 
     @Column(columnDefinition = "TEXT")
     private String content;
@@ -83,11 +87,11 @@ public class Post {
     private List<PostComment> comments = new ArrayList<>();
 
     // 게시글 수정
-    public void updatePost(String title, String content, Integer postPrice, String postImage) {
+    public void updatePost(String title, String content, Integer postPrice, List<String> postImages) {
         if(title != null) this.title = title;
         if(content != null) this.content = content;
         if(postPrice != null) this.postPrice = postPrice;
-        if(postImage != null) this.postImage = postImage;
+        if(postImages != null) this.postImages = postImages;
         this.modifiedAt = LocalDateTime.now();
     }
     // 게시글 상태를 '판매완료'로 변경
@@ -109,6 +113,11 @@ public class Post {
 
     public void addComment(PostComment comment) {
         this.comments.add(comment);
+    }
+
+    // 첫 번째 이미지 URL 반환 (목록 조회용)
+    public String getFirstImageUrl() {
+        return postImages != null && !postImages.isEmpty() ? postImages.get(0) : null;
     }
 
 }
