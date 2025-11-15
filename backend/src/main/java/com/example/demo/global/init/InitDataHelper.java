@@ -20,6 +20,8 @@ import com.example.demo.domain.chat.entity.ChatRoom;
 import com.example.demo.domain.chat.entity.ChatMessage;
 import com.example.demo.domain.chat.service.ChatRoomService;
 import com.example.demo.domain.chat.service.ChatService;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -86,7 +88,7 @@ public class InitDataHelper {
                         .professor(professor)
                         .grade(Grade.fromValue(grade))
                         .semester(Semester.fromValue(semester))
-                        .postImage(postImage)
+                        .postImages(postImage != null ? new ArrayList<>(List.of(postImage)) : new ArrayList<>())
                         .content(content)
                         .postPrice(price)
                         .likeCount(0)

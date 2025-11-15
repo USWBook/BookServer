@@ -5,6 +5,7 @@ import com.example.demo.domain.post.dto.response.PostListResponse;
 import com.example.demo.domain.post.entity.Post;
 import com.example.demo.domain.post.enums.PostStatus;
 import com.example.demo.domain.user.enums.Grade;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     @Override
     public Page<PostListResponse> search(PostSearchCondition condition, Pageable pageable) {
         // Post 엔티티와 댓글 수를 함께 조회
-        List<Object[]> results = queryFactory
+        List<Tuple> results = queryFactory
                 .select(
                         post,
                         postComment.id.count().as("commentCount")
@@ -50,9 +51,9 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
         // PostListResponse로 변환
         List<PostListResponse> content = results.stream()
-                .map(result -> {
-                    Post p = (Post) result[0];
-                    Long commentCount = (Long) result[1];
+                .map(tuple -> {
+                    Post p = tuple.get(post);
+                    Long commentCount = tuple.get(postComment.id.count());
                     return new PostListResponse(
                             p.getId(),
                             p.getTitle(),
