@@ -26,6 +26,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -111,7 +112,8 @@ public class UserService {
         Page<Post> postPage = postRepository.findBySellerId(userId, pageable);
 
         return postPage.map(post -> {
-            String presignedUrl = s3FileService.generatePresignedUrl(post.getPostImage());
+            String firstImageUrl = post.getFirstImageUrl();
+            String presignedUrl = firstImageUrl != null ? s3FileService.generatePresignedUrl(firstImageUrl) : null;
             return UploadPost.from(post, presignedUrl);
         });
     }
@@ -125,7 +127,8 @@ public class UserService {
         Page<Post> postPage = postLikeRepository.findLikedPostsByUserId(userId, pageable);
 
         return postPage.map(post -> {
-            String presignedUrl = s3FileService.generatePresignedUrl(post.getPostImage());
+            String firstImageUrl = post.getFirstImageUrl();
+            String presignedUrl = firstImageUrl != null ? s3FileService.generatePresignedUrl(firstImageUrl) : null;
             return UploadPost.from(post, presignedUrl);
         });
     }
@@ -136,8 +139,12 @@ public class UserService {
         Page<PurchaseHistory> purchases = purchaseHistoryRepository.findByBuyerId(currentUserId, pageable);
 
         return purchases.map(ph -> {
-            String presignedUrl = s3FileService.generatePresignedUrl(ph.getPost().getPostImage());
-            return PostResponse.from(ph.getPost(), presignedUrl);
+            Post post = ph.getPost();
+            List<String> presignedUrls = post.getPostImages().stream()
+                    .map(url -> s3FileService.generatePresignedUrl(url))
+                    .filter(url -> url != null)
+                    .toList();
+            return PostResponse.from(post, presignedUrls);
         });
     }
 }
