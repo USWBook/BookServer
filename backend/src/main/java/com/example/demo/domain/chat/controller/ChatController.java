@@ -5,6 +5,7 @@
         import com.example.demo.domain.chat.entity.ChatMessage;
         import com.example.demo.domain.chat.entity.ChatRoom;
         import com.example.demo.domain.chat.exception.ChatRoomNotFoundException;
+        import com.example.demo.domain.chat.repository.ChatMessageRepository;
         import com.example.demo.domain.chat.service.ChatRoomService;
         import com.example.demo.domain.chat.service.ChatService;
         import com.example.demo.domain.post.entity.Post;
@@ -55,6 +56,7 @@
             private final UserRepository userRepository;
             private final PostRepository postRepository;
             private final UserReportRepository userReportRepository;
+            private final ChatMessageRepository chatMessageRepository;
             private static final Logger log = LoggerFactory.getLogger(ChatController.class);
 
 
@@ -173,14 +175,31 @@
                             .map(User::getName)
                             .orElse("알 수 없음");
 
+                    // 최신 메시지 조회
+                    String lastMessage = null;
+                    String lastTimestamp = null;
+                    Optional<ChatMessage> latestMessage = chatMessageRepository.findFirstByChatRoomIdOrderBySentAtDesc(room.getRoomId());
+                    if (latestMessage.isPresent()) {
+                        ChatMessage message = latestMessage.get();
+                        // 텍스트 메시지면 content, 이미지면 "사진" 표시
+                        if (message.getContent() != null && !message.getContent().isBlank()) {
+                            lastMessage = message.getContent();
+                        } else if (message.getImageUrl() != null) {
+                            lastMessage = "사진";
+                        }
+                        if (message.getSentAt() != null) {
+                            lastTimestamp = message.getSentAt().toString();
+                        }
+                    }
+
                     return new ListChatRoomsResponseDto.ChatRoomDto(
                             room.getRoomId().toString(),
                             room.getPostId() != null ? room.getPostId().toString() : null,
                             name,
                             postName,
                             room.getUserCount(),
-                            room.getLastMessage(),
-                            room.getLastTimestamp()
+                            lastMessage,
+                            lastTimestamp
                     );
                 }).collect(Collectors.toList());
 
