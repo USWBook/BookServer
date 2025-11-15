@@ -67,10 +67,13 @@ public class PostService {
     // 게시글 조회(필터링이나 검색은 PostSearchCondition에 맞게 url에 파라미터로 넘겨주면 됨)
     public Page<PostListResponse> searchPosts(PostSearchCondition condition, Pageable pageable) {
         Page<PostListResponse> page = postRepository.search(condition, pageable);
-        // Presigned URL로 변환
+        // Presigned URL로 변환 (목록은 첫 번째 이미지만 사용)
         List<PostListResponse> content = page.getContent().stream()
                 .map(response -> {
-                    String presignedUrl = s3FileService.generatePresignedUrl(response.postImage());
+                    String presignedUrl = null;
+                    if (response.postImage() != null && !response.postImage().isEmpty()) {
+                        presignedUrl = s3FileService.generatePresignedUrl(response.postImage());
+                    }
                     return new PostListResponse(
                             response.id(),
                             response.title(),
@@ -108,8 +111,11 @@ public class PostService {
     public PostResponse getPostById(UUID id) {
         Post post = postRepository.findByIdWithCommentsAndUsers(id)
                 .orElseThrow(PostNotFoundException::new);
-        String presignedUrl = s3FileService.generatePresignedUrl(post.getPostImage());
-        return PostResponse.from(post, presignedUrl);
+        List<String> presignedUrls = post.getPostImages().stream()
+                .map(url -> s3FileService.generatePresignedUrl(url))
+                .filter(url -> url != null)
+                .toList();
+        return PostResponse.from(post, presignedUrls);
     }
 
     // 게시글 삭제
@@ -129,10 +135,13 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(PostNotFoundException::new);
 
-        post.updatePost(request.title(), request.content(), request.postPrice(), request.postImage());
+        post.updatePost(request.title(), request.content(), request.postPrice(), request.postImages());
 
-        String presignedUrl = s3FileService.generatePresignedUrl(post.getPostImage());
-        return PostResponse.from(post, presignedUrl);
+        List<String> presignedUrls = post.getPostImages().stream()
+                .map(url -> s3FileService.generatePresignedUrl(url))
+                .filter(url -> url != null)
+                .toList();
+        return PostResponse.from(post, presignedUrls);
     }
 
     // 찜하기
@@ -179,8 +188,11 @@ public class PostService {
         post.addComment(comment);
         postCommentRepository.save(comment);
 
-        String presignedUrl = s3FileService.generatePresignedUrl(post.getPostImage());
-        return PostResponse.from(post, presignedUrl);
+        List<String> presignedUrls = post.getPostImages().stream()
+                .map(url -> s3FileService.generatePresignedUrl(url))
+                .filter(url -> url != null)
+                .toList();
+        return PostResponse.from(post, presignedUrls);
     }
 
      // 댓글 수정
@@ -196,8 +208,12 @@ public class PostService {
 
          comment.updateContent(request.content());
 
-         String presignedUrl = s3FileService.generatePresignedUrl(comment.getPost().getPostImage());
-         return PostResponse.from(comment.getPost(), presignedUrl);
+         Post post = comment.getPost();
+         List<String> presignedUrls = post.getPostImages().stream()
+                 .map(url -> s3FileService.generatePresignedUrl(url))
+                 .filter(url -> url != null)
+                 .toList();
+         return PostResponse.from(post, presignedUrls);
     }
 
     // 댓글 삭제
@@ -211,10 +227,14 @@ public class PostService {
             throw new CommentNotInPostException();
         }
 
+        Post post = comment.getPost();
         postCommentRepository.delete(comment);
 
-        String presignedUrl = s3FileService.generatePresignedUrl(comment.getPost().getPostImage());
-        return PostResponse.from(comment.getPost(), presignedUrl);
+        List<String> presignedUrls = post.getPostImages().stream()
+                .map(url -> s3FileService.generatePresignedUrl(url))
+                .filter(url -> url != null)
+                .toList();
+        return PostResponse.from(post, presignedUrls);
     }
 
     // 판매중으로 변경

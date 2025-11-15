@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Schema(description = "게시물 생성 요청 DTO")
@@ -40,8 +42,8 @@ public record PostCreateRequest(
         @NotNull
         Integer semester,
 
-        @Schema(description = "사진 경로 (nullable)", example = "https://example.com/image.jpg")
-        String postImage,
+        @Schema(description = "사진 경로 리스트 (nullable)", example = "[\"https://example.com/image1.jpg\", \"https://example.com/image2.jpg\"]")
+        List<String> postImages,
 
         @Schema(description = "게시물 본문", example = "졸업해서 싸게 팝니다")
         String content,
@@ -59,7 +61,7 @@ public record PostCreateRequest(
                 .courseName(request.courseName())
                 .grade(Grade.fromValue(request.grade())) // 숫자를 Enum으로 변환
                 .semester(Semester.fromValue(request.semester())) // 숫자를 Enum으로 변환
-                .postImage(request.postImage())
+                .postImages(request.postImages() != null ? request.postImages() : new ArrayList<>())
                 .content(request.content())
                 .seller(seller)
                 .status(PostStatus.SELLING)

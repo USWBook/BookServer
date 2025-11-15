@@ -33,6 +33,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Tag(name = "Post", description = "게시글 API")
@@ -93,20 +95,25 @@ public class PostController {
             @RequestParam(value = "courseName", required = false) String courseName,
             @RequestParam("grade") Integer grade,
             @RequestParam("semester") Integer semester,
-            @RequestParam(value = "postImage", required = false) MultipartFile postImageFile,
+            @RequestParam(value = "postImages", required = false) List<MultipartFile> postImageFiles,
             @RequestParam(value = "content", required = false) String content,
             @RequestParam("majorId") UUID majorId) {
 
-        // 파일이 있는 경우 S3에 업로드
-        String postImageUrl = null;
-        if (postImageFile != null && !postImageFile.isEmpty()) {
-            postImageUrl = s3FileService.uploadFile(postImageFile);
+        // 파일들이 있는 경우 S3에 업로드
+        List<String> postImageUrls = new ArrayList<>();
+        if (postImageFiles != null && !postImageFiles.isEmpty()) {
+            for (MultipartFile file : postImageFiles) {
+                if (file != null && !file.isEmpty()) {
+                    String imageUrl = s3FileService.uploadFile(file);
+                    postImageUrls.add(imageUrl);
+                }
+            }
         }
 
         // PostCreateRequest 생성
         PostCreateRequest request = new PostCreateRequest(
                 title, postName, postPrice, professor, courseName,
-                grade, semester, postImageUrl, content, majorId
+                grade, semester, postImageUrls.isEmpty() ? null : postImageUrls, content, majorId
         );
 
         UUID postId = postService.createPost(userDetails.getId(), request);

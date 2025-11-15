@@ -2,9 +2,9 @@ package com.example.demo.domain.post.repository;
 
 import com.example.demo.domain.post.dto.request.PostSearchCondition;
 import com.example.demo.domain.post.dto.response.PostListResponse;
+import com.example.demo.domain.post.entity.Post;
 import com.example.demo.domain.post.enums.PostStatus;
 import com.example.demo.domain.user.enums.Grade;
-import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -28,19 +28,12 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
     @Override
     public Page<PostListResponse> search(PostSearchCondition condition, Pageable pageable) {
-        List<PostListResponse> content = queryFactory
-                .select(Projections.constructor(PostListResponse.class,
-                        post.id,
-                        post.title,
-                        post.postImage,
-                        post.postPrice,
-                        post.likeCount,
-                        postComment.id.count(),
-                        post.grade,
-                        post.semester,
-                        post.status,
-                        post.createdAt
-                ))
+        // Post 엔티티와 댓글 수를 함께 조회
+        List<Object[]> results = queryFactory
+                .select(
+                        post,
+                        postComment.id.count().as("commentCount")
+                )
                 .from(post)
                 .leftJoin(post.comments, postComment)
                 .where(
@@ -54,6 +47,26 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
+
+        // PostListResponse로 변환
+        List<PostListResponse> content = results.stream()
+                .map(result -> {
+                    Post p = (Post) result[0];
+                    Long commentCount = (Long) result[1];
+                    return new PostListResponse(
+                            p.getId(),
+                            p.getTitle(),
+                            p.getFirstImageUrl(), // 첫 번째 이미지만 사용
+                            p.getPostPrice(),
+                            p.getLikeCount(),
+                            commentCount,
+                            p.getGrade(),
+                            p.getSemester(),
+                            p.getStatus(),
+                            p.getCreatedAt()
+                    );
+                })
+                .toList();
 
         Long total = queryFactory
                 .select(post.count())
